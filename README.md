@@ -6,9 +6,11 @@ I run two companies for SharpestMinds (US co. and CAN co.). This, unfortunately,
 
 Saved the company ~$200 CAD/month with this humble CLI.
 
+Built with my specific use cases in mind. But shoudn't too hard to generalize/customize for other use cases.
+
 Issues, feature requests, and PRs welcome!
 
-If you want some help configuring this to your use case, or setting up, get in touch!
+If you want some help running this, or configuring it to your use case, get in touch!
 
 ## Installation
 
@@ -26,7 +28,7 @@ If you want some help configuring this to your use case, or setting up, get in t
 QBO_CLIENT_ID=...
 QBO_CLIENT_SECRET=...
 QBO_REDIRECT_URI=...
-STRIPE_API_KET=...
+STRIPE_API_KEY=...
 ```
 
 ## Configuration
