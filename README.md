@@ -31,7 +31,7 @@ STRIPE_API_KET=...
 
 ## Configuration
 
-Use settings.py to configure the sync.
+Use settings.py to configure the sync. Modify the settings file directly, or set them as env variables
 
 `STRIPE_PAYOUT_ACCOUNT` (**Required**)
 
