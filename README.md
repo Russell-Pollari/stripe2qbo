@@ -25,6 +25,7 @@ If you want some help running this, or configuring it to your use case, get in t
 `$ touch .env`
 
 ```
+SECRET_KEY=...
 QBO_CLIENT_ID=...
 QBO_CLIENT_SECRET=...
 QBO_REDIRECT_URI=...
@@ -100,9 +101,7 @@ The default tax code to use for all invoice line items with zero tax. Defaults t
 
 > **Note:** 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
 
-Tax codes will not be created for you if they don't exist. To see a list of existing QBO tax codes with their ids:
-
-`$ python list_tax_codes.py`
+Tax codes will not be created for you if they don't exist.
 
 ## Syncing
 
