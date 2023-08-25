@@ -4,9 +4,6 @@ import json
 import requests
 from dotenv import load_dotenv
 
-from src.qbo.qbo_auth import login
-
-
 load_dotenv()
 
 
@@ -14,17 +11,17 @@ def qbo_request(
     path: str,
     body: Optional[Mapping[str, Any]] = None,
     method: str = "GET",
+    access_token: Optional[str] = None,
+    realm_id: Optional[str] = None,
 ) -> requests.Response:
-    token = login()
-
     try:
         response = requests.request(
             method,
-            url=f"{os.getenv('QBO_BASE_URL', '')}/{token.realm_id}/{path}",
+            url=f"{os.getenv('QBO_BASE_URL', '')}/{realm_id}/{path}",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
-                "Authorization": f"Bearer {token.access_token}",
+                "Authorization": f"Bearer {access_token}",
             },
             data=json.dumps(body),
         )

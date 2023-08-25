@@ -1,0 +1,17 @@
+{
+  "name": "qbo-importer",
+  "version": "1.0.0",
+  "description": "**Quickly sync your Stripe transactions with Quick Books Online.**",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "esbuild ./src/client/index.tsx --bundle --minify --sourcemap --target=es2015 --outfile=static/index.js --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.19.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}
