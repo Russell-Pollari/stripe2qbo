@@ -7,6 +7,11 @@ from pydantic import BaseModel
 from src.qbo.qbo_request import qbo_request
 
 
+class CompanyInfo(BaseModel):
+    CompanyName: str
+    Country: str
+
+
 class CurrencyRef(BaseModel):
     value: str
     name: Optional[str]

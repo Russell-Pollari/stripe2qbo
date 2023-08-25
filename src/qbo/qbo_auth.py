@@ -88,11 +88,31 @@ def login() -> Token:
     url = input("After authorizing, past the url here ")
     code = url.split("code=")[1].split("&")[0]
     realm_id = url.split("realmId=")[1].split("&")[0]
-    auth_client.get_bearer_token(code)
-
-    token = save_token(auth_client, realm_id)
-
+    token = get_auth_token(code, realm_id)
     return token
+
+
+def get_auth_url() -> str:
+    auth_client = AuthClient(
+        client_id=os.getenv("QBO_CLIENT_ID"),
+        client_secret=os.getenv("QBO_CLIENT_SECRET"),
+        redirect_uri=os.getenv("QBO_REDIRECT_URI"),
+        environment="sandbox",  # TODO: env variable
+    )
+
+    return auth_client.get_authorization_url([Scopes.ACCOUNTING])
+
+
+def get_auth_token(code: str, realm_id: str) -> Token:
+    auth_client = AuthClient(
+        client_id=os.getenv("QBO_CLIENT_ID"),
+        client_secret=os.getenv("QBO_CLIENT_SECRET"),
+        redirect_uri=os.getenv("QBO_REDIRECT_URI"),
+        environment="sandbox",  # TODO: env variable
+    )
+    auth_client.get_bearer_token(code)
+    token = save_token(auth_client, realm_id)
+    return Token(**token.model_dump())
 
 
 if __name__ == "__main__":

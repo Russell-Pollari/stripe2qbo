@@ -68,3 +68,14 @@ class Transaction(BaseModel):
     customer: Optional[Customer] = None
     invoice: Optional[Invoice] = None
     payout: Optional[Payout] = None
+
+
+class BusinessProfile(BaseModel):
+    name: str
+
+
+class Account(BaseModel):
+    id: str
+    business_profile: BusinessProfile
+    country: str
+    default_currency: str
