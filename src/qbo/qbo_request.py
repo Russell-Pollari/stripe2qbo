@@ -1,12 +1,13 @@
 from typing import Any, Optional, Mapping
+import os
 import json
 import requests
+from dotenv import load_dotenv
 
 from src.qbo.qbo_auth import login
 
 
-# BASE_URL = "https://quickbooks.api.intuit.com/v3/company"
-BASE_URL = "https://sandbox-quickbooks.api.intuit.com/v3/company"
+load_dotenv()
 
 
 def qbo_request(
@@ -19,7 +20,7 @@ def qbo_request(
     try:
         response = requests.request(
             method,
-            url=f"{BASE_URL}/{token.realm_id}/{path}",
+            url=f"{os.getenv('QBO_BASE_URL', '')}/{token.realm_id}/{path}",
             headers={
                 "Accept": "application/json",
                 "Content-Type": "application/json",
