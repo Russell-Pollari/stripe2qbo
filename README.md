@@ -39,21 +39,31 @@ Use settings.py to configure the sync. Modify the settings file directly, or set
 
 The name of the bank account in QBO that you want stripe payouts to be synced to. Required. This should be the bank account that your payouts from Stripe get sent to.
 
-`STRIPE_BANK_ACCOUNT` (_Optional_)
+Defaults to 'Checking'
 
-The name of the bank account in QBO that you want stripe transactions to be synced to. This is sometimes refered to as a clearing account. If you don't have this accont on QBO already, one will be created for you. Defaults to 'Stripe'
+`STRIPE_BANK_ACCOUNT` (**Required**)
 
-`STRIPE_FEE_EXPENSE_ACCOUNT` (_Optional_)
+The name of the bank account in QBO that you want stripe transactions to be synced to. This is sometimes refered to as a clearing account. If you don't have this accont on QBO already, one will be created for you.
 
-The name of the expense account in QBO that you want Stripe fees to be synced to. If you don't have this accont on QBO already, one will be created for you. Defaults to 'Stripe fees'
+Defaults to 'Stripe'
 
-`STRIPE_VENDOR_NAME`(_Optional_)
+`STRIPE_FEE_EXPENSE_ACCOUNT` (**Required**)
 
-The name of the vendor in QBO that you want Stripe fees to be synced to. If you don't have this vendor on QBO already, one will be created for you. Defaults to 'Stripe'
+The name of the expense account in QBO that you want Stripe fees to be synced to. If you don't have this accont on QBO already, one will be created for you.
+
+Defaults to 'Stripe fees'
+
+`STRIPE_VENDOR_NAME`(**Required**)
+
+The name of the vendor in QBO that you want Stripe fees to be synced to. If you don't have this vendor on QBO already, one will be created for you.
+
+Defaults to 'Stripe'
 
 `DEFAULT_INCOME_ACCOUNT_NAME` (_Optional_)
 
-The name of the income account in QBO that you want Stripe sales to be synced to. If you don't have this account on QBO already, one will be created for you. Defaults to 'Stripe Income'.
+The name of the income account in QBO that you want Stripe sales to be synced to. If you don't have this account on QBO already, one will be created for you.
+
+Defaults to 'Stripe Income'.
 
 If not set, an income account for will be created with the same name as the Stripe product.
 
