@@ -2,19 +2,17 @@
 
 **Quickly sync your Stripe transactions with Quick Books Online.**
 
-I run two companies for SharpestMinds (US co. and CAN co.). This, unfortunately, doubles much of our costs—particularly around payment processing and accounting.
+I saved myself ~$100 USD/month with this humble app.
 
-Saved the company ~$200 CAD/month with this humble CLI.
+Built with my specific use cases in mind. But it shoudn't be too hard to generalize/customize for others. Issues, feature requests, and PRs welcome!
 
-Built with my specific use cases in mind. But shoudn't too hard to generalize/customize for other use cases.
-
-Issues, feature requests, and PRs welcome!
-
-If you want some help running this, or configuring it to your use case, get in touch!
+If you want some help configuring this to your use case, get in touch!
 
 ## Installation
 
 > Requires a QBO developer account and an QBO app with a client ID and secret. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0)
+
+### Server
 
 `$ python3 -m venv venv`
 
@@ -29,12 +27,25 @@ SECRET_KEY=...
 QBO_CLIENT_ID=...
 QBO_CLIENT_SECRET=...
 QBO_REDIRECT_URI=...
+QBO_BASE_URL=...
 STRIPE_API_KEY=...
 ```
 
-## Configuration
+### Client
 
-Use settings.py to configure the sync. Modify the settings file directly, or set them as env variables
+`$ npm install`
+
+## Running locally
+
+Build client
+
+`$ npm run build`
+
+Run server
+
+`$ python -m uvicorn stripe2qbo.api.app:app`
+
+## Settings
 
 `STRIPE_PAYOUT_ACCOUNT` (**Required**)
 
@@ -102,34 +113,3 @@ The default tax code to use for all invoice line items with zero tax. Defaults t
 > **Note:** 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
 
 Tax codes will not be created for you if they don't exist.
-
-## Syncing
-
-```bash
-$ python cli.py [-h] [--from_date FROM_DATE] [--to_date TO_DATE] [--type TYPE] [--currency CURRENCY] {sync,logout}
-
-positional arguments:
-{sync,logout} Command to run ('sync', 'logout'))
-
-options:
--h, --help show this help message and exit
---from_date FROM_DATE
-From date (YYYY-MM-DD)
---to_date TO_DATE To date (YYYY-MM-DD)
---type TYPE Type of transaction
---currency CURRENCY Currency of transactions
-```
-
-You will be prompted to connect your QBO account. Follow the link and then copy the resulting URL into the CLI.
-
-> **Note**: If no currency is set, all currencies will be synced. If your QBO does not have multi-currency enabled, you must set the currency to match the currency of your QBO account
-
-## Logout
-
-Disconnect your QBO account (e.g. to connect to a new one)  
-`$ python cli.py logout`
-
-## Balance check
-
-Utility for sanity checks to see if your Stripe and QBO balances match.
-`$ python balances.py`
