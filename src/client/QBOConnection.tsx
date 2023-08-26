@@ -1,10 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-type QBOCompanyInfo = {
-  CompanyName: string;
-  Country: string;
-};
+import type { QBOCompanyInfo } from "./types";
 
 const connect = () => {
   fetch("/qbo/oauth2")
@@ -34,7 +31,7 @@ const QBOConnection = () => {
 
   return (
     <div>
-      <h3>QBOConnection</h3>
+      <h3>QBO Connection</h3>
       {loading && <p>Loading...</p>}
       {companyInfo ? (
         <div>

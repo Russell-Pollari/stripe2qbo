@@ -1,14 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-type StripeInfo = {
-  id: string;
-  business_profile: {
-    name: string;
-  };
-  country: string;
-  default_currency: string;
-};
+import type { StripeInfo } from "./types";
 
 const StripeConnection = () => {
   const [stripeInfo, setStripeInfo] = useState<StripeInfo | null>(null);
@@ -23,7 +16,7 @@ const StripeConnection = () => {
 
   return (
     <div>
-      <h3>StripeConnection</h3>
+      <h3>Stripe Connection</h3>
       {stripeInfo && (
         <div>
           <p>Company Name: {stripeInfo.business_profile.name}</p>
