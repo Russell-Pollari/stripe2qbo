@@ -29,6 +29,19 @@ export type QBOTaxCode = {
 };
 
 
+export type Settings = {
+  stripeClearingAccountId: string;
+  stripePayoutAccountId: string;
+  stripeVendorId: string;
+  stripeFeeAccountId: string;
+  defaultIncomeAccountId: string | null;
+  defaultTaxCodeId: string;
+  exemptTaxCodeId: string;
+  // productSettings: ProductSettings[];
+  // taxSettings: TaxSettings[];
+};
+
+
 export type StripeInfo = {
   id: string;
   business_profile: {

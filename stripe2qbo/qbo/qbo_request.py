@@ -1,19 +1,29 @@
 from typing import Any, Optional, Mapping
 import os
 import json
-import requests
 from dotenv import load_dotenv
+
+import requests
+
+from stripe2qbo.qbo.auth import Token
+from stripe2qbo.qbo.auth import get_token_from_file
 
 load_dotenv()
 
 
 def qbo_request(
     path: str,
-    body: Optional[Mapping[str, Any]] = None,
     method: str = "GET",
+    body: Optional[Mapping[str, Any]] = None,
     access_token: Optional[str] = None,
     realm_id: Optional[str] = None,
 ) -> requests.Response:
+    token: Token = get_token_from_file()
+    if access_token is None:
+        access_token = token.access_token
+    if realm_id is None:
+        realm_id = token.realm_id
+
     try:
         response = requests.request(
             method,

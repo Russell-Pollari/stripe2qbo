@@ -2,83 +2,15 @@ from typing import Literal, Optional, List
 import datetime
 
 import requests
-from pydantic import BaseModel
 
-from src.qbo.qbo_request import qbo_request
-
-
-class CompanyInfo(BaseModel):
-    CompanyName: str
-    Country: str
-
-
-class CurrencyRef(BaseModel):
-    value: str
-    name: Optional[str]
-
-
-class ItemRef(BaseModel):
-    value: str
-    name: Optional[str]
-
-
-class TaxRateRef(BaseModel):
-    value: str
-    name: Optional[str]
-
-
-class TaxCodeRef(BaseModel):
-    value: str
-
-
-class Customer(BaseModel):
-    DisplayName: str
-    Id: str
-    CurrencyRef: CurrencyRef
-
-
-class TaxRateDetail(BaseModel):
-    TaxRateRef: TaxRateRef
-
-
-class TaxRateList(BaseModel):
-    TaxRateDetail: List[TaxRateDetail]
-
-
-class TaxCode(BaseModel):
-    Id: str
-    SalesTaxRateList: TaxRateList
-
-
-class TaxLineDetail(BaseModel):
-    TaxRateRef: TaxRateRef
-    PercentBased: bool = True
-    TaxPercent: float
-    NetAmountTaxable: float
-
-
-class TaxLineModel(BaseModel):
-    DetailType: Literal["TaxLineDetail"] = "TaxLineDetail"
-    Amount: float
-    TaxLineDetail: TaxLineDetail
-
-
-class TaxDetail(BaseModel):
-    TotalTax: float
-    TaxLine: Optional[List[TaxLineModel]] = None
-    TxnTaxCodeRef: Optional[TaxCodeRef] = None
-
-
-class SalesItemLineDetail(BaseModel):
-    ItemRef: ItemRef
-    TaxCodeRef: Optional[TaxCodeRef]
-
-
-class InvoiceLine(BaseModel):
-    Amount: float
-    Description: str
-    SalesItemLineDetail: SalesItemLineDetail
-    DetailType: Literal["SalesItemLineDetail"] = "SalesItemLineDetail"
+from stripe2qbo.qbo.qbo_request import qbo_request
+from stripe2qbo.qbo.models import (
+    Customer,
+    TaxCode,
+    TaxDetail,
+    ItemRef,
+    InvoiceLine,
+)
 
 
 def query(query: str) -> requests.Response:
@@ -155,6 +87,9 @@ def get_account_id(account_name: str) -> Optional[str]:
         raise Exception(f"Multiple accounts found with {account_name}")
 
     return accounts[0]["Id"]
+
+
+# def get_account_by_id(account_id: str) -> Optional[str]:
 
 
 def get_or_create_account(account_name: str, account_type: str) -> str:

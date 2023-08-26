@@ -1,0 +1,9 @@
+{
+    "stripe_clearing_account_id": "96",
+    "stripe_payout_account_id": "97",
+    "stripe_fee_account_id": "101",
+    "stripe_vendor_id": "68",
+    "default_income_account_id": "65",
+    "default_tax_code_id": "5",
+    "exempt_tax_code_id": "2"
+}

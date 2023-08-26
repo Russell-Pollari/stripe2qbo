@@ -2,7 +2,7 @@ from typing import List, Optional
 import os
 import stripe
 
-from src.models.stripe_models import (
+from stripe2qbo.stripe.models import (
     Charge,
     Customer,
     Invoice,
