@@ -36,6 +36,7 @@ async def index() -> HTMLResponse:
                 <head>
                     <meta name="viewport" content="width=device-width, initial-scale=1">
                     <title>Stripe2QBO</title>
+                    <link rel="stylesheet" href="/static/index.css">
                 </head>
                 <body>
                     <div id="root"></div>

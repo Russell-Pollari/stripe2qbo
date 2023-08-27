@@ -6,3 +6,4 @@ token.json
 node_modules/
 static/index.js
 static/index.js.map
+static/index.css

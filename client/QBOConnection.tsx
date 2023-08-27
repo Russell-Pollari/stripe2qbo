@@ -2,6 +2,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 
 import type { QBOCompanyInfo } from "./types";
+import ConnectionCard from "./ConnectionCard";
 
 const connect = () => {
   fetch("/qbo/oauth2")
@@ -30,8 +31,7 @@ const QBOConnection = () => {
   }, []);
 
   return (
-    <div>
-      <h3>QBO Connection</h3>
+    <ConnectionCard title="QuickBooks Online">
       {loading && <p>Loading...</p>}
       {companyInfo ? (
         <div>
@@ -48,7 +48,7 @@ const QBOConnection = () => {
       ) : (
         <button onClick={connect}>Connect a QBO account</button>
       )}
-    </div>
+    </ConnectionCard>
   );
 };
 

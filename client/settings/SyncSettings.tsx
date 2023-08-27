@@ -65,8 +65,8 @@ const SyncSettings = () => {
   }
 
   return (
-    <div>
-      <h3>Settings</h3>
+    <div className="w-64 shadow-lg">
+      <h3 className="text-xl font-bold mb-4">Settings</h3>
       <Formik
         initialValues={{
           ...defaultSettings,
@@ -78,49 +78,59 @@ const SyncSettings = () => {
         }}
         enableReinitialize
       >
-        <Form>
-          <AccountSelect
-            label="Stripe Clearing Account"
-            name="stripeClearingAccountId"
-            accounts={accounts}
-            accountType="Bank"
-          />
-          <AccountSelect
-            label="Stripe Payout Account"
-            name="stripePayoutAccountId"
-            accounts={accounts}
-            accountType="Bank"
-          />
-          <VendorSelect
-            label="Stripe Vendor"
-            name="stripeVendorId"
-            vendors={vendors}
-          />
-          <AccountSelect
-            label="Stripe Expense Account"
-            name="stripeFeeAccountId"
-            accounts={accounts}
-            accountType="Expense"
-          />
-          <AccountSelect
-            label="Default Income Account"
-            name="defaultIncomeAccountId"
-            accounts={accounts}
-            accountType="Income"
-          />
-          <h4>Tax Codes</h4>
-          <TaxCodeSelect
-            label="Default Tax Code"
-            name="defaultTaxCodeId"
-            taxCodes={taxCodes}
-          />
-          <TaxCodeSelect
-            label="Exempt Tax Code"
-            name="exemptTaxCodeId"
-            taxCodes={taxCodes}
-          />
-          <button type="submit">Save</button>
-        </Form>
+        {({ isSubmitting }) => (
+          <Form>
+            <AccountSelect
+              label="Stripe Clearing Account"
+              name="stripeClearingAccountId"
+              accounts={accounts}
+              accountType="Bank"
+            />
+            <AccountSelect
+              label="Stripe Payout Account"
+              name="stripePayoutAccountId"
+              accounts={accounts}
+              accountType="Bank"
+            />
+            <VendorSelect
+              label="Stripe Vendor"
+              name="stripeVendorId"
+              vendors={vendors}
+            />
+            <AccountSelect
+              label="Stripe Expense Account"
+              name="stripeFeeAccountId"
+              accounts={accounts}
+              accountType="Expense"
+            />
+            <AccountSelect
+              label="Default Income Account"
+              name="defaultIncomeAccountId"
+              accounts={accounts}
+              accountType="Income"
+            />
+            <h4 className="mb-4 font-bold">Tax Codes</h4>
+            <TaxCodeSelect
+              label="Default Tax Code"
+              name="defaultTaxCodeId"
+              taxCodes={taxCodes}
+            />
+            <TaxCodeSelect
+              label="Exempt Tax Code"
+              name="exemptTaxCodeId"
+              taxCodes={taxCodes}
+            />
+            <div className="text-center mt-4">
+              <button
+                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded m-auto"
+                disabled={isSubmitting}
+                type="submit"
+              >
+                {isSubmitting ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </Form>
+        )}
       </Formik>
     </div>
   );

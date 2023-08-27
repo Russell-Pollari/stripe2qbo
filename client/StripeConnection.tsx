@@ -2,6 +2,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 
 import type { StripeInfo } from "./types";
+import ConnectionCard from "./ConnectionCard";
 
 const StripeConnection = () => {
   const [stripeInfo, setStripeInfo] = useState<StripeInfo | null>(null);
@@ -15,16 +16,26 @@ const StripeConnection = () => {
   }, []);
 
   return (
-    <div>
-      <h3>Stripe Connection</h3>
+    <ConnectionCard title="Stripe">
       {stripeInfo && (
-        <div>
-          <p>Company Name: {stripeInfo.business_profile.name}</p>
-          <p>Country: {stripeInfo.country}</p>
-          <p>Currency: {stripeInfo.default_currency}</p>
-        </div>
+        <table className="table-auto">
+          <tbody>
+            <tr>
+              <td className="font-semibold mr-4">Company:</td>
+              <td>{stripeInfo.business_profile.name}</td>
+            </tr>
+            <tr>
+              <td className="font-semibold mr-4">Country:</td>
+              <td>{stripeInfo.country}</td>
+            </tr>
+            <tr>
+              <td className="font-semibold mr-4">Currency:</td>
+              <td>{stripeInfo.default_currency.toUpperCase()}</td>
+            </tr>
+          </tbody>
+        </table>
       )}
-    </div>
+    </ConnectionCard>
   );
 };
 
