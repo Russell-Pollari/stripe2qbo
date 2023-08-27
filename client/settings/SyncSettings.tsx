@@ -81,8 +81,8 @@ const SyncSettings = ({ isConnected }) => {
   }
 
   return (
-    <div className="w-64 shadow-lg">
-      <h3 className="text-xl font-bold mb-4">Sync Settings</h3>
+    <div className="w-64 shadow-lg p-4">
+      <h3 className="font-semibold mb-4">Sync Settings</h3>
       {!isConnected && (
         <div className="text-center mb-4">
           <p className="text-red-500">

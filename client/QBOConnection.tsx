@@ -35,9 +35,11 @@ const QBOConnection = () => {
       {loading && <p>Loading...</p>}
       {companyInfo ? (
         <div>
-          <p>Company Name: {companyInfo.CompanyName}</p>
-          <p>Country: {companyInfo.Country}</p>
+          <p>
+            {companyInfo.CompanyName} ({companyInfo.Country})
+          </p>
           <button
+            className="mt-2 inline-block hover:bg-slate-100 text-red-500 font-bold py-2 px-4 rounded-full text-sm"
             onClick={() => {
               fetch("/qbo/disconnect").then(() => setCompanyInfo(null));
             }}
@@ -46,7 +48,12 @@ const QBOConnection = () => {
           </button>
         </div>
       ) : (
-        <button onClick={connect}>Connect a QBO account</button>
+        <button
+          className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
+          onClick={connect}
+        >
+          Connect a QBO account
+        </button>
       )}
     </ConnectionCard>
   );

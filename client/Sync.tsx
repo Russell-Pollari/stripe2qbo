@@ -25,34 +25,39 @@ const Sync = () => {
   };
 
   return (
-    <div className="shadow-lg p-4 mt-4">
-      <Formik
-        initialValues={{ from_date: "", to_date: "" }}
-        onSubmit={(values: SyncOptions) => {
-          startSync(values);
-        }}
-      >
-        <Form>
-          <div>
-            <label htmlFor="from_date">From</label>
-            <Field id="from_date" name="from_date" type="date" />
-          </div>
-          <div>
-            <label htmlFor="to_date">To</label>
-            <Field id="to_date" name="to_date" type="date" />
-          </div>
-          <div className="text-center mt-4">
-            <button
-              disabled={isSyncing}
-              className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            >
-              {isSyncing ? "Syncing..." : "Sync transactions"}
-            </button>
-          </div>
-        </Form>
-      </Formik>
+    <div>
+      <div className="shadow-lg p-4">
+        <h3 className="font-semibold mb-4">Sync Transactions</h3>
+        <Formik
+          initialValues={{ from_date: "", to_date: "" }}
+          onSubmit={(values: SyncOptions) => {
+            startSync(values);
+          }}
+        >
+          <Form>
+            <div className="flex justify-between">
+              <div>
+                <label className="font-semibold mx-2" htmlFor="from_date">
+                  From:
+                </label>
+                <Field id="from_date" name="from_date" type="date" />
+                <label className="font-semibold mx-2" htmlFor="to_date">
+                  To
+                </label>
+                <Field id="to_date" name="to_date" type="date" />
+              </div>
+              <button
+                disabled={isSyncing}
+                className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+              >
+                {isSyncing ? "Syncing..." : "Import and sync"}
+              </button>
+            </div>
+          </Form>
+        </Formik>
+      </div>
 
-      <div className="text-left mt-4 mb-4">
+      <div className="text-left mt-4 p-4 shadow-lg">
         {logs.map((log: string, index: number) => (
           <div key={index}>{log}</div>
         ))}

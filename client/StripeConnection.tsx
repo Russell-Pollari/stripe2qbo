@@ -16,24 +16,11 @@ const StripeConnection = () => {
   }, []);
 
   return (
-    <ConnectionCard title="Stripe">
+    <ConnectionCard title="Stripe account">
       {stripeInfo && (
-        <table className="table-auto">
-          <tbody>
-            <tr>
-              <td className="font-semibold mr-4">Company:</td>
-              <td>{stripeInfo.business_profile.name}</td>
-            </tr>
-            <tr>
-              <td className="font-semibold mr-4">Country:</td>
-              <td>{stripeInfo.country}</td>
-            </tr>
-            <tr>
-              <td className="font-semibold mr-4">Currency:</td>
-              <td>{stripeInfo.default_currency.toUpperCase()}</td>
-            </tr>
-          </tbody>
-        </table>
+        <span>
+          {stripeInfo.business_profile.name} ({stripeInfo.country})
+        </span>
       )}
     </ConnectionCard>
   );

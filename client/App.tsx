@@ -20,19 +20,19 @@ const App = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between flex-wrap bg-green-300 p-4">
-        <span className="container mx-auto">
-          <h1 className="font-semibold text-xl">Stripe 2 QBO</h1>
-        </span>
+      <div className="flex items-center justify-between bg-green-300 p-4">
+        <h1 className="font-semibold text-xl">Stripe 2 QBO</h1>
       </div>
-      <div className="container mx-auto p-6">
-        <div className="p-6 flex justify-around flex-wrap">
+      <div className="p-6">
+        <div className="flex justify-between">
           <div>
             <StripeConnection />
             <QBOConnection />
+            <SyncSettings isConnected={qboConnected} />
+          </div>
+          <div className="basis-3/4">
             <Sync />
           </div>
-          <SyncSettings isConnected={qboConnected} />
         </div>
       </div>
     </div>
