@@ -68,6 +68,7 @@ async def save_settings(settings: Settings) -> None:
 async def sync(
     websocket: WebSocket,
     from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
 ):
     await websocket.accept()
 
@@ -76,14 +77,28 @@ async def sync(
         if from_date
         else None
     )
-    await websocket.send_text("Fetching transactions from Stripe")
-    transactions = get_transactions(
-        from_timestamp=from_timestamp,
+    to_timestamp = (
+        int(datetime.datetime.strptime(to_date, "%Y-%m-%d").timestamp())
+        if to_date
+        else None
     )
-    await websocket.send_text(f"Syncing {len(transactions)} transactions")
-    for transaction in transactions:
-        message = sync_transaction(transaction)
-        await websocket.send_text(message)
+
+    starting_after = None  # for pagination
+    while True:
+        await websocket.send_text("Fetching transactions from Stripe...")
+        transactions = get_transactions(
+            from_timestamp=from_timestamp,
+            to_timestamp=to_timestamp,
+            starting_after=starting_after,
+        )
+        await websocket.send_text(f"Syncing {len(transactions)} transactions...")
+        for transaction in transactions:
+            message = sync_transaction(transaction)
+            await websocket.send_text(message)
+
+        if len(transactions) < 100:
+            break
+        starting_after = transactions[-1].id
 
     await websocket.send_text("Done")
     await websocket.close()
