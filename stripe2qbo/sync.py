@@ -323,7 +323,7 @@ def sync_payout(transaction: Transaction) -> str:
     return transfer_id
 
 
-def sync_transaction(transaction: Transaction) -> None:
+def sync_transaction(transaction: Transaction) -> str:
     if transaction.type == "stripe_fee":
         sync_stripe_fee(transaction)
     elif transaction.type in ["charge", "payment"]:
@@ -348,4 +348,6 @@ def sync_transaction(transaction: Transaction) -> None:
     elif transaction.type == "payout":
         sync_payout(transaction)
     else:
-        print(f"Unknown transaction type {transaction.type}")
+        return f"Unknown transaction type {transaction.type}"
+
+    return f"Synced transaction, {transaction.id}"

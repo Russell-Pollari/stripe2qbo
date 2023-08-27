@@ -2,7 +2,7 @@ import datetime
 from typing import Optional
 import os
 
-from fastapi import FastAPI, BackgroundTasks
+from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -64,27 +64,26 @@ async def save_settings(settings: Settings) -> None:
     save(settings)
 
 
-def sync_task(from_date: Optional[str] = None):
-    # TODO: Report status back to client
+@app.websocket("/sync")
+async def sync(
+    websocket: WebSocket,
+    from_date: Optional[str] = None,
+):
+    await websocket.accept()
+
     from_timestamp = (
         int(datetime.datetime.strptime(from_date, "%Y-%m-%d").timestamp())
         if from_date
         else None
     )
-    print("Fetching transactions")
+    await websocket.send_text("Fetching transactions from Stripe")
     transactions = get_transactions(
         from_timestamp=from_timestamp,
     )
-    print("Syncing transactions")
+    await websocket.send_text(f"Syncing {len(transactions)} transactions")
     for transaction in transactions:
-        sync_transaction(transaction)
-    print("Done syncing")
+        message = sync_transaction(transaction)
+        await websocket.send_text(message)
 
-
-@app.get("/sync")
-async def sync(
-    background_tasks: BackgroundTasks,
-    from_date: Optional[str] = None,
-):
-    background_tasks.add_task(sync_task, from_date)
-    return {"message": "syncing"}
+    await websocket.send_text("Done")
+    await websocket.close()

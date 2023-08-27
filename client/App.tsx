@@ -3,6 +3,7 @@ import * as React from "react";
 import QBOConnection from "./QBOConnection";
 import StripeConnection from "./StripeConnection";
 import SyncSettings from "./settings/SyncSettings";
+import Sync from "./Sync";
 
 const App = () => {
   const [qboConnected, setQBOConnected] = React.useState(false);
@@ -28,21 +29,8 @@ const App = () => {
         <div className="p-6 flex justify-around flex-wrap">
           <div>
             <StripeConnection />
-            <div className="text-center mt-4 mb-4">
-              <button
-                className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => {
-                  fetch("/sync")
-                    .then((res) => res.json())
-                    .then((data) => {
-                      console.log(data);
-                    });
-                }}
-              >
-                Sync transactions
-              </button>
-            </div>
             <QBOConnection />
+            <Sync />
           </div>
           <SyncSettings isConnected={qboConnected} />
         </div>
