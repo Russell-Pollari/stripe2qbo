@@ -3,6 +3,7 @@ __pycache__/
 venv/
 .env
 token.json
+settings.json
 node_modules/
 static/index.js
 static/index.js.map
