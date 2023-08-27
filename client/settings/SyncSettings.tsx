@@ -1,10 +1,23 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
-import { Formik, Form, Field } from "formik";
+import { Formik, Form } from "formik";
+import { object, string } from "yup";
 
 import type { QBOAccount, QBOTaxCode, QBOVendor, Settings } from "../types";
 import { AccountSelect, VendorSelect, TaxCodeSelect } from "./Inputs";
 import getDefaultSettings from "./getDefaultSettings";
+
+const schema = object().shape({
+  stripeClearingAccountId: string().required(
+    "Stripe Clearing Account is required"
+  ),
+  stripePayoutAccountId: string().required("Stripe Payout Account is required"),
+  stripeVendorId: string().required("Stripe Vendor is required"),
+  stripeFeeAccountId: string().required("Stripe Fee Account is required"),
+  defaultIncomeAccountId: string().nullable(),
+  defaultTaxCodeId: string().required("Default Tax Code is required"),
+  exemptTaxCodeId: string().required("Exempt Tax Code is required"),
+});
 
 const saveSettings = (settings: Settings) => {
   fetch("/settings", {
@@ -16,12 +29,12 @@ const saveSettings = (settings: Settings) => {
   });
 };
 
-const SyncSettings = () => {
+const SyncSettings = ({ isConnected }) => {
   const [accounts, setAccounts] = useState<QBOAccount[]>([]);
   const [vendors, setVendors] = useState<QBOVendor[]>([]);
   const [taxCodes, setTaxCodes] = useState<QBOTaxCode[]>([]);
   const [settings, setSettings] = useState<Settings>({});
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const loadAccount = async () => {
     const response = await fetch("/qbo/accounts");
@@ -50,13 +63,16 @@ const SyncSettings = () => {
   };
 
   useEffect(() => {
-    Promise.all([
-      loadAccount(),
-      loadVendors(),
-      loadTaxCodes(),
-      loadSettings(),
-    ]).then(() => setLoading(false));
-  }, []);
+    if (isConnected) {
+      setLoading(true);
+      Promise.all([
+        loadAccount(),
+        loadVendors(),
+        loadTaxCodes(),
+        loadSettings(),
+      ]).then(() => setLoading(false));
+    }
+  }, [isConnected]);
 
   const defaultSettings = getDefaultSettings({ accounts, vendors, taxCodes });
 
@@ -66,13 +82,23 @@ const SyncSettings = () => {
 
   return (
     <div className="w-64 shadow-lg">
-      <h3 className="text-xl font-bold mb-4">Settings</h3>
+      <h3 className="text-xl font-bold mb-4">Sync Settings</h3>
+      {!isConnected && (
+        <div className="text-center mb-4">
+          <p className="text-red-500">
+            You must connect to QuickBooks Online before you can save your
+            settings.
+          </p>
+        </div>
+      )}
       <Formik
+        validationSchema={schema}
         initialValues={{
           ...defaultSettings,
           ...settings,
         }}
         onSubmit={(values: Settings, { setSubmitting }) => {
+          console.log(values);
           saveSettings(values);
           setSubmitting(false);
         }}
@@ -123,7 +149,7 @@ const SyncSettings = () => {
             <div className="text-center mt-4">
               <button
                 className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded m-auto"
-                disabled={isSubmitting}
+                disabled={isSubmitting || !isConnected}
                 type="submit"
               >
                 {isSubmitting ? "Saving..." : "Save"}

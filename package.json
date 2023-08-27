@@ -18,7 +18,8 @@
     "esbuild": "^0.19.2",
     "formik": "^2.4.3",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "yup": "^1.2.0"
   },
   "devDependencies": {
     "concurrently": "^8.2.1",
