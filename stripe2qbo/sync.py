@@ -1,5 +1,7 @@
-from typing import Optional, Dict
+from typing import Literal, Optional, Dict
 import datetime
+
+from pydantic import BaseModel
 
 import stripe2qbo.qbo.qbo as qbo
 import stripe2qbo.qbo.models as qbo_models
@@ -8,6 +10,14 @@ from stripe2qbo.stripe.stripe_transactions import (
     Invoice,
 )
 from stripe2qbo.settings import load_from_file
+
+
+class TransactionSync(BaseModel):
+    id: str
+    created: int
+    type: str
+    description: str
+    status: Literal["pending", "success", "failed"]
 
 
 settings = load_from_file()
@@ -323,7 +333,11 @@ def sync_payout(transaction: Transaction) -> str:
     return transfer_id
 
 
-def sync_transaction(transaction: Transaction) -> str:
+def sync_transaction(transaction: Transaction) -> TransactionSync:
+    sync_status = TransactionSync(
+        **transaction.model_dump(),
+        status="success",
+    )
     if transaction.type == "stripe_fee":
         sync_stripe_fee(transaction)
     elif transaction.type in ["charge", "payment"]:
@@ -348,6 +362,6 @@ def sync_transaction(transaction: Transaction) -> str:
     elif transaction.type == "payout":
         sync_payout(transaction)
     else:
-        return f"Unknown transaction type {transaction.type}"
+        sync_status.status = "failed"
 
-    return f"Synced transaction, {transaction.id}"
+    return sync_status

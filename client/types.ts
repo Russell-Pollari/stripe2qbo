@@ -50,3 +50,17 @@ export type StripeInfo = {
   country: string;
   default_currency: string;
 };
+
+
+export type SyncOptions = {
+  from_date: string;
+  to_date: string;
+};
+
+export type Transaction = {
+  id: string;
+  created: number;
+  type: string;
+  description: string;
+  status: string;
+};

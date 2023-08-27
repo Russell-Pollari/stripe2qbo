@@ -1,14 +1,12 @@
 import * as React from "react";
 import { Formik, Field, Form } from "formik";
 
-type SyncOptions = {
-  from_date: string;
-  to_date: string;
-};
+import type { SyncOptions, Transaction } from "./types";
 
 const Sync = () => {
   const [isSyncing, setIsSyncing] = React.useState<boolean>(false);
-  const [logs, setLogs] = React.useState<string[]>([]);
+  const [status, setStatus] = React.useState<string>("");
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
 
   const startSync = (options: SyncOptions) => {
     const queryString = new URLSearchParams(options).toString();
@@ -17,7 +15,16 @@ const Sync = () => {
       setIsSyncing(true);
     };
     ws.onmessage = (event) => {
-      setLogs((logs: string) => [event.data, ...logs]);
+      const data = JSON.parse(event.data);
+      if (data.status) {
+        setStatus(data.status);
+      }
+      if (data.transaction) {
+        setTransactions((prevTransactions: Transaction[]) => [
+          ...prevTransactions,
+          data.transaction,
+        ]);
+      }
     };
     ws.onclose = () => {
       setIsSyncing(false);
@@ -42,25 +49,45 @@ const Sync = () => {
                 </label>
                 <Field id="from_date" name="from_date" type="date" />
                 <label className="font-semibold mx-2" htmlFor="to_date">
-                  To
+                  To:
                 </label>
                 <Field id="to_date" name="to_date" type="date" />
               </div>
-              <button
-                disabled={isSyncing}
-                className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-              >
-                {isSyncing ? "Syncing..." : "Import and sync"}
-              </button>
+              <div>
+                <button
+                  disabled={isSyncing}
+                  className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                >
+                  {isSyncing ? "Syncing..." : "Import and sync"}
+                </button>
+                <div>{isSyncing ? status + "..." : null}</div>
+              </div>
             </div>
           </Form>
         </Formik>
       </div>
 
       <div className="text-left mt-4 p-4 shadow-lg">
-        {logs.map((log: string, index: number) => (
-          <div key={index}>{log}</div>
-        ))}
+        <table className="text-left table-auto w-full">
+          <thead>
+            <tr>
+              <th>Created</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Sync status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {transactions.map((transaction: Transaction) => (
+              <tr key={transaction.id}>
+                <td>{new Date(transaction.created * 1000).toUTCString()}</td>
+                <td>{transaction.type}</td>
+                <td>{transaction.description}</td>
+                <td>{transaction.status}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

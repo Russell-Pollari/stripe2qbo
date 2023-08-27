@@ -11,7 +11,7 @@ import stripe
 from dotenv import load_dotenv
 
 from stripe2qbo.settings import Settings, load_from_file, save
-from stripe2qbo.stripe.models import Account
+from stripe2qbo.stripe.models import Account, Transaction
 from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.sync import sync_transaction
 from stripe2qbo.api.routers import qbo
@@ -85,20 +85,25 @@ async def sync(
 
     starting_after = None  # for pagination
     while True:
-        await websocket.send_text("Fetching transactions from Stripe...")
+        await websocket.send_json({"status": "Fetching Stripe transactions"})
         transactions = get_transactions(
             from_timestamp=from_timestamp,
             to_timestamp=to_timestamp,
             starting_after=starting_after,
         )
-        await websocket.send_text(f"Syncing {len(transactions)} transactions...")
+        await websocket.send_json(
+            {"status": f"Syncing {len(transactions)} transactions"}
+        )
         for transaction in transactions:
-            message = sync_transaction(transaction)
-            await websocket.send_text(message)
+            transaction_sync = sync_transaction(transaction)
+            await websocket.send_json(
+                {
+                    "transaction": transaction_sync.model_dump(),
+                }
+            )
 
         if len(transactions) < 100:
             break
         starting_after = transactions[-1].id
 
-    await websocket.send_text("Done")
     await websocket.close()
