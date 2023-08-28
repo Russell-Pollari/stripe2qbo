@@ -9,7 +9,11 @@ const StripeConnection = ({
   stripeInfo: StripeInfo | null;
 }) => {
   return (
-    <ConnectionCard title="Stripe account">
+    <ConnectionCard
+      isConnected={!!stripeInfo}
+      title="Stripe account"
+      disconnect={() => {}}
+    >
       {stripeInfo && (
         <span>
           {stripeInfo.business_profile.name} ({stripeInfo.country})

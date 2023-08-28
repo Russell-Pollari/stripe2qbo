@@ -15,24 +15,22 @@ const QBOConnection = ({
   companyInfo,
   onDisconnect,
 }: {
-  companyInfo: QBOCompanyInfo;
+  companyInfo?: QBOCompanyInfo;
   onDisconnect: () => void;
 }) => {
+  const disconnect = () => {
+    fetch("/qbo/disconnect").then(onDisconnect);
+  };
+
   return (
-    <ConnectionCard title="QuickBooks Online">
+    <ConnectionCard
+      title="QuickBooks Online"
+      isConnected={!!companyInfo}
+      disconnect={disconnect}
+    >
       {companyInfo ? (
         <div>
-          <p>
-            {companyInfo.CompanyName} ({companyInfo.Country})
-          </p>
-          <button
-            className="mt-2 inline-block hover:bg-slate-100 text-red-500 font-bold py-2 px-4 rounded-full text-sm"
-            onClick={() => {
-              fetch("/qbo/disconnect").then(onDisconnect);
-            }}
-          >
-            Disconnect
-          </button>
+          {companyInfo.CompanyName} ({companyInfo.Country})
         </div>
       ) : (
         <button
