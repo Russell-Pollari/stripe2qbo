@@ -22,6 +22,8 @@ If you want some help configuring this to your use case, get in touch!
 
 `$ touch .env`
 
+Add the following to `.env` with your own values:
+
 ```
 SECRET_KEY=...
 QBO_CLIENT_ID=...
@@ -45,71 +47,60 @@ Run server
 
 `$ python -m uvicorn stripe2qbo.api.app:app`
 
-## Settings
+## Sync Settings
 
-`STRIPE_PAYOUT_ACCOUNT` (**Required**)
+`Stripe Clearing Account` (**Required**)
 
-The name of the bank account in QBO that you want stripe payouts to be synced to. Required. This should be the bank account that your payouts from Stripe get sent to.
+The bank account in QBO that you want Stripe transactions to be synced to. This should track your Stripe Balance.
 
-Defaults to 'Checking'
+`Stripe Payout Account` (**Required**)
 
-`STRIPE_BANK_ACCOUNT` (**Required**)
+The name of the bank account in QBO that you want Stripe Payouts to be transferred to.
 
-The name of the bank account in QBO that you want stripe transactions to be synced to. This is sometimes refered to as a clearing account. If you don't have this accont on QBO already, one will be created for you.
+`Stripe Vendor`(**Required**)
 
-Defaults to 'Stripe'
+The name of the vendor in QBO that you want Stripe fees to be sent to. (e.g. 'Stripe\)
 
-`STRIPE_FEE_EXPENSE_ACCOUNT` (**Required**)
+`Stripe Expense Account` (**Required**)
 
-The name of the expense account in QBO that you want Stripe fees to be synced to. If you don't have this accont on QBO already, one will be created for you.
+The name of the expense account in QBO that you want Stripe fees to be categorized under. (e.g. 'Stripe Fees')
 
-Defaults to 'Stripe fees'
+`Default Income Account ` (**Required**)
 
-`STRIPE_VENDOR_NAME`(**Required**)
+The name of the income account in QBO that you want Stripe sales to be categorized under. (e.g. 'Sales')
 
-The name of the vendor in QBO that you want Stripe fees to be synced to. If you don't have this vendor on QBO already, one will be created for you.
-
-Defaults to 'Stripe'
-
-`DEFAULT_INCOME_ACCOUNT_NAME` (_Optional_)
-
-The name of the income account in QBO that you want Stripe sales to be synced to. If you don't have this account on QBO already, one will be created for you.
-
-Defaults to 'Stripe Income'.
-
-If not set, an income account for will be created with the same name as the Stripe product.
-
-You can override this for individual products using `PRODUCTS` (see below).
-
-`PRODUCTS` (_Optional_)
-
-List of settings to customize syncing of Stripe products.
-
-Each product should have a `stripe_name` and an `income_account` (the name of the income account in QBO that you want the product to be synced to). If you don't have this accont on QBO already, one will be created for you with type `Income`.
-
-```json
-    "PRODUCTS": [{
-            "product_name": "stripe_product_name",
-            "income_account_name": "account_name",
-        },
-```
-
-> **Note**: if the product exists on QBO already, it may already be linked to an income account. If you want to change this, you'll need to do it manually.
+> Products on QBO will be automatically created for you, using the product name from Stripe. If this product exists on QBO already, it may already be linked to an income account. If you want to change this, you'll need to do it manually.
 
 ### Tax settings
 
-Support for multiple tax codes and more complex tax configuration is on the roadmap. For now just two fields are required, a default tax code and an exempt tax code. The default tax code is used for all line items with non-zero tax. The exempt tax code is used for all line items with zero tax.
+For now, just two fields are required—a default tax code and an exempt tax code. The default tax code is used for all line items with non-zero tax. The exempt tax code is used for all line items with zero tax.
 
-When syncing invoices, any automatic tax calculations done by QBO will be overwritten to ensure the total tax amount matches the Stripe invoice.
+> When syncing invoices, any automatic tax calculations done by QBO will be overwritten to ensure the total tax amount matches the Stripe invoice.
 
-`DEFAULT_TAX_CODE_ID` **(required if sales tax is enabled)**
+`Default Tax Code` **(required if sales tax is enabled)**
 
-The default tax code to use for all invoice line items with non-zero tax. Defaults to 'TAX'.
+The default tax code to use for all invoice line items with non-zero tax. (e.g. TAX, or HST ON)
 
-`EXEMPT_TAX_CODE_ID` **(required if sales tax is enabled)**
+`Exempt Tax Code` **(required if sales tax is enabled)**
 
-The default tax code to use for all invoice line items with zero tax. Defaults to 'NON'.
+The default tax code to use for all invoice line items with zero tax. (e.g. TAX or Exempt)
 
-> **Note:** 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
+> 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
 
-Tax codes will not be created for you if they don't exist.
+## TODO:
+
+Here's a rough roadmap to get this to a more usable state:
+
+- [ ] Import transactions for review before syncing
+- [ ] Create new QBO accounts from Sync Settings
+- [ ] OAuth2 for Stripe
+- [ ] Product settings to customize behaviour of individual products
+- [ ] Tax settings to customize behaviour of taxes
+- [ ] Support all transaction types (e.g. refunds, transfers, etc.)
+- [ ] Charges without invoices
+- [ ] Add test suite and CI/CD
+- [ ] Speed up backend with concurrent requests
+- [ ] State management for frontend; optimize data fetching
+- [ ] Persistent SQL backend
+- [ ] User accounts
+- [ ] Deploy
