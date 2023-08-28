@@ -4,7 +4,7 @@
 
 Connect your accounts, define your sync settings, and import your Stripe transactions into QBO with ease.
 
-[!screenshot](screenshot.png)
+![screenshot](screenshot.png)
 
 I saved myself ~$100 USD/month by replacing some SaaS tools with this custom solution. I'm sharing it here in case it's useful to anyone else.
 
