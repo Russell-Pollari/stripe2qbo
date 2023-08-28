@@ -2,13 +2,13 @@
 
 **Import your Stripe transactions into Quick Books Online.**
 
-Connect your accounts, define your sync settings, and import your Stripe transactions into QBO with ease.
+Connect your accounts, define your sync settings, and import your Stripe transactions into QBO with a single click.
 
 ![screenshot](screenshot.png)
 
-I saved myself ~$100 USD/month by replacing some SaaS tools with this custom solution. I'm sharing it here in case it's useful to anyone else.
+I saved myself ~$100 USD/month by replacing some SaaS tools with this custom solution. Sharing it here in case it's useful to anyone else.
 
-Working on generalize/customize for others. Issues, feature requests, and PRs welcome!
+Working on generalizing/customizing this so that it is valuable beyond my use cases. Issues, feature requests, and PRs welcome!
 
 ## Installation
 
