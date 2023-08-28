@@ -28,14 +28,25 @@ class Settings(BaseModel):
     }
 
 
-def load_from_file(path: str = "settings.json") -> Optional[Settings]:
+def load_from_file(
+    qbo_realm_id: str, path: str = "settings.json"
+) -> Optional[Settings]:
     if not os.path.exists(path):
         return None
 
     with open(path, "r") as f:
-        return Settings(**json.load(f))
+        all_settings = json.load(f)
+
+        settings = all_settings.get(qbo_realm_id)
+
+    return Settings(**settings) if settings else None
 
 
-def save(settings: Settings, path: str = "settings.json") -> None:
+def save(qbo_realm_id: str, settings: Settings, path: str = "settings.json") -> None:
+    all_settings = {}
+    if os.path.exists(path):
+        with open(path, "r") as f:
+            all_settings = json.load(f)
+
     with open(path, "w") as f:
-        json.dump(settings.model_dump(), f, indent=4)
+        json.dump({**all_settings, qbo_realm_id: settings.model_dump()}, f, indent=4)

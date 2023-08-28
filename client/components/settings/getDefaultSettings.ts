@@ -24,7 +24,7 @@ const getDefaultSettings = ({
       accounts.find((act: QBOAccount) => act.Name === "Stripe fees")?.Id || "",
     defaultIncomeAccountId:
       accounts.find((act: QBOAccount) => act.Name === "Stripe sales")?.Id ||
-      null,
+      '',
     defaultTaxCodeId:
       taxCodes.find((taxCode: QBOTaxCode) => taxCode.Name === "TAX")?.Id || "",
     exemptTaxCodeId:

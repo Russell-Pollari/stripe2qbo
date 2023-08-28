@@ -1,8 +1,8 @@
 import datetime
-from typing import Optional
+from typing import Optional, Annotated
 import os
 
-from fastapi import FastAPI, WebSocket
+from fastapi import Depends, FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -11,10 +11,11 @@ import stripe
 from dotenv import load_dotenv
 
 from stripe2qbo.settings import Settings, load_from_file, save
-from stripe2qbo.stripe.models import Account, Transaction
+from stripe2qbo.stripe.models import Account
 from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.sync import sync_transaction
 from stripe2qbo.api.routers import qbo
+from stripe2qbo.qbo.auth import Token
 
 load_dotenv()
 
@@ -55,13 +56,19 @@ async def get_stripe_info() -> Account:
 
 
 @app.get("/settings")
-async def get_settings() -> Optional[Settings]:
-    return load_from_file()
+async def get_settings(
+    token: Annotated[Token, Depends(qbo.get_qbo_token)]
+) -> Optional[Settings]:
+    realm_id = token.realm_id
+    return load_from_file(realm_id)
 
 
 @app.post("/settings")
-async def save_settings(settings: Settings) -> None:
-    save(settings)
+async def save_settings(
+    settings: Settings, token: Annotated[Token, Depends(qbo.get_qbo_token)]
+) -> None:
+    realm_id = token.realm_id
+    save(realm_id, settings)
 
 
 @app.websocket("/sync")

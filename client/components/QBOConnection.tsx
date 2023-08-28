@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { QBOCompanyInfo } from "./types";
+import type { QBOCompanyInfo } from "../types";
 import ConnectionCard from "./ConnectionCard";
 
 const connect = () => {

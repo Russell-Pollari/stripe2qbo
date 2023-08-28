@@ -21,7 +21,7 @@ const App = () => {
   const [accounts, setAccounts] = useState<QBOAccount[]>([]);
   const [vendors, setVendors] = useState<QBOVendor[]>([]);
   const [taxCodes, setTaxCodes] = useState<QBOTaxCode[]>([]);
-  const [settings, setSettings] = useState<Settings>({});
+  const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [stripeInfo, setStripeInfo] = useState<StripeInfo | null>(null);
 

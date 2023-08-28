@@ -75,3 +75,7 @@ def get_token_from_file(path: str = "token.json") -> Token:
 def save_token_to_file(token: Token, path: str = "token.json") -> None:
     with open(path, "w") as f:
         json.dump(token.model_dump(), f, indent=4)
+
+
+def delete_token_file(path: str = "token.json") -> None:
+    os.remove(path)

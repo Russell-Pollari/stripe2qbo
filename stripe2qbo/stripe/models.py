@@ -71,7 +71,7 @@ class Transaction(BaseModel):
 
 
 class BusinessProfile(BaseModel):
-    name: str
+    name: Optional[str]
 
 
 class Account(BaseModel):

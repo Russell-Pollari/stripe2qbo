@@ -9,6 +9,7 @@ from stripe2qbo.qbo.models import CompanyInfo
 from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.qbo.auth import (
     Token,
+    delete_token_file,
     generate_auth_token,
     get_auth_url,
     refresh_auth_token,
@@ -52,6 +53,7 @@ async def qbo_oauth_callback(code: str, realmId: str, request: Request):
 @router.get("/disconnect")
 async def disconnect_qbo(request: Request):
     request.session["token"] = None
+    delete_token_file()
     return RedirectResponse("/")
 
 

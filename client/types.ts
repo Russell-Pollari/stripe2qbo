@@ -34,7 +34,7 @@ export type Settings = {
   stripePayoutAccountId: string;
   stripeVendorId: string;
   stripeFeeAccountId: string;
-  defaultIncomeAccountId: string | null;
+  defaultIncomeAccountId: string;
   defaultTaxCodeId: string;
   exemptTaxCodeId: string;
   // productSettings: ProductSettings[];

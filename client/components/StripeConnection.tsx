@@ -16,7 +16,8 @@ const StripeConnection = ({
     >
       {stripeInfo && (
         <span>
-          {stripeInfo.business_profile.name} ({stripeInfo.country})
+          {stripeInfo.business_profile.name || stripeInfo.id} (
+          {stripeInfo.country})
         </span>
       )}
     </ConnectionCard>

@@ -2,6 +2,7 @@ from typing import Literal, Optional, Dict
 import datetime
 
 from pydantic import BaseModel
+from stripe2qbo.qbo.auth import get_token_from_file
 
 import stripe2qbo.qbo.qbo as qbo
 import stripe2qbo.qbo.models as qbo_models
@@ -20,7 +21,8 @@ class TransactionSync(BaseModel):
     status: Literal["pending", "success", "failed"]
 
 
-settings = load_from_file()
+token = get_token_from_file()
+settings = load_from_file(token.realm_id)
 
 
 def _timestamp_to_date(timestamp: int) -> datetime.datetime:
