@@ -1,5 +1,4 @@
 import * as React from "react";
-import { useEffect, useState } from "react";
 
 import type { QBOCompanyInfo } from "./types";
 import ConnectionCard from "./ConnectionCard";
@@ -12,27 +11,15 @@ const connect = () => {
     });
 };
 
-const QBOConnection = () => {
-  const [loading, setLoading] = useState<boolean>(true);
-  const [companyInfo, setCompanyInfo] = useState<QBOCompanyInfo | null>(null);
-
-  useEffect(() => {
-    fetch("/qbo/info")
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.CompanyName) {
-          setCompanyInfo(data);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
-
+const QBOConnection = ({
+  companyInfo,
+  onDisconnect,
+}: {
+  companyInfo: QBOCompanyInfo;
+  onDisconnect: () => void;
+}) => {
   return (
     <ConnectionCard title="QuickBooks Online">
-      {loading && <p>Loading...</p>}
       {companyInfo ? (
         <div>
           <p>
@@ -41,7 +28,7 @@ const QBOConnection = () => {
           <button
             className="mt-2 inline-block hover:bg-slate-100 text-red-500 font-bold py-2 px-4 rounded-full text-sm"
             onClick={() => {
-              fetch("/qbo/disconnect").then(() => setCompanyInfo(null));
+              fetch("/qbo/disconnect").then(onDisconnect);
             }}
           >
             Disconnect

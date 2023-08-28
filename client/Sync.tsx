@@ -36,7 +36,7 @@ const Sync = () => {
       <div className="shadow-lg p-4">
         <h3 className="font-semibold mb-4">Sync Transactions</h3>
         <Formik
-          initialValues={{ from_date: "", to_date: "" }}
+          initialValues={{ from_date: "2023-08-28", to_date: "" }}
           onSubmit={(values: SyncOptions) => {
             startSync(values);
           }}
@@ -58,9 +58,8 @@ const Sync = () => {
                   disabled={isSyncing}
                   className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
                 >
-                  {isSyncing ? "Syncing..." : "Import and sync"}
+                  {isSyncing ? `${status}...` : "Import and sync"}
                 </button>
-                <div>{isSyncing ? status + "..." : null}</div>
               </div>
             </div>
           </Form>
@@ -80,7 +79,11 @@ const Sync = () => {
           <tbody>
             {transactions.map((transaction: Transaction) => (
               <tr key={transaction.id}>
-                <td>{new Date(transaction.created * 1000).toUTCString()}</td>
+                <td>
+                  {new Date(transaction.created * 1000)
+                    .toDateString()
+                    .slice(0, 10)}
+                </td>
                 <td>{transaction.type}</td>
                 <td>{transaction.description}</td>
                 <td>{transaction.status}</td>
