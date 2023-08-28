@@ -59,25 +59,30 @@ const App = () => {
     }
   };
 
-  const loadCompanyInfo = async () => {
+  const loadCompanyInfo = async (): Promise<boolean> => {
     const response = await fetch("/qbo/info");
     const data = await response.json();
     if (data.CompanyName) {
       setQBoCompanyInfo(data);
+      return true;
+    } else {
+      return false;
     }
   };
 
   useEffect(() => {
     setLoading(true);
     loadCompanyInfo()
-      .then(() =>
-        Promise.all([
-          loadAccount(),
-          loadVendors(),
-          loadTaxCodes(),
-          loadSettings(),
-        ])
-      )
+      .then((isLoggedIn) => {
+        if (isLoggedIn) {
+          return Promise.all([
+            loadAccount(),
+            loadVendors(),
+            loadTaxCodes(),
+            loadSettings(),
+          ]);
+        }
+      })
       .then(() => setLoading(false));
   }, []);
 
