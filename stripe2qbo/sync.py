@@ -236,7 +236,7 @@ def sync_invoice(invoice: Invoice, qbo_customer_id: str, description: str = "") 
 
 def sync_invoice_payment(
     qbo_customer_id: str,
-    qbo_invoice_id: str,
+    qbo_invoice_id: Optional[str],
     transaction: Transaction,
 ) -> str:
     assert transaction.charge is not None
@@ -260,7 +260,7 @@ def sync_invoice_payment(
         transaction.charge.amount / 100,
         _timestamp_to_date(transaction.charge.created),
         qbo_stripe_bank_account_id,
-        transaction.invoice.currency.upper(),  # type: ignore
+        transaction.currency.upper(),  # type: ignore
         transaction.exchange_rate,
         private_note=f"{transaction.description}\n{transaction.charge.id}",
     )
@@ -343,20 +343,26 @@ def sync_transaction(transaction: Transaction) -> TransactionSync:
     if transaction.type == "stripe_fee":
         sync_stripe_fee(transaction)
     elif transaction.type in ["charge", "payment"]:
-        assert transaction.invoice is not None
         assert transaction.customer is not None
         assert transaction.charge is not None
+
+        currency = transaction.currency
 
         qbo_customer = qbo.get_or_create_customer(
             transaction.customer.name
             or transaction.customer.description
             or transaction.customer.email,  # type: ignore
-            transaction.invoice.currency.upper(),  # type: ignore
+            currency.upper(),  # type: ignore
         )
 
-        qbo_invoice_id = sync_invoice(
-            transaction.invoice, qbo_customer.Id, description=transaction.description
-        )
+        if transaction.invoice is None:
+            qbo_invoice_id = None
+        else:
+            qbo_invoice_id = sync_invoice(
+                transaction.invoice,
+                qbo_customer.Id,
+                description=transaction.description,
+            )
 
         sync_invoice_payment(qbo_customer.Id, qbo_invoice_id, transaction)
 

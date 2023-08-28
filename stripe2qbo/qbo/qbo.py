@@ -205,7 +205,7 @@ def get_or_create_vendor(vendor_name: str) -> str:
 
 
 def create_invoice_payment(
-    invoice_id: str,
+    invoice_id: Optional[str],
     customer_id: str,
     amount: float,
     date: datetime.datetime,
@@ -221,17 +221,18 @@ def create_invoice_payment(
         "CustomerRef": {"value": customer_id},
         "TxnDate": date.strftime("%Y-%m-%d"),
         "DepositToAccountRef": {"value": qbo_account_id},
-        "Line": [
-            {
-                "Amount": amount,
-                "LinkedTxn": [{"TxnId": invoice_id, "TxnType": "Invoice"}],
-            }
-        ],
         "PrivateNote": private_note,
         "CurrencyRef": {"value": currency},
         "ExchangeRate": exchange_rate or "1",
     }
 
+    if invoice_id:
+        body["LINE"] = [
+            {
+                "Amount": amount,
+                "LinkedTxn": [{"TxnId": invoice_id, "TxnType": "Invoice"}],
+            }
+        ]
     response = qbo_request(path="/payment", body=body, method="POST")
 
     return response.json()["Payment"]["Id"]

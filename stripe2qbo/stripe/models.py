@@ -64,6 +64,7 @@ class Transaction(BaseModel):
     amount: float  # cents
     fee: float
     exchange_rate: Optional[float]
+    currency: Literal["usd", "cad"]
     charge: Optional[Charge] = None
     customer: Optional[Customer] = None
     invoice: Optional[Invoice] = None
