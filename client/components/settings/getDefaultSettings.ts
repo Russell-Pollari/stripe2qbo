@@ -1,4 +1,4 @@
-import type { QBOAccount, QBOVendor, QBOTaxCode, Settings } from "../types";
+import type { QBOAccount, QBOVendor, QBOTaxCode, Settings } from "../../types";
 /*
     This function takes in the accounts, vendors, and taxCodes from the QBO API 
     and looks for some sensible defaults for syncing with Stripe.

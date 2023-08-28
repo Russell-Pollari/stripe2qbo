@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Field, FieldInputProps, ErrorMessage } from "formik";
 
-import type { QBOAccount, QBOTaxCode, QBOVendor } from "../types";
+import type { QBOAccount, QBOTaxCode, QBOVendor } from "../../types";
 
 const SelectInput = ({
   field,

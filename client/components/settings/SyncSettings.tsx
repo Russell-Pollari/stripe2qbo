@@ -2,7 +2,7 @@ import * as React from "react";
 import { Formik, Form } from "formik";
 import { object, string } from "yup";
 
-import type { QBOAccount, QBOTaxCode, QBOVendor, Settings } from "../types";
+import type { QBOAccount, QBOTaxCode, QBOVendor, Settings } from "../../types";
 import { AccountSelect, VendorSelect, TaxCodeSelect } from "./Inputs";
 import getDefaultSettings from "./getDefaultSettings";
 

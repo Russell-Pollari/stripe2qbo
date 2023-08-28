@@ -1,10 +1,10 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 
-import QBOConnection from "./QBOConnection";
-import StripeConnection from "./StripeConnection";
-import SyncSettings from "./settings/SyncSettings";
-import Sync from "./Sync";
+import QBOConnection from "./components/QBOConnection";
+import StripeConnection from "./components/StripeConnection";
+import SyncSettings from "./components/settings/SyncSettings";
+import Sync from "./components/Sync";
 import type {
   QBOCompanyInfo,
   QBOAccount,
@@ -23,7 +23,6 @@ const App = () => {
   const [taxCodes, setTaxCodes] = useState<QBOTaxCode[]>([]);
   const [settings, setSettings] = useState<Settings>({});
   const [loading, setLoading] = useState<boolean>(false);
-
   const [stripeInfo, setStripeInfo] = useState<StripeInfo | null>(null);
 
   useEffect(() => {
@@ -33,6 +32,7 @@ const App = () => {
         setStripeInfo(data);
       });
   }, []);
+
   const loadAccount = async () => {
     const response = await fetch("/qbo/accounts");
     const data = await response.json();

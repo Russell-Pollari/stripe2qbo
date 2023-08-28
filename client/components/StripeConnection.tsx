@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import type { StripeInfo } from "./types";
+import type { StripeInfo } from "../types";
 import ConnectionCard from "./ConnectionCard";
 
 const StripeConnection = ({
