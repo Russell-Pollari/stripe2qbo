@@ -14,6 +14,8 @@ Working on generalize/customize for others. Issues, feature requests, and PRs we
 
 > Requires a QBO developer account and an QBO app with a client ID and secret. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0)
 
+> Requires a Stripe account with Connect enabled
+
 ### Server
 
 `$ python3 -m venv venv`
@@ -28,13 +30,18 @@ Add the following to `.env` with your own values:
 
 ```
 SECRET_KEY=...
+
 QBO_CLIENT_ID=...
 QBO_CLIENT_SECRET=...
-QBO_REDIRECT_URI=...
-QBO_BASE_URL=...
+QBO_REDIRECT_URI=http://localhost:8000/qbo/oauth2/callback
+QBO_BASE_URL=https://sandbox-quickbooks.api.intuit.com/v3/company
+
 STRIPE_API_KEY=...
-STRIPE_ACCOUNT_ID=...
+STRIPE_CLIENT_ID=...
+STRIPE_REDIRECT_URL=http://localhost:8000/stripe/oauth2/callback
 ```
+
+Make sure to update your QBO and Stripe settings with the correct redirect URLs.
 
 ### Client
 
@@ -94,7 +101,6 @@ The default tax code to use for all invoice line items with zero tax. (e.g. TAX 
 
 Here's a rough roadmap of what's on the way to make this generally useful:
 
-- [ ] OAuth2 for Stripe
 - [ ] Import transactions for review before syncing
 - [ ] Sync individual transactions
 - [ ] Product settings to customize behaviour of individual products
