@@ -29,7 +29,9 @@ const App = () => {
     fetch("/stripe/info")
       .then((response) => response.json())
       .then((data) => {
-        setStripeInfo(data);
+        if (data.id) {
+          setStripeInfo(data);
+        }
       });
   }, []);
 
@@ -100,7 +102,10 @@ const App = () => {
               <Sync />
             </div>
             <div>
-              <StripeConnection stripeInfo={stripeInfo} />
+              <StripeConnection
+                stripeInfo={stripeInfo}
+                onDisconnect={() => setStripeInfo(null)}
+              />
               <QBOConnection
                 companyInfo={qboCompanyInfo}
                 onDisconnect={() => setQBoCompanyInfo(null)}

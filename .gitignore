@@ -2,9 +2,12 @@ __pycache__/
 .vscode/
 venv/
 .env
-token.json
-settings.json
 node_modules/
+
 static/index.js
 static/index.js.map
 static/index.css
+
+token.json
+settings.json
+stripe_token.json

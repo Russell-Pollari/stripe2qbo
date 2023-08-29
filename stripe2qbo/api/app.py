@@ -6,20 +6,15 @@ from fastapi import Depends, FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
-import stripe
-
 from dotenv import load_dotenv
 
 from stripe2qbo.settings import Settings, load_from_file, save
-from stripe2qbo.stripe.models import Account
 from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.sync import sync_transaction
-from stripe2qbo.api.routers import qbo
+from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.qbo.auth import Token
 
 load_dotenv()
-
-stripe.api_key = os.getenv("STRIPE_API_KEY")
 
 
 app = FastAPI()
@@ -27,6 +22,7 @@ app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 app.include_router(qbo.router)
+app.include_router(stripe_router.router)
 
 
 @app.get("/")
@@ -47,12 +43,6 @@ async def index() -> HTMLResponse:
         """,
         status_code=200,
     )
-
-
-@app.get("/stripe/info")
-async def get_stripe_info() -> Account:
-    account = stripe.Account.retrieve(os.getenv("STRIPE_ACCOUNT_ID"))
-    return Account(**account.to_dict())
 
 
 @app.get("/settings")
