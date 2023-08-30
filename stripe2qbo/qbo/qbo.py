@@ -62,7 +62,7 @@ def get_or_create_customer(
 
     if customer.CurrencyRef.value != currency:
         # if already exists with different currency, create a new one
-        return create_customer(f"{customer_name} ({currency})", currency)
+        return get_or_create_customer(f"{customer_name} ({currency})", currency)
 
     return customer
 

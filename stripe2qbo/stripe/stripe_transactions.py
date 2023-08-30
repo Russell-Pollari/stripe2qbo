@@ -54,7 +54,8 @@ def get_transactions(
 
         if transaction.type in ["charge", "payment"]:
             transaction.charge = Charge(**txn.source)
-            transaction.customer = Customer(**txn.source.customer)
+            if txn.source.customer:
+                transaction.customer = Customer(**txn.source.customer)
             inv = txn.source.invoice
             if inv:
                 lines: List[InvoiceLine] = []
