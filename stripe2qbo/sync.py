@@ -19,7 +19,7 @@ class TransactionSync(BaseModel):
     type: str
     amount: int
     description: str
-    status: Literal["pending", "success", "failed"]
+    status: Optional[Literal["pending", "success", "failed"]] = None
 
 
 token = get_token_from_file()

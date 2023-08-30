@@ -6,6 +6,7 @@ import {
     QBOVendor,
     Settings,
     StripeInfo,
+    SyncOptions,
 } from '../types';
 
 export const api = createApi({
