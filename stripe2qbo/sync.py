@@ -23,7 +23,7 @@ class TransactionSync(BaseModel):
 
 
 token = get_token_from_file()
-realm_id = token.realm_id if token is not None else ''
+realm_id = token.realm_id if token is not None else ""
 settings = load_from_file(realm_id)
 
 
@@ -119,23 +119,25 @@ def get_income_account_for_product(product_name: str) -> str:
         str: QBO income account name
     """
     assert settings is not None
-    # First check product settings
-    product_settings = []  # settings.product_settings
-    product_setting = next(
-        (prod for prod in product_settings if prod.product_name == product_name),
-        None,
-    )
-    if product_setting is None:
-        qbo_income_account_id = settings.default_income_account_id
-    else:
-        income_account_name = (
-            product_setting.income_account_name
-            if product_setting.income_account_name
-            else product_name
-        )
-        qbo_income_account_id = qbo.get_or_create_account(income_account_name, "Income")
+    # TODO: product settings
+    # product_settings = []  # settings.product_settings
+    # product_setting = next(
+    #     (prod for prod in product_settings if prod.product_name == product_name),
+    #     None,
+    # )
+    # if product_setting is None:
+    #     qbo_income_account_id = settings.default_income_account_id
+    # else:
+    #     income_account_name = (
+    #         product_setting.income_account_name
+    #         if product_setting.income_account_name
+    #         else product_name
+    #     )
+    #     qbo_income_account_id = qbo.get_or_create_account(income_account_name,
+    #                                                           "Income")
 
     # If no product settings, and no default, use the product name for an income account
+    qbo_income_account_id = settings.default_income_account_id
     if qbo_income_account_id is None:
         qbo_income_account_id = qbo.get_or_create_account(product_name, "Income")
 
@@ -347,17 +349,17 @@ def sync_transaction(transaction: Transaction) -> TransactionSync:
     elif transaction.type in ["charge", "payment"]:
         assert transaction.charge is not None
 
-        currency = transaction.currency
+        currency: qbo_models.QBOCurrency = transaction.currency.upper()  # type: ignore
 
         if transaction.customer is not None:
             qbo_customer = qbo.get_or_create_customer(
                 transaction.customer.name
                 or transaction.customer.description
                 or transaction.customer.email,  # type: ignore
-                currency.upper(),  # type: ignore
+                currency,
             )
         else:
-            qbo_customer = qbo.get_or_create_customer("STRIPE CUSTOMER", currency.upper()) # type: ignore
+            qbo_customer = qbo.get_or_create_customer("STRIPE CUSTOMER", currency)
 
         if transaction.invoice is None:
             qbo_invoice_id = None

@@ -1,10 +1,11 @@
-from typing import Literal, Optional, List
+from typing import Optional, List
 import datetime
 
 import requests
 
 from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.qbo.models import (
+    QBOCurrency,
     Customer,
     TaxCode,
     TaxDetail,
@@ -46,15 +47,13 @@ def get_customer_by_name(customer_name: str) -> Optional[Customer]:
     return Customer(**customers[0])
 
 
-def create_customer(customer_name: str, currency: Literal["USD", "CAD"]) -> Customer:
+def create_customer(customer_name: str, currency: QBOCurrency) -> Customer:
     body = {"DisplayName": customer_name, "CurrencyRef": {"value": currency}}
     response = qbo_request(path="/customer", body=body, method="POST")
     return Customer(**response.json()["Customer"])
 
 
-def get_or_create_customer(
-    customer_name: str, currency: Literal["USD", "CAD"]
-) -> Customer:
+def get_or_create_customer(customer_name: str, currency: QBOCurrency) -> Customer:
     customer = get_customer_by_name(customer_name)
 
     if customer is None:
@@ -87,9 +86,6 @@ def get_account_id(account_name: str) -> Optional[str]:
         raise Exception(f"Multiple accounts found with {account_name}")
 
     return accounts[0]["Id"]
-
-
-# def get_account_by_id(account_id: str) -> Optional[str]:
 
 
 def get_or_create_account(account_name: str, account_type: str) -> str:
@@ -144,7 +140,7 @@ def create_invoice(
     customer_id: str,
     lines: List[InvoiceLine],
     created_date: Optional[datetime.datetime] = None,
-    currency: Optional[Literal["USD", "CAD"]] = "USD",
+    currency: Optional[QBOCurrency] = "USD",
     private_note: Optional[str] = "",
     due_date: Optional[datetime.datetime] = None,
     tax_detail: Optional[TaxDetail] = None,
@@ -210,7 +206,7 @@ def create_invoice_payment(
     amount: float,
     date: datetime.datetime,
     qbo_account_id: str,
-    currency: Literal["USD", "CAD"],
+    currency: QBOCurrency,
     exchange_rate: Optional[float],
     private_note: str = "",
 ) -> str:

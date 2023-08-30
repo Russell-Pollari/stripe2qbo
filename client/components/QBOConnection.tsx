@@ -1,25 +1,25 @@
-import * as React from 'react'
-import { useDispatch } from 'react-redux'
+import * as React from 'react';
+import { useDispatch } from 'react-redux';
 
 import {
     useGetCompanyInfoQuery,
     useDisconnectQBOMutation,
     api,
-} from '../services/api'
-import ConnectionCard from './ConnectionCard'
+} from '../services/api';
+import ConnectionCard from './ConnectionCard';
 
 const connect = () => {
     fetch('/qbo/oauth2')
         .then((response) => response.json())
         .then((data: string) => {
-            location.href = data
-        })
-}
+            location.href = data;
+        });
+};
 
 const QBOConnection = () => {
-    const { data: companyInfo, isLoading } = useGetCompanyInfoQuery('')
-    const [disconnect] = useDisconnectQBOMutation()
-    const dispatch = useDispatch()
+    const { data: companyInfo, isLoading } = useGetCompanyInfoQuery('');
+    const [disconnect] = useDisconnectQBOMutation();
+    const dispatch = useDispatch();
 
     return (
         <ConnectionCard
@@ -27,8 +27,8 @@ const QBOConnection = () => {
             isLoading={isLoading}
             isConnected={!!companyInfo}
             disconnect={() => {
-                disconnect('')
-                dispatch(api.util.resetApiState())
+                disconnect('');
+                dispatch(api.util.resetApiState());
             }}
         >
             {companyInfo ? (
@@ -44,7 +44,7 @@ const QBOConnection = () => {
                 </button>
             )}
         </ConnectionCard>
-    )
-}
+    );
+};
 
-export default QBOConnection
+export default QBOConnection;

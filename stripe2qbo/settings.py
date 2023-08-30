@@ -13,7 +13,6 @@ def _snake_to_camel(s: str) -> str:
 class Settings(BaseModel):
     stripe_clearing_account_id: str
     stripe_payout_account_id: str
-    stripe_fee_account_id: str
     stripe_vendor_id: str
     stripe_fee_account_id: str
     default_income_account_id: Optional[str] = None
