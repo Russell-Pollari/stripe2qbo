@@ -26,6 +26,12 @@ repos:
       rev: v8.48.0
       hooks:
           - id: eslint
+            additional_dependencies:
+                - eslint-config-prettier
+                - '@typescript-eslint/eslint-plugin'
+                - '@typescript-eslint/parser'
+            files: \.(js|jsx|ts|tsx)$
+            types: [file]
 
     - repo: https://github.com/pre-commit/mirrors-mypy
       rev: v1.5.1
