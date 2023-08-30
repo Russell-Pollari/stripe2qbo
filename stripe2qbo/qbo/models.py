@@ -2,6 +2,8 @@ from typing import List, Optional, Literal
 
 from pydantic import BaseModel
 
+QBOCurrency = Literal["USD", "CAD"]
+
 
 class CompanyInfo(BaseModel):
     CompanyName: str
@@ -9,7 +11,7 @@ class CompanyInfo(BaseModel):
 
 
 class CurrencyRef(BaseModel):
-    value: str
+    value: QBOCurrency
     name: Optional[str]
 
 
