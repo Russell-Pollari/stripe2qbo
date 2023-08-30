@@ -345,17 +345,19 @@ def sync_transaction(transaction: Transaction) -> TransactionSync:
     if transaction.type == "stripe_fee":
         sync_stripe_fee(transaction)
     elif transaction.type in ["charge", "payment"]:
-        assert transaction.customer is not None
         assert transaction.charge is not None
 
         currency = transaction.currency
 
-        qbo_customer = qbo.get_or_create_customer(
-            transaction.customer.name
-            or transaction.customer.description
-            or transaction.customer.email,  # type: ignore
-            currency.upper(),  # type: ignore
-        )
+        if transaction.customer is not None:
+            qbo_customer = qbo.get_or_create_customer(
+                transaction.customer.name
+                or transaction.customer.description
+                or transaction.customer.email,  # type: ignore
+                currency.upper(),  # type: ignore
+            )
+        else:
+            qbo_customer = qbo.get_or_create_customer("STRIPE CUSTOMER", currency.upper()) # type: ignore
 
         if transaction.invoice is None:
             qbo_invoice_id = None
