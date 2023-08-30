@@ -1,9 +1,10 @@
 import * as React from 'react';
 import { Formik, Field, Form } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, setIsSyncing, setSyncStatus } from '../store';
-import { addTransaction } from '../store';
+import { setIsSyncing, setSyncStatus } from '../store/sync';
+import { addTransaction } from '../store/transactions';
 
+import type { RootState } from '../store/store';
 import type { SyncOptions, Transaction } from '../types';
 
 const ImportTransactions = () => {
