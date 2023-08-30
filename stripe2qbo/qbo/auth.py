@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import json
 from datetime import datetime, timedelta
@@ -67,7 +68,9 @@ def refresh_auth_token(refresh_token: str, realm_id: str) -> Token:
 
 
 # TODO: replace with simple SQL db
-def get_token_from_file(path: str = "token.json") -> Token:
+def get_token_from_file(path: str = "token.json") -> Optional[Token]:
+    if not os.path.exists(path):
+        return None
     with open(path, "r") as f:
         return Token(**json.load(f))
 

@@ -17,12 +17,14 @@ class TransactionSync(BaseModel):
     id: str
     created: int
     type: str
+    amount: int
     description: str
     status: Literal["pending", "success", "failed"]
 
 
 token = get_token_from_file()
-settings = load_from_file(token.realm_id)
+realm_id = token.realm_id if token is not None else ''
+settings = load_from_file(realm_id)
 
 
 def _timestamp_to_date(timestamp: int) -> datetime.datetime:

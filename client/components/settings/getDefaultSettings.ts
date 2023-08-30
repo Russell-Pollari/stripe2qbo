@@ -8,9 +8,9 @@ const getDefaultSettings = ({
   vendors = [],
   taxCodes = [],
 }: {
-  accounts: QBOAccount[],
-  vendors: QBOVendor[],
-  taxCodes: QBOTaxCode[],
+  accounts?: QBOAccount[],
+  vendors?: QBOVendor[],
+  taxCodes?: QBOTaxCode[],
 }): Settings => {
   return {
     stripeClearingAccountId:

@@ -1,46 +1,37 @@
 import * as React from "react";
 import { Formik, Form } from "formik";
-import { object, string } from "yup";
 
-import type { QBOAccount, QBOTaxCode, QBOVendor, Settings } from "../../types";
+import {
+  useGetAccountsQuery,
+  useGetTaxCodesQuery,
+  useGetVendorsQuery,
+  useGetCompanyInfoQuery,
+  useGetSettingsQuery,
+  useUpdateSettingsMutation,
+} from "../../services/api";
+import type { Settings } from "../../types";
 import { AccountSelect, VendorSelect, TaxCodeSelect } from "./Inputs";
 import getDefaultSettings from "./getDefaultSettings";
+import schema from "./settingsFormSchema";
 
-const schema = object().shape({
-  stripeClearingAccountId: string().required(
-    "Stripe Clearing Account is required"
-  ),
-  stripePayoutAccountId: string().required("Stripe Payout Account is required"),
-  stripeVendorId: string().required("Stripe Vendor is required"),
-  stripeFeeAccountId: string().required("Stripe Fee Account is required"),
-  defaultIncomeAccountId: string().required(
-    "Default Income Account is required"
-  ),
-  defaultTaxCodeId: string().required("Default Tax Code is required"),
-  exemptTaxCodeId: string().required("Exempt Tax Code is required"),
-});
-
-const saveSettings = async (settings: Settings) => {
-  await fetch("/settings", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(settings),
+const SyncSettings = () => {
+  const { data: companyInfo } = useGetCompanyInfoQuery("");
+  const { data: accounts } = useGetAccountsQuery("", {
+    skip: !companyInfo,
   });
-};
+  const { data: vendors } = useGetVendorsQuery("", {
+    skip: !companyInfo,
+  });
+  const { data: taxCodes } = useGetTaxCodesQuery("", {
+    skip: !companyInfo,
+  });
 
-const SyncSettings = ({
-  accounts = [],
-  vendors = [],
-  taxCodes = [],
-  settings,
-}: {
-  accounts: QBOAccount[];
-  vendors: QBOVendor[];
-  taxCodes: QBOTaxCode[];
-  settings?: Settings;
-}) => {
+  const { data: settings } = useGetSettingsQuery("", {
+    skip: !companyInfo,
+  });
+
+  const [updateSettings] = useUpdateSettingsMutation();
+
   const defaultSettings = settings
     ? settings
     : getDefaultSettings({ accounts, vendors, taxCodes });
@@ -48,16 +39,14 @@ const SyncSettings = ({
   return (
     <div className="w-64 shadow-lg p-4">
       <h3 className="font-semibold mb-4">Sync Settings</h3>
-      {accounts.length === 0 ? (
+      {!companyInfo ? (
         <div className="text-center">Missing QBO connection</div>
       ) : (
         <Formik
           validationSchema={schema}
-          initialValues={{
-            ...defaultSettings,
-          }}
+          initialValues={defaultSettings}
           onSubmit={async (values: Settings, { setSubmitting }) => {
-            await saveSettings(values);
+            await updateSettings(values);
             setSubmitting(false);
           }}
           enableReinitialize
