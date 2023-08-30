@@ -1,8 +1,8 @@
 from typing import List, Optional
 import os
 import stripe
-from stripe2qbo.stripe.auth import get_token_from_file
 
+from stripe2qbo.stripe.auth import get_token_from_file
 from stripe2qbo.stripe.models import (
     Charge,
     Customer,

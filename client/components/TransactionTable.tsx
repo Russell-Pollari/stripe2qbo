@@ -1,12 +1,9 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import {
-    addTransaction,
-    RootState,
-    setIsSyncing,
-    setSyncStatus,
-} from '../store';
+import { addTransaction } from '../store/transactions';
+import { setIsSyncing, setSyncStatus } from '../store/sync';
+import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
 
 const TransactionTable = () => {
