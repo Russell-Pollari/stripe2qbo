@@ -101,20 +101,19 @@ The default tax code to use for all invoice line items with zero tax. (e.g. TAX 
 
 Here's a rough roadmap of what's on the way to make this generally useful:
 
--   [ ] Add linters and formatters and enforce in pre-commit hooks
--   [ ] Add test suite and CI/CD
--   [ ] Import transactions for review before syncing
--   [ ] Sync individual transactions
+-   [ ] Persistent SQL backend
 -   [ ] Product settings to customize behaviour of individual products
 -   [ ] Tax settings to customize behaviour of taxes
 -   [ ] Support all transaction types (e.g. refunds, transfers, etc.)
+-   [ ] Add test suite and CI/CD
 -   [ ] Create new QBO accounts from Sync Settings
--   [ ] Prettify transaction table - pagination, sorting, filtering, etc.
--   [ ] Add more info to transaction table - e.g. fees, tax, etc.
--   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Stripe fee)
+-   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
+-   [ ] Add more info to transaction table - e.g. fees, tax, customer, etc.
+-   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
 -   [ ] Speed up backend with concurrent requests
--   [ ] Persistent SQL backend w/ user accounts
+-   [ ] JWT auth and user accounts
 -   [ ] Deploy
+-   [ ] Multiple connections per user
 -   [ ] Find matches / sync status from historical data
 -   [ ] Support all currencies
 -   [ ] Sync payment methods (e.g. credit cards, ACH)

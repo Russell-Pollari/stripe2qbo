@@ -1,16 +1,15 @@
-import datetime
 from typing import Optional, Annotated
 import os
 
-from fastapi import Depends, FastAPI, WebSocket
+from fastapi import Depends, FastAPI, WebSocket, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from stripe2qbo.settings import Settings, load_from_file, save
-from stripe2qbo.stripe.stripe_transactions import get_transactions
-from stripe2qbo.sync import sync_transaction
+from stripe2qbo.stripe.stripe_transactions import get_transaction
+from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.qbo.auth import Token
 
@@ -61,46 +60,34 @@ async def save_settings(
     save(realm_id, settings)
 
 
-@app.websocket("/sync")
-async def sync(
+@app.post(
+    "/sync",
+    dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
+)
+async def sync_single_transaction(transaction_id: str) -> TransactionSync:
+    transaction = get_transaction(transaction_id)
+    transaction_sync = sync_transaction(transaction)
+
+    return transaction_sync
+
+
+@app.websocket("/syncmany")
+async def sync_many(
     websocket: WebSocket,
-    from_date: Optional[str] = None,
-    to_date: Optional[str] = None,
+    transaction_ids: Annotated[list[str], Query()],
 ):
     await websocket.accept()
-
-    from_timestamp = (
-        int(datetime.datetime.strptime(from_date, "%Y-%m-%d").timestamp())
-        if from_date
-        else None
+    await websocket.send_json(
+        {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
-    to_timestamp = (
-        int(datetime.datetime.strptime(to_date, "%Y-%m-%d").timestamp())
-        if to_date
-        else None
-    )
+    for transaction_id in transaction_ids:
+        transaction = get_transaction(transaction_id)
+        transaction_sync = sync_transaction(transaction)
 
-    starting_after = None  # for pagination
-    while True:
-        await websocket.send_json({"status": "Fetching Stripe transactions"})
-        transactions = get_transactions(
-            from_timestamp=from_timestamp,
-            to_timestamp=to_timestamp,
-            starting_after=starting_after,
-        )
         await websocket.send_json(
-            {"status": f"Syncing {len(transactions)} transactions"}
+            {
+                "transaction": transaction_sync.model_dump(),
+            }
         )
-        for transaction in transactions:
-            transaction_sync = sync_transaction(transaction)
-            await websocket.send_json(
-                {
-                    "transaction": transaction_sync.model_dump(),
-                }
-            )
-
-        if len(transactions) < 100:
-            break
-        starting_after = transactions[-1].id
 
     await websocket.close()

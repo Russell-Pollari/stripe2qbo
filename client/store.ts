@@ -29,7 +29,14 @@ const transactionsSlice = createSlice({
     initialState: initialState,
     reducers: {
         addTransaction: (state, action: PayloadAction<Transaction>) => {
-            state.push(action.payload);
+            const txn = state.find(
+                (t: Transaction) => t.id === action.payload.id
+            );
+            if (txn && action.payload.status) {
+                txn.status = action.payload.status;
+            } else {
+                state.push(action.payload);
+            }
         },
     },
 });

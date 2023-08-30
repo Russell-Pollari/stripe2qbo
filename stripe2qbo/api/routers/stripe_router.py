@@ -1,5 +1,6 @@
 import os
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, List, Optional
 from starlette.requests import Request
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
@@ -13,6 +14,8 @@ from stripe2qbo.stripe.auth import (
     get_auth_url,
 )
 from stripe2qbo.stripe.models import Account
+from stripe2qbo.stripe.stripe_transactions import get_transactions
+from stripe2qbo.sync import TransactionSync
 
 load_dotenv()
 
@@ -59,3 +62,32 @@ async def get_stripe_info(
     stripe_user_id = token.stripe_user_id
     account = stripe.Account.retrieve(stripe_user_id)
     return Account(**account.to_dict())
+
+
+@router.get("/transactions", dependencies=[Depends(get_stripe_token)])
+async def get_stripe_transactions(
+    from_date: Optional[str] = None,
+    to_date: Optional[str] = None,
+) -> List[TransactionSync]:
+    from_timestamp = (
+        int(datetime.strptime(from_date, "%Y-%m-%d").timestamp()) if from_date else None
+    )
+    to_timestamp = (
+        int(datetime.strptime(to_date, "%Y-%m-%d").timestamp()) if to_date else None
+    )
+
+    transactions = []
+    starting_after: str | None = None
+    while True:
+        txs = get_transactions(
+            from_timestamp=from_timestamp,
+            to_timestamp=to_timestamp,
+            starting_after=starting_after,
+        )
+        transactions.extend(txs)
+
+        if len(txs) < 100:
+            break
+        starting_after = txs[-1].id
+
+    return [TransactionSync(**transaction.model_dump()) for transaction in transactions]

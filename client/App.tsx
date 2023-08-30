@@ -3,7 +3,8 @@ import * as React from 'react';
 import QBOConnection from './components/QBOConnection';
 import StripeConnection from './components/StripeConnection';
 import SyncSettings from './components/settings/SyncSettings';
-import Sync from './components/Sync';
+import ImportTransactions from './components/ImportTransactions';
+import TransactionTable from './components/TransactionTable';
 
 const App = () => {
     return (
@@ -14,7 +15,8 @@ const App = () => {
             <div className="p-6">
                 <div className="flex justify-around">
                     <div className="basis-3/4">
-                        <Sync />
+                        <ImportTransactions />
+                        <TransactionTable />
                     </div>
                     <div>
                         <StripeConnection />
