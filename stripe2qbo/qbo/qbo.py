@@ -227,7 +227,7 @@ def create_invoice_payment(
     }
 
     if invoice_id:
-        body["LINE"] = [
+        body["Line"] = [
             {
                 "Amount": amount,
                 "LinkedTxn": [{"TxnId": invoice_id, "TxnType": "Invoice"}],

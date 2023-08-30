@@ -1,6 +1,8 @@
+from re import A
 from typing import List, Optional
 import os
 import stripe
+from stripe2qbo.stripe.auth import get_token_from_file
 
 from stripe2qbo.stripe.models import (
     Charge,
@@ -17,6 +19,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
+token = get_token_from_file()
+account_id = token.stripe_user_id if token is not None else ''
 
 
 def get_transactions(
@@ -42,6 +46,7 @@ def get_transactions(
             "data.source",
         ],
         starting_after=starting_after,
+        stripe_account=account_id,
     )
 
     for txn in txns:
@@ -55,15 +60,15 @@ def get_transactions(
                 lines: List[InvoiceLine] = []
                 for line in inv.lines.data:
                     if line.plan:
-                        product = stripe.Product.retrieve(line.plan.product)
+                        product = stripe.Product.retrieve(line.plan.product, stripe_account=account_id)
                     elif line.price:
-                        product = stripe.Product.retrieve(line.price.product)
+                        product = stripe.Product.retrieve(line.price.product, stripe_account=account_id)
                     else:
                         product = {"name": "Unknown"}
                     tax_amounts = []
                     for tax_amount in line.tax_amounts:
                         amt = tax_amount
-                        amt.tax_rate = stripe.TaxRate.retrieve(tax_amount.tax_rate)
+                        amt.tax_rate = stripe.TaxRate.retrieve(tax_amount.tax_rate, stripe_account=account_id)
                         tax_amounts.append(amt)
                     line.tax_amounts = tax_amounts
                     line = InvoiceLine(**line, product=Product(**product))

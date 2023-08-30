@@ -77,6 +77,5 @@ class BusinessProfile(BaseModel):
 
 class Account(BaseModel):
     id: str
-    business_profile: BusinessProfile
     country: str
     default_currency: str

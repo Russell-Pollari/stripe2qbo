@@ -17,6 +17,7 @@ class TransactionSync(BaseModel):
     id: str
     created: int
     type: str
+    amount: int
     description: str
     status: Literal["pending", "success", "failed"]
 

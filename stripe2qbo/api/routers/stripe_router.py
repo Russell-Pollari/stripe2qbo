@@ -43,7 +43,7 @@ async def stripe_oauth_url() -> str:
 async def stripe_oauth_callback(code: str, request: Request):
     token = generate_auth_token(code)
     request.session["stripe_token"] = token.model_dump()
-    return RedirectResponse("/")
+    return RedirectResponse(url="/")
 
 
 @router.post("/disconnect")

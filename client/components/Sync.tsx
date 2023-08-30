@@ -1,33 +1,35 @@
 import * as React from 'react';
 import { Formik, Field, Form } from 'formik';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, setIsSyncing, setSyncStatus } from '../store';
+import { addTransaction } from '../store';
 
 import type { SyncOptions, Transaction } from '../types';
 
 const Sync = () => {
-    const [isSyncing, setIsSyncing] = React.useState<boolean>(false);
-    const [status, setStatus] = React.useState<string>('');
-    const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+    const dispatch = useDispatch();
+    const isSyncing = useSelector((state: RootState) => state.sync.isSyncing);
+    const status = useSelector((state: RootState) => state.sync.status);
+    const transactions = useSelector((state: RootState) => state.transactions);
 
     const startSync = (options: SyncOptions) => {
         const queryString = new URLSearchParams(options).toString();
         const ws = new WebSocket(`ws://localhost:8000/sync?${queryString}`);
         ws.onopen = () => {
-            setIsSyncing(true);
+            dispatch(setIsSyncing(true));
         };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             if (data.status) {
-                setStatus(data.status);
+                dispatch(setSyncStatus(data.status));
             }
             if (data.transaction) {
-                setTransactions((prevTransactions: Transaction[]) => [
-                    ...prevTransactions,
-                    data.transaction,
-                ]);
+                dispatch(addTransaction(data.transaction));
             }
         };
         ws.onclose = () => {
-            setIsSyncing(false);
+            dispatch(setSyncStatus(''));
+            dispatch(setIsSyncing(false));
         };
     };
 
@@ -88,6 +90,7 @@ const Sync = () => {
                         <tr>
                             <th>Created</th>
                             <th>Type</th>
+                            <th>Amount</th>
                             <th>Description</th>
                             <th>Sync status</th>
                         </tr>
@@ -101,6 +104,12 @@ const Sync = () => {
                                         .slice(0, 10)}
                                 </td>
                                 <td>{transaction.type}</td>
+                                <td>
+                                    $
+                                    {(
+                                        transaction.amount / 100
+                                    ).toLocaleString()}
+                                </td>
                                 <td>{transaction.description}</td>
                                 <td>{transaction.status}</td>
                             </tr>
