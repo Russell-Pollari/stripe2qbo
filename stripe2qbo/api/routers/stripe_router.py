@@ -46,11 +46,10 @@ async def stripe_oauth_callback(code: str, request: Request):
     return RedirectResponse("/")
 
 
-@router.get("/disconnect")
-async def disconnect_qbo(request: Request):
-    request.session["token"] = None
+@router.post("/disconnect")
+async def disconnect_stripe(request: Request):
+    request.session["stripe_token"] = None
     delete_token_file()
-    return RedirectResponse("/")
 
 
 @router.get("/info")

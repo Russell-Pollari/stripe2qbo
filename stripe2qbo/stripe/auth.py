@@ -1,3 +1,4 @@
+from typing import Optional
 import os
 import json
 from pydantic import BaseModel
@@ -31,7 +32,9 @@ def generate_auth_token(code: str) -> StripeToken:
 
 
 # TODO: replace with simple SQL db
-def get_token_from_file(path: str = "stripe_token.json") -> StripeToken:
+def get_token_from_file(path: str = "stripe_token.json") -> Optional[StripeToken]:
+    if not os.path.exists(path):
+        return None
     with open(path, "r") as f:
         return StripeToken(**json.load(f))
 
@@ -42,4 +45,5 @@ def save_token_to_file(token: StripeToken, path: str = "stripe_token.json") -> N
 
 
 def delete_token_file(path: str = "stripe_token.json") -> None:
-    os.remove(path)
+    if os.path.exists(path):
+        os.remove(path)

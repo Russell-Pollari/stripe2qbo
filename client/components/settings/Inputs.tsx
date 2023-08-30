@@ -50,7 +50,7 @@ export const AccountSelect = ({
 }: {
   label: string;
   name: string;
-  accounts: QBOAccount[];
+  accounts?: QBOAccount[];
   accountType: string;
 }) => {
   return (
@@ -74,7 +74,7 @@ export const VendorSelect = ({
 }: {
   label: string;
   name: string;
-  vendors: QBOVendor[];
+  vendors?: QBOVendor[];
 }) => {
   return (
     <Field
@@ -98,7 +98,7 @@ export const TaxCodeSelect = ({
 }: {
   label: string;
   name: string;
-  taxCodes: QBOTaxCode[];
+  taxCodes?: QBOTaxCode[];
 }) => {
   return (
     <Field
