@@ -1,17 +1,33 @@
 from typing import Optional, Annotated
 import os
 
+from sqlalchemy import select, update
+from sqlalchemy.orm import Session
 from fastapi import Depends, FastAPI, WebSocket, Query
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
-from stripe2qbo.settings import Settings, load_from_file, save
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.qbo.auth import Token
+
+from stripe2qbo.db.database import SessionLocal, engine
+from stripe2qbo.db.models import Base, SyncSettings
+from stripe2qbo.db.schemas import Settings
+
+Base.metadata.create_all(bind=engine)
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 load_dotenv()
 
@@ -45,36 +61,60 @@ async def index() -> HTMLResponse:
 
 
 @app.get("/settings")
-async def get_settings(
-    token: Annotated[Token, Depends(qbo.get_qbo_token)]
+def get_settings(
+    token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> Optional[Settings]:
     realm_id = token.realm_id
-    return load_from_file(realm_id)
+    query = select(SyncSettings).where(SyncSettings.qbo_realm_id == realm_id)
+    sync_settings = db.execute(query).scalar_one_or_none()
+    return Settings.model_validate(sync_settings)
 
 
 @app.post("/settings")
-async def save_settings(
-    settings: Settings, token: Annotated[Token, Depends(qbo.get_qbo_token)]
+def save_settings(
+    settings: Settings,
+    token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    db: Annotated[Session, Depends(get_db)],
 ) -> None:
     realm_id = token.realm_id
-    save(realm_id, settings)
+    query = select(SyncSettings).where(SyncSettings.qbo_realm_id == realm_id)
+    sync_settings = db.execute(query).scalar_one_or_none()
+    if sync_settings is None:
+        sync_settings = SyncSettings(qbo_realm_id=realm_id, **settings.model_dump())
+        db.add(sync_settings)
+    else:
+        update_query = (
+            update(SyncSettings)
+            .where(SyncSettings.qbo_realm_id == realm_id)
+            .values(**settings.model_dump())
+        )
+        print(update_query)
+        db.execute(update_query)
+    db.commit()
 
 
 @app.post(
     "/sync",
     dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
 )
-async def sync_single_transaction(transaction_id: str) -> TransactionSync:
+async def sync_single_transaction(
+    transaction_id: str, settings: Annotated[Settings, Depends(get_settings)]
+) -> TransactionSync:
     transaction = get_transaction(transaction_id)
-    transaction_sync = sync_transaction(transaction)
+    transaction_sync = sync_transaction(transaction, settings)
 
     return transaction_sync
 
 
-@app.websocket("/syncmany")
+@app.websocket(
+    "/syncmany",
+    dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
+)
 async def sync_many(
     websocket: WebSocket,
     transaction_ids: Annotated[list[str], Query()],
+    settings: Annotated[Settings, Depends(get_settings)],
 ):
     await websocket.accept()
     await websocket.send_json(
@@ -82,7 +122,7 @@ async def sync_many(
     )
     for transaction_id in transaction_ids:
         transaction = get_transaction(transaction_id)
-        transaction_sync = sync_transaction(transaction)
+        transaction_sync = sync_transaction(transaction, settings)
 
         await websocket.send_json(
             {
