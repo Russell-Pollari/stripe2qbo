@@ -7,7 +7,7 @@ const ConnectionMenu = ({ disconnect }: { disconnect: () => void }) => (
         <Menu.Button>
             <Cog6ToothIcon className="absolute top-0 right-0 h-5 w-5 cursor-pointer text-gray-400 hover:text-gray-700" />
         </Menu.Button>
-        <Menu.Items className="absolute right-0 bg-white shadow-lg p-2">
+        <Menu.Items className="absolute top-4 right-0 bg-white shadow-lg p-2">
             <Menu.Item>
                 <button
                     className="mt-2 inline-block hover:bg-slate-200 text-red-500 font-bold py-2 px-4 rounded-full text-sm"
