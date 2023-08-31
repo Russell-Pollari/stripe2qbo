@@ -6,6 +6,7 @@ import { addTransaction } from '../store/transactions';
 
 import type { RootState } from '../store/store';
 import type { SyncOptions, Transaction } from '../types';
+import SubmitButton from '../SubmitButton';
 
 const ImportTransactions = () => {
     const dispatch = useDispatch();
@@ -64,12 +65,9 @@ const ImportTransactions = () => {
                                 />
                             </div>
                             <div>
-                                <button
-                                    disabled={isSyncing}
-                                    className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                                >
+                                <SubmitButton isSubmitting={isSyncing}>
                                     {isSyncing ? `${status}...` : 'Import'}
-                                </button>
+                                </SubmitButton>
                             </div>
                         </div>
                     </Form>
