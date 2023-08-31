@@ -6,23 +6,36 @@ import { addTransaction } from '../store/transactions';
 
 import type { RootState } from '../store/store';
 import type { SyncOptions, Transaction } from '../types';
+import SubmitButton from './SubmitButton';
+import { useGetStripeInfoQuery } from '../services/api';
 
 const ImportTransactions = () => {
     const dispatch = useDispatch();
     const isSyncing = useSelector((state: RootState) => state.sync.isSyncing);
     const status = useSelector((state: RootState) => state.sync.status);
+    const { data: stripeInfo } = useGetStripeInfoQuery('');
 
     const importTransactions = async (options: SyncOptions) => {
-        const queryString = new URLSearchParams(options).toString();
+        if (!stripeInfo) {
+            alert('No Stripe account connected.');
+            return;
+        }
+
         dispatch(setIsSyncing(true));
         dispatch(setSyncStatus('Importing transactions...'));
+
+        const queryString = new URLSearchParams(options).toString();
         const response = await fetch('/stripe/transactions?' + queryString);
-        const data: Transaction[] = await response.json();
-        if (data) {
+
+        if (response.status === 200) {
+            const data: Transaction[] = await response.json();
             data.forEach((transaction: Transaction) => {
                 dispatch(addTransaction(transaction));
             });
+        } else {
+            alert('Error importing transactions.');
         }
+
         dispatch(setSyncStatus(''));
         dispatch(setIsSyncing(false));
     };
@@ -64,12 +77,9 @@ const ImportTransactions = () => {
                                 />
                             </div>
                             <div>
-                                <button
-                                    disabled={isSyncing}
-                                    className="inline-block bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-                                >
+                                <SubmitButton isSubmitting={isSyncing}>
                                     {isSyncing ? `${status}...` : 'Import'}
-                                </button>
+                                </SubmitButton>
                             </div>
                         </div>
                     </Form>

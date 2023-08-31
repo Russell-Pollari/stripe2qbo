@@ -11,6 +11,7 @@ import {
 } from '../../services/api';
 import type { Settings } from '../../types';
 import { AccountSelect, VendorSelect, TaxCodeSelect } from './Inputs';
+import SubmitButton from '../SubmitButton';
 import getDefaultSettings from './getDefaultSettings';
 import schema from './settingsFormSchema';
 
@@ -94,13 +95,9 @@ const SyncSettings = () => {
                                 taxCodes={taxCodes}
                             />
                             <div className="text-center mt-4">
-                                <button
-                                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded m-auto"
-                                    disabled={isSubmitting}
-                                    type="submit"
-                                >
+                                <SubmitButton isSubmitting={isSubmitting}>
                                     {isSubmitting ? 'Saving...' : 'Save'}
-                                </button>
+                                </SubmitButton>
                             </div>
                         </Form>
                     )}

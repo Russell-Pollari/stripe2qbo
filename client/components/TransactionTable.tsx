@@ -1,12 +1,9 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import {
-    addTransaction,
-    RootState,
-    setIsSyncing,
-    setSyncStatus,
-} from '../store';
+import { addTransaction } from '../store/transactions';
+import { setIsSyncing, setSyncStatus } from '../store/sync';
+import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
 
 const TransactionTable = () => {
@@ -52,7 +49,14 @@ const TransactionTable = () => {
 
     return (
         <div className="text-left mt-4 p-4 shadow-lg">
-            <button onClick={syncAll}>Sync all</button>
+            <div className="text-right">
+                <button
+                    className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
+                    onClick={syncAll}
+                >
+                    Sync all
+                </button>
+            </div>
             <table className="text-left table-auto w-full">
                 <thead>
                     <tr>
