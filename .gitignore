@@ -8,6 +8,7 @@ static/index.js
 static/index.js.map
 static/index.css
 
+stripe2qbo.db
+
 token.json
-settings.json
 stripe_token.json
