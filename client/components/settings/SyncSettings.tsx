@@ -11,7 +11,7 @@ import {
 } from '../../services/api';
 import type { Settings } from '../../types';
 import { AccountSelect, VendorSelect, TaxCodeSelect } from './Inputs';
-import SubmitButton from '../../SubmitButton';
+import SubmitButton from '../SubmitButton';
 import getDefaultSettings from './getDefaultSettings';
 import schema from './settingsFormSchema';
 

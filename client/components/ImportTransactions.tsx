@@ -6,7 +6,7 @@ import { addTransaction } from '../store/transactions';
 
 import type { RootState } from '../store/store';
 import type { SyncOptions, Transaction } from '../types';
-import SubmitButton from '../SubmitButton';
+import SubmitButton from './SubmitButton';
 import { useGetStripeInfoQuery } from '../services/api';
 
 const ImportTransactions = () => {
