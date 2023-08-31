@@ -49,7 +49,14 @@ const TransactionTable = () => {
 
     return (
         <div className="text-left mt-4 p-4 shadow-lg">
-            <button onClick={syncAll}>Sync all</button>
+            <div className="text-right">
+                <button
+                    className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
+                    onClick={syncAll}
+                >
+                    Sync all
+                </button>
+            </div>
             <table className="text-left table-auto w-full">
                 <thead>
                     <tr>
