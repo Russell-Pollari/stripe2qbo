@@ -17,7 +17,6 @@ const connect = () => {
 const StripeConnection = () => {
     const { data: stripeInfo, isLoading, error } = useGetStripeInfoQuery();
     const [disconnect] = useDisconnectStripeMutation();
-    console.log(error);
     return (
         <ConnectionCard
             isConnected={!!stripeInfo}
