@@ -14,21 +14,13 @@ from stripe2qbo.qbo.auth import (
     get_auth_url,
     refresh_auth_token,
 )
-from stripe2qbo.db.database import SessionLocal
+from stripe2qbo.db.database import get_db
 from stripe2qbo.db.models import User, QBOToken
 
 router = APIRouter(
     prefix="/qbo",
     tags=["qbo"],
 )
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 def get_qbo_token(request: Request, db: Annotated[Session, Depends(get_db)]) -> Token:

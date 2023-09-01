@@ -8,25 +8,18 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
+from stripe2qbo.stripe.auth import StripeToken
 
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.qbo.auth import Token
 
-from stripe2qbo.db.database import SessionLocal, engine
+from stripe2qbo.db.database import get_db, engine
 from stripe2qbo.db.models import Base, SyncSettings
 from stripe2qbo.db.schemas import Settings
 
 Base.metadata.create_all(bind=engine)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 load_dotenv()
@@ -102,8 +95,11 @@ async def sync_single_transaction(
     transaction_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
     qbo_token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    stripe_token: Annotated[StripeToken, Depends(stripe_router.get_stripe_token)],
 ) -> TransactionSync:
-    transaction = get_transaction(transaction_id)
+    transaction = get_transaction(
+        transaction_id, account_id=stripe_token.stripe_user_id
+    )
     transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
     return transaction_sync
@@ -118,13 +114,16 @@ async def sync_many(
     transaction_ids: Annotated[list[str], Query()],
     settings: Annotated[Settings, Depends(get_settings)],
     qbo_token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    stripe_token: Annotated[StripeToken, Depends(stripe_router.get_stripe_token)],
 ):
     await websocket.accept()
     await websocket.send_json(
         {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
     for transaction_id in transaction_ids:
-        transaction = get_transaction(transaction_id)
+        transaction = get_transaction(
+            transaction_id, account_id=stripe_token.stripe_user_id
+        )
         transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
         await websocket.send_json(

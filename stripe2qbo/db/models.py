@@ -1,4 +1,3 @@
-from typing import List
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -26,21 +25,8 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=False)
+    stripe_user_id: Mapped[str]
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
-
-    stripe_accounts: Mapped[List["StripeAccounts"]] = relationship(
-        "StripeAccounts", back_populates="user"
-    )
-
-
-class StripeAccounts(Base):
-    __tablename__ = "stripe_accounts"
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    stripe_account_id: Mapped[str] = mapped_column(unique=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-
-    user: Mapped[User] = relationship("User", back_populates="stripe_accounts")
 
 
 class QBOToken(Base):
@@ -51,6 +37,6 @@ class QBOToken(Base):
     refresh_token: Mapped[str] = mapped_column(nullable=False)
     expires_at: Mapped[str] = mapped_column(nullable=False)
     refresh_token_expires_at: Mapped[str] = mapped_column(nullable=False)
-
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+
     user = relationship("User", back_populates="qbo_token")
