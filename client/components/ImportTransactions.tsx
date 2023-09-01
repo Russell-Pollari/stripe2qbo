@@ -13,7 +13,7 @@ const ImportTransactions = () => {
     const dispatch = useDispatch();
     const isSyncing = useSelector((state: RootState) => state.sync.isSyncing);
     const status = useSelector((state: RootState) => state.sync.status);
-    const { data: stripeInfo } = useGetStripeInfoQuery('');
+    const { data: stripeInfo } = useGetStripeInfoQuery();
 
     const importTransactions = async (options: SyncOptions) => {
         if (!stripeInfo) {

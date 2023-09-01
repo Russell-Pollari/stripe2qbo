@@ -1,11 +1,9 @@
 import * as React from 'react';
-import { useDispatch } from 'react-redux';
 
 import ConnectionCard from './ConnectionCard';
 import {
     useGetStripeInfoQuery,
     useDisconnectStripeMutation,
-    api,
 } from '../services/api';
 
 const connect = () => {
@@ -17,21 +15,19 @@ const connect = () => {
 };
 
 const StripeConnection = () => {
-    const { data: stripeInfo, isLoading } = useGetStripeInfoQuery('');
+    const { data: stripeInfo, isLoading, error } = useGetStripeInfoQuery();
     const [disconnect] = useDisconnectStripeMutation();
-    const dispatch = useDispatch();
-
+    console.log(error);
     return (
         <ConnectionCard
             isConnected={!!stripeInfo}
             title="Stripe account"
             isLoading={isLoading}
             disconnect={() => {
-                disconnect('');
-                dispatch(api.util.resetApiState());
+                disconnect();
             }}
         >
-            {stripeInfo ? (
+            {stripeInfo && !error ? (
                 <span>
                     {stripeInfo.id} ({stripeInfo.country})
                 </span>

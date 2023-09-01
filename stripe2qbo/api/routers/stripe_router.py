@@ -47,8 +47,13 @@ async def stripe_oauth_callback(
 
 
 @router.post("/disconnect")
-async def disconnect_stripe(request: Request):
-    request.session["stripe_token"] = None
+async def disconnect_stripe(
+    request: Request,
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user)],
+) -> None:
+    user.stripe_user_id = None
+    db.commit()
 
 
 @router.get("/info")

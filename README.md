@@ -101,7 +101,6 @@ The default tax code to use for all invoice line items with zero tax. (e.g. TAX 
 
 Here's a rough roadmap of what's on the way to make this generally useful:
 
--   [ ] Login flow using QBO oauth
 -   [ ] JWT token for authentication
 -   [ ] DB model for transactions, show historical data on login
 -   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
@@ -109,8 +108,8 @@ Here's a rough roadmap of what's on the way to make this generally useful:
 -   [ ] Product settings to customize behaviour of individual products
 -   [ ] Tax settings to customize behaviour of taxes
 -   [ ] Add test suite and CI/CD
--   [ ] Migrations framework
--   [ ] Support all transaction types (e.g. refunds, transfers, etc.)
+-   [ ] Migrations framework for DB
+-   [ ] Support all Stripe transaction types/variants (e.g. refunds, transfers, etc.)
 -   [ ] Create new QBO accounts from Sync Settings
 -   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
 -   [ ] Add more info to transaction table - e.g. fees, tax, customer, etc.

@@ -13,17 +13,32 @@ export const api = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: '/',
     }),
-    tagTypes: ['Settings', 'Stripe'],
+    tagTypes: ['Settings', 'Stripe', 'User'],
     endpoints: (builder) => ({
-        // STRIPE
-        getStripeInfo: builder.query<StripeInfo, string>({
-            query: () => 'stripe/info',
+        // AUTH
+        getCurrentUser: builder.query<number, void>({
+            query: () => 'userId',
+            providesTags: ['User'],
         }),
-        disconnectStripe: builder.mutation<StripeInfo, string>({
+        logout: builder.mutation<void, void>({
+            query: () => ({
+                url: 'logout',
+                method: 'POST',
+            }),
+            invalidatesTags: ['User'],
+        }),
+
+        // STRIPE
+        getStripeInfo: builder.query<StripeInfo, void>({
+            query: () => 'stripe/info',
+            providesTags: ['Stripe'],
+        }),
+        disconnectStripe: builder.mutation<StripeInfo, void>({
             query: () => ({
                 url: 'stripe/disconnect',
                 method: 'POST',
             }),
+            invalidatesTags: ['Stripe'],
         }),
 
         // QBO
@@ -38,9 +53,6 @@ export const api = createApi({
         }),
         getTaxCodes: builder.query<QBOTaxCode[], string>({
             query: () => 'qbo/taxcodes',
-        }),
-        disconnectQBO: builder.mutation<QBOCompanyInfo, string>({
-            query: () => 'qbo/disconnect',
         }),
 
         // settings
@@ -60,6 +72,9 @@ export const api = createApi({
 });
 
 export const {
+    useGetCurrentUserQuery,
+    useLogoutMutation,
+
     useGetStripeInfoQuery,
     useDisconnectStripeMutation,
 
@@ -67,7 +82,6 @@ export const {
     useGetTaxCodesQuery,
     useGetVendorsQuery,
     useGetCompanyInfoQuery,
-    useDisconnectQBOMutation,
 
     useGetSettingsQuery,
     useUpdateSettingsMutation,

@@ -56,12 +56,6 @@ def qbo_oauth_callback(
     return RedirectResponse("/")
 
 
-@router.get("/disconnect")
-async def disconnect_qbo(request: Request):
-    request.session["user_id"] = None
-    return RedirectResponse("/")
-
-
 @router.get("/info")
 async def get_qbo_info(token: Annotated[Token, Depends(get_qbo_token)]) -> CompanyInfo:
     try:

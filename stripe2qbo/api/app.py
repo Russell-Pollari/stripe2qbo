@@ -3,7 +3,7 @@ import os
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
-from fastapi import Depends, FastAPI, WebSocket, Query
+from fastapi import Depends, FastAPI, WebSocket, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -12,11 +12,16 @@ from dotenv import load_dotenv
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
-from stripe2qbo.api.dependencies import get_db, get_stripe_user_id, get_qbo_token
+from stripe2qbo.api.dependencies import (
+    get_db,
+    get_stripe_user_id,
+    get_qbo_token,
+    get_current_user,
+)
 from stripe2qbo.qbo.auth import Token
 
 from stripe2qbo.db.database import engine
-from stripe2qbo.db.models import Base, SyncSettings
+from stripe2qbo.db.models import Base, SyncSettings, User
 from stripe2qbo.db.schemas import Settings
 
 Base.metadata.create_all(bind=engine)
@@ -51,6 +56,17 @@ async def index() -> HTMLResponse:
         """,
         status_code=200,
     )
+
+
+@app.get("/userId")
+async def user_id(user: Annotated[User, Depends(get_current_user)]) -> int:
+    return user.id
+
+
+@app.post("/logout")
+async def logout(request: Request) -> None:
+    request.session.clear()
+    return None
 
 
 @app.get("/settings")

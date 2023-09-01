@@ -25,7 +25,7 @@ class User(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=False)
-    stripe_user_id: Mapped[str]
+    stripe_user_id: Mapped[str] = mapped_column(nullable=True)
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
 
 
