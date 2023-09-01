@@ -53,11 +53,11 @@ def generate_auth_token(code: str, realm_id: str) -> Token:
     client = auth_client()
     client.get_bearer_token(code)
     token = create_token(client, realm_id)
-    return Token(**token.model_dump())
+    return token
 
 
 def refresh_auth_token(refresh_token: str, realm_id: str) -> Token:
     client = auth_client()
     client.refresh(refresh_token=refresh_token)
     token = create_token(client, realm_id)
-    return Token(**token.model_dump())
+    return token

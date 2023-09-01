@@ -32,20 +32,25 @@ def get_db():
 
 
 def get_qbo_token(request: Request, db: Annotated[Session, Depends(get_db)]) -> Token:
-    user_id = request.session.get("token")
+    user_id = request.session.get("user_id")
     token = db.query(QBOToken).filter(QBOToken.user_id == user_id).first()
 
     if token is None:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    token = Token.model_validate(token, from_attributes=True)
-
     if datetime.fromisoformat(token.refresh_token_expires_at) < datetime.now():
         raise HTTPException(status_code=401, detail="Access token expired")
 
     if datetime.fromisoformat(token.expires_at) < datetime.now():
-        token = refresh_auth_token(token.refresh_token, token.realm_id)
-        request.session["token"] = token.model_dump()
+        refreshed_token = refresh_auth_token(token.refresh_token, token.realm_id)
+        token.access_token = refreshed_token.access_token
+        token.refresh_token = refreshed_token.refresh_token
+        token.expires_at = refreshed_token.expires_at
+        token.refresh_token_expires_at = refreshed_token.refresh_token_expires_at
+        db.commit()
+        db.refresh(token)
+
+    token = Token.model_validate(token, from_attributes=True)
 
     return token
 
@@ -87,7 +92,7 @@ def qbo_oauth_callback(
 
 @router.get("/disconnect")
 async def disconnect_qbo(request: Request):
-    request.session["token"] = None
+    request.session["user_id"] = None
     return RedirectResponse("/")
 
 

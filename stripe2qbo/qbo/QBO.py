@@ -1,8 +1,6 @@
 from datetime import datetime
 from typing import Any, Optional, Mapping, List
-import os
-import json
-from requests import request, Response
+from requests import Response
 
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.models import (
@@ -13,15 +11,12 @@ from stripe2qbo.qbo.models import (
     TaxCode,
     TaxDetail,
 )
+from stripe2qbo.qbo.qbo_request import qbo_request
 
 
 class QBO:
     realm_id: str | None = None
     access_token: str | None = None
-
-    def __init__(self, token: Optional[Token] = None) -> None:
-        if token is not None:
-            self.set_token(token)
 
     def set_token(self, token: Token) -> None:
         self.realm_id = token.realm_id
@@ -30,23 +25,16 @@ class QBO:
     def _request(
         self, path: str, method: str = "GET", body: Optional[Mapping[str, Any]] = None
     ) -> Response:
-        try:
-            response = request(
-                method,
-                url=f"{os.getenv('QBO_BASE_URL', '')}/{self.realm_id}/{path}",
-                headers={
-                    "Accept": "application/json",
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.access_token}",
-                },
-                data=json.dumps(body),
-            )
-        except Exception as e:
-            raise Exception(f"Error making request: {e}")
+        if self.access_token is None or self.realm_id is None:
+            raise Exception("QBO token not set")
 
-        if "Fault" in response.json():
-            raise Exception(f"Error making request: {response.json()['Fault']}")
-
+        response = qbo_request(
+            path=path,
+            method=method,
+            body=body,
+            access_token=self.access_token,
+            realm_id=self.realm_id,
+        )
         return response
 
     def _query(self, query: str) -> Response:
