@@ -1,5 +1,4 @@
 from typing import Annotated
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -12,39 +11,14 @@ from stripe2qbo.qbo.auth import (
     Token,
     generate_auth_token,
     get_auth_url,
-    refresh_auth_token,
 )
-from stripe2qbo.db.database import get_db
+from stripe2qbo.api.dependencies import get_db, get_qbo_token
 from stripe2qbo.db.models import User, QBOToken
 
 router = APIRouter(
     prefix="/qbo",
     tags=["qbo"],
 )
-
-
-def get_qbo_token(request: Request, db: Annotated[Session, Depends(get_db)]) -> Token:
-    user_id = request.session.get("user_id")
-    token = db.query(QBOToken).filter(QBOToken.user_id == user_id).first()
-
-    if token is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    if datetime.fromisoformat(token.refresh_token_expires_at) < datetime.now():
-        raise HTTPException(status_code=401, detail="Access token expired")
-
-    if datetime.fromisoformat(token.expires_at) < datetime.now():
-        refreshed_token = refresh_auth_token(token.refresh_token, token.realm_id)
-        token.access_token = refreshed_token.access_token
-        token.refresh_token = refreshed_token.refresh_token
-        token.expires_at = refreshed_token.expires_at
-        token.refresh_token_expires_at = refreshed_token.refresh_token_expires_at
-        db.commit()
-        db.refresh(token)
-
-    token = Token.model_validate(token, from_attributes=True)
-
-    return token
 
 
 @router.get("/oauth2")
