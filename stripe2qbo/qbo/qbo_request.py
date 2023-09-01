@@ -5,8 +5,6 @@ from dotenv import load_dotenv
 
 import requests
 
-from stripe2qbo.qbo.auth import get_token_from_file
-
 load_dotenv()
 
 
@@ -14,17 +12,10 @@ def qbo_request(
     path: str,
     method: str = "GET",
     body: Optional[Mapping[str, Any]] = None,
-    access_token: Optional[str] = None,
-    realm_id: Optional[str] = None,
+    access_token: str = "",
+    realm_id: str = "",
 ) -> requests.Response:
-    token = get_token_from_file()
-
-    if access_token is None and token is not None:
-        access_token = token.access_token
-    if realm_id is None and token is not None:
-        realm_id = token.realm_id
-
-    if access_token is None:
+    if access_token == "":
         raise Exception("No access token provided")
 
     try:

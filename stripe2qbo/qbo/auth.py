@@ -1,6 +1,4 @@
-from typing import Optional
 import os
-import json
 from datetime import datetime, timedelta
 
 from intuitlib.client import AuthClient
@@ -55,7 +53,6 @@ def generate_auth_token(code: str, realm_id: str) -> Token:
     client = auth_client()
     client.get_bearer_token(code)
     token = create_token(client, realm_id)
-    save_token_to_file(token)
     return Token(**token.model_dump())
 
 
@@ -63,22 +60,4 @@ def refresh_auth_token(refresh_token: str, realm_id: str) -> Token:
     client = auth_client()
     client.refresh(refresh_token=refresh_token)
     token = create_token(client, realm_id)
-    save_token_to_file(token)
     return Token(**token.model_dump())
-
-
-# TODO: replace with simple SQL db
-def get_token_from_file(path: str = "token.json") -> Optional[Token]:
-    if not os.path.exists(path):
-        return None
-    with open(path, "r") as f:
-        return Token(**json.load(f))
-
-
-def save_token_to_file(token: Token, path: str = "token.json") -> None:
-    with open(path, "w") as f:
-        json.dump(token.model_dump(), f, indent=4)
-
-
-def delete_token_file(path: str = "token.json") -> None:
-    os.remove(path)

@@ -40,10 +40,7 @@ export const api = createApi({
             query: () => 'qbo/taxcodes',
         }),
         disconnectQBO: builder.mutation<QBOCompanyInfo, string>({
-            query: () => ({
-                url: 'qbo/disconnect',
-                method: 'POST',
-            }),
+            query: () => 'qbo/disconnect',
         }),
 
         // settings

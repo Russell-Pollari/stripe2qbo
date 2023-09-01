@@ -2,8 +2,9 @@ from typing import Literal, Optional, Dict
 import datetime
 
 from pydantic import BaseModel
+from stripe2qbo.qbo.auth import Token
 
-import stripe2qbo.qbo.qbo as qbo
+from stripe2qbo.qbo.QBO import QBO
 import stripe2qbo.qbo.models as qbo_models
 from stripe2qbo.stripe.stripe_transactions import (
     Transaction,
@@ -19,6 +20,9 @@ class TransactionSync(BaseModel):
     amount: int
     description: str
     status: Optional[Literal["pending", "success", "failed"]] = None
+
+
+qbo = QBO()
 
 
 def _timestamp_to_date(timestamp: int) -> datetime.datetime:
@@ -60,6 +64,10 @@ def tax_detail_from_invoice(
                 continue
 
             tax_code = qbo.get_tax_code(tax_code_id)
+
+            if tax_code is None:
+                raise Exception(f"Tax code {tax_code_id} not found")
+
             tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
 
             detail = tax_details.get(tax_code_id)
@@ -83,6 +91,9 @@ def tax_detail_from_invoice(
         if tax_code_id != "NON":
             # No rates associated with the NON psuedo tax code.
             tax_code = qbo.get_tax_code(tax_code_id)
+            if tax_code is None:
+                raise Exception(f"Tax code {tax_code_id} not found")
+
             tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
             tax_details[tax_code_id] = qbo_models.TaxLineModel(
                 Amount=0,
@@ -93,7 +104,7 @@ def tax_detail_from_invoice(
                 ),
             )
 
-    return qbo.TaxDetail(
+    return qbo_models.TaxDetail(
         TaxLine=list(tax_details.values()),
         TotalTax=total_tax / 100,
     )
@@ -158,7 +169,7 @@ def check_for_existing(
     if len(filters) > 0:
         filter_string = "where " + " and ".join(filters)
 
-    response = qbo.query(f"select * from {object_type} {filter_string}")
+    response = qbo._query(f"select * from {object_type} {filter_string}")
     qbo_items = response.json()["QueryResponse"].get(object_type, [])
 
     # Cannot query by PrivateNote, so we filter the returned items
@@ -178,6 +189,7 @@ def sync_invoice(
     qbo_customer_id: str,
     description: str = "",
     settings: Optional[Settings] = None,
+    qbo_token: Optional[Token] = None,
 ) -> str:
     """Sync a Stripe invoice to QBO."""
     assert settings is not None
@@ -242,6 +254,7 @@ def sync_invoice_payment(
     settings: Settings,
 ) -> str:
     assert transaction.charge is not None
+
     qbo_payment_id = check_for_existing(
         "Payment",
         qbo_customer_id,
@@ -334,7 +347,11 @@ def sync_payout(transaction: Transaction, settings: Settings) -> str:
     return transfer_id
 
 
-def sync_transaction(transaction: Transaction, settings: Settings) -> TransactionSync:
+def sync_transaction(
+    transaction: Transaction, settings: Settings, qbo_token: Token
+) -> TransactionSync:
+    qbo.set_token(qbo_token)
+
     sync_status = TransactionSync(
         **transaction.model_dump(),
         status="success",
@@ -364,6 +381,7 @@ def sync_transaction(transaction: Transaction, settings: Settings) -> Transactio
                 qbo_customer.Id,
                 description=transaction.description,
                 settings=settings,
+                qbo_token=qbo_token,
             )
 
         sync_invoice_payment(qbo_customer.Id, qbo_invoice_id, transaction, settings)

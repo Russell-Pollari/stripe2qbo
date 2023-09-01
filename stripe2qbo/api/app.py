@@ -99,10 +99,12 @@ def save_settings(
     dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
 )
 async def sync_single_transaction(
-    transaction_id: str, settings: Annotated[Settings, Depends(get_settings)]
+    transaction_id: str,
+    settings: Annotated[Settings, Depends(get_settings)],
+    qbo_token: Annotated[Token, Depends(qbo.get_qbo_token)],
 ) -> TransactionSync:
     transaction = get_transaction(transaction_id)
-    transaction_sync = sync_transaction(transaction, settings)
+    transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
     return transaction_sync
 
@@ -115,6 +117,7 @@ async def sync_many(
     websocket: WebSocket,
     transaction_ids: Annotated[list[str], Query()],
     settings: Annotated[Settings, Depends(get_settings)],
+    qbo_token: Annotated[Token, Depends(qbo.get_qbo_token)],
 ):
     await websocket.accept()
     await websocket.send_json(
@@ -122,7 +125,7 @@ async def sync_many(
     )
     for transaction_id in transaction_ids:
         transaction = get_transaction(transaction_id)
-        transaction_sync = sync_transaction(transaction, settings)
+        transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
         await websocket.send_json(
             {
