@@ -2,7 +2,6 @@ from typing import List, Optional
 import os
 import stripe
 
-from stripe2qbo.stripe.auth import get_token_from_file
 from stripe2qbo.stripe.models import (
     Charge,
     Customer,
@@ -18,11 +17,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 stripe.api_key = os.getenv("STRIPE_API_KEY")
-token = get_token_from_file()
-account_id = token.stripe_user_id if token is not None else ""
 
 
-def build_transaction(txn: stripe.BalanceTransaction) -> Transaction:
+def build_transaction(txn: stripe.BalanceTransaction, account_id: str) -> Transaction:
     transaction = Transaction(**txn.to_dict())
 
     if transaction.type in ["charge", "payment"]:
@@ -60,7 +57,7 @@ def build_transaction(txn: stripe.BalanceTransaction) -> Transaction:
     return transaction
 
 
-def get_transaction(transaction_id: str) -> Transaction:
+def get_transaction(transaction_id: str, account_id: str) -> Transaction:
     txn = stripe.BalanceTransaction.retrieve(
         transaction_id,
         expand=[
@@ -71,7 +68,7 @@ def get_transaction(transaction_id: str) -> Transaction:
         ],
         stripe_account=account_id,
     )
-    return build_transaction(txn)
+    return build_transaction(txn, account_id)
 
 
 def get_transactions(
@@ -81,7 +78,9 @@ def get_transactions(
     currency: Optional[str] = None,
     limit: Optional[int] = 100,
     starting_after: Optional[str] = None,
+    account_id: Optional[str] = None,
 ) -> List[Transaction]:
+    assert account_id is not None
 
     # TODO: paginatition when N > 100
     txns = stripe.BalanceTransaction.list(
@@ -101,7 +100,7 @@ def get_transactions(
 
     transactions = []
     for txn in txns:
-        transaction = build_transaction(txn)
+        transaction = build_transaction(txn, account_id)
         transactions.append(transaction)
 
     return transactions

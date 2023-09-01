@@ -1,6 +1,4 @@
-from typing import Optional
 import os
-import json
 from pydantic import BaseModel
 import stripe
 from dotenv import load_dotenv
@@ -27,23 +25,4 @@ def get_auth_url() -> str:
 def generate_auth_token(code: str) -> StripeToken:
     resp = stripe.OAuth.token(grant_type="authorization_code", code=code)
     stripe_token = StripeToken(stripe_user_id=resp["stripe_user_id"])
-    save_token_to_file(stripe_token)
     return stripe_token
-
-
-# TODO: replace with simple SQL db
-def get_token_from_file(path: str = "stripe_token.json") -> Optional[StripeToken]:
-    if not os.path.exists(path):
-        return None
-    with open(path, "r") as f:
-        return StripeToken(**json.load(f))
-
-
-def save_token_to_file(token: StripeToken, path: str = "stripe_token.json") -> None:
-    with open(path, "w") as f:
-        json.dump(token.model_dump(), f, indent=4)
-
-
-def delete_token_file(path: str = "stripe_token.json") -> None:
-    if os.path.exists(path):
-        os.remove(path)

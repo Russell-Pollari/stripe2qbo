@@ -3,7 +3,7 @@ import os
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
-from fastapi import Depends, FastAPI, WebSocket, Query
+from fastapi import Depends, FastAPI, WebSocket, Query, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -12,21 +12,19 @@ from dotenv import load_dotenv
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
+from stripe2qbo.api.dependencies import (
+    get_db,
+    get_stripe_user_id,
+    get_qbo_token,
+    get_current_user,
+)
 from stripe2qbo.qbo.auth import Token
 
-from stripe2qbo.db.database import SessionLocal, engine
-from stripe2qbo.db.models import Base, SyncSettings
+from stripe2qbo.db.database import engine
+from stripe2qbo.db.models import Base, SyncSettings, User
 from stripe2qbo.db.schemas import Settings
 
 Base.metadata.create_all(bind=engine)
-
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 
 
 load_dotenv()
@@ -60,9 +58,20 @@ async def index() -> HTMLResponse:
     )
 
 
+@app.get("/userId")
+async def user_id(user: Annotated[User, Depends(get_current_user)]) -> int:
+    return user.id
+
+
+@app.post("/logout")
+async def logout(request: Request) -> None:
+    request.session.clear()
+    return None
+
+
 @app.get("/settings")
 def get_settings(
-    token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    token: Annotated[Token, Depends(get_qbo_token)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Optional[Settings]:
     realm_id = token.realm_id
@@ -74,7 +83,7 @@ def get_settings(
 @app.post("/settings")
 def save_settings(
     settings: Settings,
-    token: Annotated[Token, Depends(qbo.get_qbo_token)],
+    token: Annotated[Token, Depends(get_qbo_token)],
     db: Annotated[Session, Depends(get_db)],
 ) -> None:
     realm_id = token.realm_id
@@ -94,35 +103,34 @@ def save_settings(
     db.commit()
 
 
-@app.post(
-    "/sync",
-    dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
-)
+@app.post("/sync")
 async def sync_single_transaction(
-    transaction_id: str, settings: Annotated[Settings, Depends(get_settings)]
+    transaction_id: str,
+    settings: Annotated[Settings, Depends(get_settings)],
+    qbo_token: Annotated[Token, Depends(get_qbo_token)],
+    stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
 ) -> TransactionSync:
-    transaction = get_transaction(transaction_id)
-    transaction_sync = sync_transaction(transaction, settings)
+    transaction = get_transaction(transaction_id, account_id=stripe_user_id)
+    transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
     return transaction_sync
 
 
-@app.websocket(
-    "/syncmany",
-    dependencies=[Depends(qbo.get_qbo_token), Depends(stripe_router.get_stripe_token)],
-)
+@app.websocket("/syncmany")
 async def sync_many(
     websocket: WebSocket,
     transaction_ids: Annotated[list[str], Query()],
     settings: Annotated[Settings, Depends(get_settings)],
+    qbo_token: Annotated[Token, Depends(get_qbo_token)],
+    stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
 ):
     await websocket.accept()
     await websocket.send_json(
         {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
     for transaction_id in transaction_ids:
-        transaction = get_transaction(transaction_id)
-        transaction_sync = sync_transaction(transaction, settings)
+        transaction = get_transaction(transaction_id, account_id=stripe_user_id)
+        transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
         await websocket.send_json(
             {
