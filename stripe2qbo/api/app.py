@@ -13,6 +13,7 @@ from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync, sync_transaction
 from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.api.dependencies import (
+    get_current_user_ws,
     get_db,
     get_stripe_user_id,
     get_qbo_token,
@@ -120,16 +121,24 @@ async def sync_single_transaction(
 async def sync_many(
     websocket: WebSocket,
     transaction_ids: Annotated[list[str], Query()],
-    settings: Annotated[Settings, Depends(get_settings)],
-    qbo_token: Annotated[Token, Depends(get_qbo_token)],
-    stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user_ws)],
 ):
+    # Most dependencies are not defines for websocket scope
+    settings_orm = (
+        db.query(SyncSettings)
+        .where(SyncSettings.qbo_realm_id == user.qbo_realm_id)
+        .first()
+    )
+    settings = Settings.model_validate(settings_orm)
+    qbo_token = get_qbo_token(user, db)
+
     await websocket.accept()
     await websocket.send_json(
         {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
     for transaction_id in transaction_ids:
-        transaction = get_transaction(transaction_id, account_id=stripe_user_id)
+        transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
         transaction_sync = sync_transaction(transaction, settings, qbo_token)
 
         await websocket.send_json(
