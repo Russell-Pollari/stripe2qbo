@@ -33,7 +33,7 @@ class Invoice(BaseModel):
     due_date: Optional[int] = None
     amount_due: int  # cents
     currency: Literal["usd", "cad"]
-    lines: Optional[List[InvoiceLine]] = []
+    lines: List[InvoiceLine] = []
     tax: Optional[int] = None
     number: Optional[str] = None
 
@@ -42,7 +42,7 @@ class Charge(BaseModel):
     id: str
     amount: float  # cents
     created: int  # timestamp
-    description: str
+    description: Optional[str]
 
 
 class Customer(BaseModel):
@@ -59,7 +59,7 @@ class Payout(BaseModel):
 class Transaction(BaseModel):
     id: str
     created: int  # timestamp
-    description: str
+    description: Optional[str] = None
     type: str
     amount: float  # cents
     fee: float
