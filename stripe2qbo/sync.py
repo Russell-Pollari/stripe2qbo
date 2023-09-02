@@ -282,6 +282,36 @@ def sync_invoice_payment(
     return payment_id
 
 
+def expense_from_transaction(
+    transaction: Transaction, settings: Settings
+) -> qbo_models.Expense:
+    if transaction.type in ["charge", "payment"]:
+        amount = transaction.fee / 100
+    else:
+        amount = -transaction.amount / 100
+
+    return qbo_models.Expense(
+        TotalAmt=amount,
+        AccountRef=qbo_models.ItemRef(value=settings.stripe_clearing_account_id),
+        EntityRef=qbo_models.ItemRef(value=settings.stripe_vendor_id),
+        TxnDate=_timestamp_to_date(transaction.created).strftime("%Y-%m-%d"),
+        PrivateNote=f"""
+            {transaction.description}
+            {transaction.id}
+            {transaction.charge.id if transaction.charge else None}
+        """,
+        Line=[
+            qbo_models.ExpenseLine(
+                Amount=amount,
+                AccountBasedExpenseLineDetail=qbo_models.AccountBasedExpenseLineDetail(
+                    AccountRef=qbo_models.ItemRef(value=settings.stripe_fee_account_id),
+                ),
+                Description=transaction.description,
+            )
+        ],
+    )
+
+
 def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
     expense_id = check_for_existing(
         "Purchase",
@@ -294,26 +324,9 @@ def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
         print(f"Expense for {transaction.id} already synced")
         return expense_id
 
-    amount = (
-        transaction.fee / 100
-        if transaction.type in ["charge", "payment"]
-        else -transaction.amount / 100
-    )
+    expense = expense_from_transaction(transaction, settings)
+    expense_id = qbo.create_expense(expense)
 
-    expense_id = qbo.create_expense(
-        amount,
-        _timestamp_to_date(transaction.created),
-        settings.stripe_clearing_account_id,
-        settings.stripe_vendor_id,
-        settings.stripe_fee_account_id,
-        description=transaction.description,
-        private_note=f"""
-            {transaction.description}
-            {transaction.id}
-            {transaction.charge.id if transaction.charge else None}
-            {transaction.invoice.id if transaction.invoice else None}
-        """,
-    )
     print(f"Created expense {expense_id} for stripe fee {transaction.id}")
     return expense_id
 

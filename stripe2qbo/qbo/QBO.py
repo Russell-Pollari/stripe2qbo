@@ -5,6 +5,7 @@ from requests import Response
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.models import (
     Customer,
+    Expense,
     InvoiceLine,
     ItemRef,
     QBOCurrency,
@@ -223,36 +224,10 @@ class QBO:
 
         return response.json()["Payment"]["Id"]
 
-    def create_expense(
-        self,
-        amount: float,
-        date: datetime,
-        bank_account_id: str,
-        vendor_id: str,
-        expense_account_id: str,
-        private_note: str = "",
-        description: Optional[str] = None,
-    ) -> str:
-        body = {
-            "TotalAmt": amount,
-            "AccountRef": {"value": bank_account_id},
-            "PaymentType": "Check",
-            "Line": [
-                {
-                    "Amount": amount,
-                    "DetailType": "AccountBasedExpenseLineDetail",
-                    "AccountBasedExpenseLineDetail": {
-                        "AccountRef": {"value": expense_account_id},
-                    },
-                    "Description": description,
-                }
-            ],
-            "EntityRef": {"value": vendor_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "PrivateNote": private_note,
-        }
-
-        response = self._request(path="/purchase", body=body, method="POST")
+    def create_expense(self, expense: Expense) -> str:
+        response = self._request(
+            path="/purchase", body=expense.model_dump(), method="POST"
+        )
         return response.json()["Purchase"]["Id"]
 
     def create_transfer(
