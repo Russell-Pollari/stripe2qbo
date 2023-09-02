@@ -6,6 +6,7 @@ from stripe2qbo.qbo.auth import Token
 
 from stripe2qbo.qbo.QBO import QBO
 import stripe2qbo.qbo.models as qbo_models
+from stripe2qbo.stripe.models import Payout
 from stripe2qbo.stripe.stripe_transactions import (
     Transaction,
     Invoice,
@@ -317,32 +318,36 @@ def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
     return expense_id
 
 
-def sync_payout(transaction: Transaction, settings: Settings) -> str:
-    assert transaction.type == "payout"
-    assert transaction.payout is not None
-    transfer_id = check_for_existing("Transfer", private_note=transaction.payout.id)
-
-    if transfer_id is not None:
-        print(f"Transfer {transaction.id} already synced")
-        return transfer_id
-
-    if transaction.amount < 0:
-        amount = transaction.amount * -1
+def transfer_from_payout(payout: Payout, settings: Settings) -> qbo_models.Transfer:
+    if payout.amount > 0:
+        amount = payout.amount
         to_account = settings.stripe_payout_account_id
         from_account = settings.stripe_clearing_account_id
     else:
-        amount = transaction.amount
+        amount = payout.amount * -1
         to_account = settings.stripe_clearing_account_id
         from_account = settings.stripe_payout_account_id
 
-    transfer_id = qbo.create_transfer(
-        amount / 100,
-        _timestamp_to_date(transaction.created),
-        from_account,
-        to_account,
-        private_note=f"{transaction.description}\n{transaction.id}\n{transaction.payout.id}",  # noqa
+    return qbo_models.Transfer(
+        Amount=amount / 100,
+        FromAccountRef=qbo_models.ItemRef(value=from_account),
+        ToAccountRef=qbo_models.ItemRef(value=to_account),
+        # TODO: use arrival date?
+        TxnDate=_timestamp_to_date(payout.created).strftime("%Y-%m-%d"),
+        PrivateNote=f"{payout.description}\n{payout.id}",
     )
-    print(f"Created transfer {transfer_id} for {transaction.payout.id}")
+
+
+def sync_payout(payout: Payout, settings: Settings) -> str:
+    transfer_id = check_for_existing("Transfer", private_note=payout.id)
+    if transfer_id is not None:
+        print(f"Payout {payout.id} already synced")
+        return transfer_id
+
+    transfer = transfer_from_payout(payout, settings)
+    transfer_id = qbo.create_transfer(transfer)
+
+    print(f"Created transfer {transfer_id} for {payout.id}")
     return transfer_id
 
 
@@ -386,7 +391,8 @@ def sync_transaction(
 
         sync_stripe_fee(transaction, settings)
     elif transaction.type == "payout":
-        sync_payout(transaction, settings)
+        assert transaction.payout is not None
+        sync_payout(transaction.payout, settings)
     else:
         sync_status.status = "failed"
 

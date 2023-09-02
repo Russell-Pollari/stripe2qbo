@@ -17,7 +17,7 @@ class CurrencyRef(BaseModel):
 
 class ItemRef(BaseModel):
     value: str
-    name: Optional[str]
+    name: Optional[str] = None
 
 
 class TaxRateRef(BaseModel):
@@ -77,3 +77,11 @@ class InvoiceLine(BaseModel):
     Description: str
     SalesItemLineDetail: SalesItemLineDetail
     DetailType: Literal["SalesItemLineDetail"] = "SalesItemLineDetail"
+
+
+class Transfer(BaseModel):
+    Amount: float
+    FromAccountRef: ItemRef
+    ToAccountRef: ItemRef
+    TxnDate: str
+    PrivateNote: str

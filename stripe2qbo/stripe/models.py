@@ -54,6 +54,10 @@ class Customer(BaseModel):
 
 class Payout(BaseModel):
     id: str
+    amount: int
+    arrival_date: int  # timestamp
+    created: int  # timestamp
+    description: str
 
 
 class Transaction(BaseModel):

@@ -10,6 +10,7 @@ from stripe2qbo.qbo.models import (
     QBOCurrency,
     TaxCode,
     TaxDetail,
+    Transfer,
 )
 from stripe2qbo.qbo.qbo_request import qbo_request
 
@@ -256,19 +257,9 @@ class QBO:
 
     def create_transfer(
         self,
-        amount: float,
-        date: datetime,
-        source_account_id: str,
-        destination_account_id: str,
-        private_note: str = "",
+        transfer: Transfer,
     ) -> str:
-        body = {
-            "Amount": amount,
-            "FromAccountRef": {"value": source_account_id},
-            "ToAccountRef": {"value": destination_account_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "PrivateNote": private_note,
-        }
-
-        response = self._request(path="/transfer", body=body, method="POST")
+        response = self._request(
+            path="/transfer", body=transfer.model_dump(), method="POST"
+        )
         return response.json()["Transfer"]["Id"]
