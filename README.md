@@ -97,6 +97,22 @@ The default tax code to use for all invoice line items with zero tax. (e.g. TAX 
 
 > 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
 
+## Development
+
+### Server
+
+`$ python -m uvicorn stripe2qbo.api.app:app --reload`
+
+### Client
+
+`$ npm run dev`
+
+#### Tests
+
+`$ pytest`
+
+Requires `TEST_STRIPE_API_KEY` and `TEST_STRIPE_ACCOUNT_ID` env vars to be set.
+
 ## ROADMAP:
 
 Here's a rough roadmap of what's on the way to make this generally useful:
