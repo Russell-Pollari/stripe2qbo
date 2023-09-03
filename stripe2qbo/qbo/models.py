@@ -13,7 +13,7 @@ class CompanyInfo(BaseModel):
 
 class CurrencyRef(BaseModel):
     value: QBOCurrency
-    name: Optional[str]
+    name: Optional[str] = None
 
 
 class ItemRef(BaseModel):
@@ -50,7 +50,7 @@ class TaxCode(BaseModel):
 
 
 class TaxLineDetail(BaseModel):
-    TaxRateRef: TaxRateRef
+    # TaxRateRef: TaxRateRef
     PercentBased: bool = True
     TaxPercent: float
     NetAmountTaxable: float
@@ -66,18 +66,6 @@ class TaxDetail(BaseModel):
     TotalTax: float
     TaxLine: Optional[List[TaxLineModel]] = None
     TxnTaxCodeRef: Optional[TaxCodeRef] = None
-
-
-class SalesItemLineDetail(BaseModel):
-    ItemRef: ItemRef
-    TaxCodeRef: Optional[TaxCodeRef]
-
-
-class InvoiceLine(BaseModel):
-    Amount: float
-    Description: str
-    SalesItemLineDetail: SalesItemLineDetail
-    DetailType: Literal["SalesItemLineDetail"] = "SalesItemLineDetail"
 
 
 class Transfer(BaseModel):
@@ -109,3 +97,31 @@ class Expense(BaseModel):
     TxnDate: str
     PrivateNote: str
     Line: List[ExpenseLine]
+
+
+class ProductItemRef(BaseModel):
+    value: Optional[str] = None
+    name: Optional[str] = None
+
+
+class SalesItemLineDetail(BaseModel):
+    ItemRef: ProductItemRef
+    TaxCodeRef: Optional[TaxCodeRef]
+
+
+class InvoiceLine(BaseModel):
+    Amount: float
+    Description: Optional[str]
+    SalesItemLineDetail: SalesItemLineDetail
+    DetailType: Literal["SalesItemLineDetail"] = "SalesItemLineDetail"
+
+
+class Invoice(BaseModel):
+    CustomerRef: ItemRef
+    CurrencyRef: CurrencyRef
+    TxnDate: Optional[str] = None
+    DueDate: Optional[str] = None
+    PrivateNote: str
+    DocNumber: Optional[str] = None
+    TxnTaxDetail: Optional[TaxDetail] = None
+    Line: List[InvoiceLine]

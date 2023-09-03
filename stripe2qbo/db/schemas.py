@@ -1,5 +1,3 @@
-from typing import Optional
-
 from pydantic import BaseModel
 
 
@@ -13,7 +11,7 @@ class Settings(BaseModel):
     stripe_payout_account_id: str
     stripe_vendor_id: str
     stripe_fee_account_id: str
-    default_income_account_id: Optional[str] = None
+    default_income_account_id: str
     default_tax_code_id: str
     exempt_tax_code_id: str
     # product_settings: list[ProductSettings]

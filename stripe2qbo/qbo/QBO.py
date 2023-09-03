@@ -1,16 +1,15 @@
 from datetime import datetime
-from typing import Any, Optional, Mapping, List
+from typing import Any, Optional, Mapping
 from requests import Response
 
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.models import (
     Customer,
     Expense,
-    InvoiceLine,
+    Invoice,
     ItemRef,
     QBOCurrency,
     TaxCode,
-    TaxDetail,
     Transfer,
 )
 from stripe2qbo.qbo.qbo_request import qbo_request
@@ -150,43 +149,11 @@ class QBO:
             return acount_id
         return self.create_account(account_name, account_type)
 
-    def create_invoice(
-        self,
-        customer_id: str,
-        lines: List[InvoiceLine],
-        created_date: Optional[datetime],
-        currency: Optional[QBOCurrency] = "USD",
-        private_note: Optional[str] = None,
-        due_date: Optional[datetime] = None,
-        txn_date: Optional[datetime] = None,
-        tax_detail: Optional[TaxDetail] = None,
-        inv_number: Optional[str] = None,
-    ) -> str:
-
-        body = {
-            "CustomerRef": {
-                "value": customer_id,
-            },
-            "CurrencyRef": {
-                "value": currency,
-            },
-            "Line": [line.model_dump() for line in lines],
-            "TxnDate": txn_date.strftime("%Y-%m-%d") if txn_date else None,
-            "DueDate": due_date.strftime("%Y-%m-%d") if due_date else None,
-            "TxnTaxDetail": tax_detail.model_dump() if tax_detail else None,
-            "PrivateNote": private_note,
-            "DocNumber": inv_number,
-        }
-
-        if due_date:
-            body["DueDate"] = due_date.strftime("%Y-%m-%d")
-        if created_date:
-            body["TxnDate"] = created_date.strftime("%Y-%m-%d")
-
+    def create_invoice(self, invoice: Invoice) -> str:
         response = self._request(
             path="invoice",
             method="POST",
-            body=body,
+            body=invoice.model_dump(),
         )
         return response.json()["Invoice"]["Id"]
 
@@ -230,10 +197,7 @@ class QBO:
         )
         return response.json()["Purchase"]["Id"]
 
-    def create_transfer(
-        self,
-        transfer: Transfer,
-    ) -> str:
+    def create_transfer(self, transfer: Transfer) -> str:
         response = self._request(
             path="/transfer", body=transfer.model_dump(), method="POST"
         )
