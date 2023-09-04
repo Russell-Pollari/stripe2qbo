@@ -164,3 +164,72 @@ def test_invoice_transform(test_customer, test_settings):
     assert len(qbo_invoice.TxnTaxDetail.TaxLine) == 1
     assert qbo_invoice.TxnTaxDetail.TaxLine[0].Amount == 0
     assert qbo_invoice.TxnTaxDetail.TaxLine[0].TaxLineDetail.NetAmountTaxable == 15
+
+
+def test_invoice_transform_with_tax(test_customer, test_settings):
+    tax_rate = stripe.TaxRate.create(
+        display_name="Test Tax Rate",
+        inclusive=False,
+        percentage=10,
+        stripe_account=ACCOUNT_ID,
+    )
+
+    stripe.InvoiceItem.create(
+        customer=test_customer.id,
+        amount=1000,
+        currency="usd",
+        description="Product with tax",
+        stripe_account=ACCOUNT_ID,
+        tax_rates=[tax_rate.id],
+    )
+    stripe.InvoiceItem.create(
+        customer=test_customer.id,
+        amount=500,
+        currency="usd",
+        description="Product without tax",
+        stripe_account=ACCOUNT_ID,
+    )
+    test_invoice = stripe.Invoice.create(
+        customer=test_customer.id,
+        stripe_account=ACCOUNT_ID,
+        collection_method="send_invoice",
+        currency="usd",
+        days_until_due=30,
+    )
+    stripe.Invoice.pay(test_invoice.id, stripe_account=ACCOUNT_ID)
+    txn = stripe.BalanceTransaction.list(limit=1, stripe_account=ACCOUNT_ID).data[0]
+    transaction = get_transaction(txn.id, ACCOUNT_ID)
+    stripe_invoice = transaction.invoice
+
+    assert stripe_invoice is not None
+    assert stripe_invoice.due_date is not None
+    assert stripe_invoice.tax is not None
+
+    qbo_invoice = qbo_invoice_from_stripe_invoice(
+        stripe_invoice, test_customer.id, test_settings
+    )
+
+    assert len(qbo_invoice.Line) == 2
+    assert qbo_invoice.Line[1].Amount == 10
+    assert qbo_invoice.Line[1].SalesItemLineDetail.ItemRef.name == "Product with tax"
+    assert (
+        qbo_invoice.Line[1].SalesItemLineDetail.TaxCodeRef.value
+        == test_settings.default_tax_code_id
+    )
+    assert qbo_invoice.Line[0].Amount == 5
+    assert qbo_invoice.Line[0].SalesItemLineDetail.ItemRef.name == "Product without tax"
+    assert (
+        qbo_invoice.Line[0].SalesItemLineDetail.TaxCodeRef.value
+        == test_settings.exempt_tax_code_id
+    )
+
+    assert qbo_invoice.TxnTaxDetail is not None
+    assert qbo_invoice.TxnTaxDetail.TotalTax == 1
+    assert qbo_invoice.TxnTaxDetail.TaxLine is not None
+    assert len(qbo_invoice.TxnTaxDetail.TaxLine) == 2
+    assert qbo_invoice.TxnTaxDetail.TaxLine[0].Amount == stripe_invoice.tax / 100
+    assert qbo_invoice.TxnTaxDetail.TaxLine[0].Amount == 1
+    assert qbo_invoice.TxnTaxDetail.TaxLine[0].TaxLineDetail.NetAmountTaxable == 10
+
+    assert qbo_invoice.TxnTaxDetail.TaxLine[1].Amount == 0
+    assert qbo_invoice.TxnTaxDetail.TaxLine[1].TaxLineDetail.NetAmountTaxable == 5
