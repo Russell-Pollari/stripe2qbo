@@ -173,7 +173,7 @@ def check_for_existing(
     qbo_items = response.json()["QueryResponse"].get(object_type, [])
 
     # Cannot query by PrivateNote, so we filter the returned items
-    if private_note is None:
+    if private_note is not None:
         qbo_items = [
             item for item in qbo_items if private_note in item.get("PrivateNote", "")
         ]
@@ -187,9 +187,8 @@ def check_for_existing(
 def sync_invoice(
     invoice: Invoice,
     qbo_customer_id: str,
-    description: str = "",
+    description: Optional[str] = None,
     settings: Optional[Settings] = None,
-    qbo_token: Optional[Token] = None,
 ) -> str:
     """Sync a Stripe invoice to QBO."""
     assert settings is not None
@@ -381,7 +380,6 @@ def sync_transaction(
                 qbo_customer.Id,
                 description=transaction.description,
                 settings=settings,
-                qbo_token=qbo_token,
             )
 
         sync_invoice_payment(qbo_customer.Id, qbo_invoice_id, transaction, settings)
