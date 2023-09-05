@@ -2,15 +2,11 @@ from typing import Literal, Optional
 import datetime
 
 from pydantic import BaseModel
-from stripe2qbo.qbo.auth import Token
 
+from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.QBO import QBO
 import stripe2qbo.qbo.models as qbo_models
-from stripe2qbo.stripe.models import Payout
-from stripe2qbo.stripe.stripe_transactions import (
-    Transaction,
-    Invoice,
-)
+from stripe2qbo.stripe.models import Payout, Transaction, Invoice
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.transforms import (
     qbo_invoice_from_stripe_invoice,
@@ -26,6 +22,7 @@ class TransactionSync(BaseModel):
     amount: int
     description: str
     status: Optional[Literal["pending", "success", "failed"]] = None
+    transfer_id: Optional[str] = None
 
 
 qbo = QBO()
@@ -48,23 +45,6 @@ def get_income_account_for_product(product_name: str, settings: Settings) -> str
         str: QBO income account name
     """
     # TODO: product settings
-    # product_settings = []  # settings.product_settings
-    # product_setting = next(
-    #     (prod for prod in product_settings if prod.product_name == product_name),
-    #     None,
-    # )
-    # if product_setting is None:
-    #     qbo_income_account_id = settings.default_income_account_id
-    # else:
-    #     income_account_name = (
-    #         product_setting.income_account_name
-    #         if product_setting.income_account_name
-    #         else product_name
-    #     )
-    #     qbo_income_account_id = qbo.get_or_create_account(income_account_name,
-    #                                                           "Income")
-
-    # If no product settings, and no default, use the product name for an income account
     qbo_income_account_id = settings.default_income_account_id
     if qbo_income_account_id is None:
         qbo_income_account_id = qbo.get_or_create_account(product_name, "Income")
@@ -112,12 +92,9 @@ def check_for_existing(
 def sync_invoice(
     invoice: Invoice,
     qbo_customer_id: str,
-    settings: Optional[Settings] = None,
+    settings: Settings,
 ) -> str:
     """Sync a Stripe invoice to QBO."""
-    assert settings is not None
-    assert invoice.lines is not None
-
     qbo_invoice_id = check_for_existing(
         "Invoice",
         qbo_customer_id=qbo_customer_id,
@@ -131,17 +108,14 @@ def sync_invoice(
     qbo_invoice = qbo_invoice_from_stripe_invoice(invoice, qbo_customer_id, settings)
 
     for line in qbo_invoice.Line:
-        # Create qbo products to match Stripe products
-        if (
-            line.SalesItemLineDetail.ItemRef.value is None
-            and line.SalesItemLineDetail.ItemRef.name is not None
-        ):
-            line.SalesItemLineDetail.value = qbo.get_or_create_item(
-                line.SalesItemLineDetail.ItemRef.name,
-                settings.default_income_account_id,
-            )
-    qbo_invoice_id = qbo.create_invoice(qbo_invoice)
+        product = line.SalesItemLineDetail.ItemRef
+        if product.value is None and product.name is not None:
+            income_account_id = get_income_account_for_product(product.name, settings)
+            line.SalesItemLineDetail.ItemRef = qbo.get_or_create_item(
+                product.name, income_account_id
+            )  # type: ignore
 
+    qbo_invoice_id = qbo.create_invoice(qbo_invoice)
     print(f"Created invoice {qbo_invoice_id} for {invoice.id}")
     return qbo_invoice_id
 
@@ -253,7 +227,8 @@ def sync_transaction(
         sync_stripe_fee(transaction, settings)
     elif transaction.type == "payout":
         assert transaction.payout is not None
-        sync_payout(transaction.payout, settings)
+        transfer_id = sync_payout(transaction.payout, settings)
+        sync_status.transfer_id = transfer_id
     else:
         sync_status.status = "failed"
 
