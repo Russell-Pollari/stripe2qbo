@@ -1,4 +1,3 @@
-from typing import Literal, Optional
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -41,4 +40,3 @@ class QBOToken(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     user = relationship("User", back_populates="qbo_token")
-
