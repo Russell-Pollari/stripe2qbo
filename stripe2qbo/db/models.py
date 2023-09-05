@@ -42,13 +42,3 @@ class QBOToken(Base):
 
     user = relationship("User", back_populates="qbo_token")
 
-
-class TransactionSync(Base):
-    __tablename__ = "transaction_sync"
-
-    id: Mapped[str] = mapped_column(primary_key=True)
-    created: Mapped[int] = mapped_column(nullable=False)
-    type: Mapped[str] = mapped_column(nullable=False)
-    amount: Mapped[int] = mapped_column(nullable=False)
-    description: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[Optional[Literal["pending", "success", "failed"]]] = mapped_column(default=None)
