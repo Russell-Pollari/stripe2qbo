@@ -230,7 +230,7 @@ class QBO:
         vendor_id: str,
         expense_account_id: str,
         private_note: str = "",
-        description: str = "",
+        description: Optional[str] = None,
     ) -> str:
         body = {
             "TotalAmt": amount,
