@@ -2,15 +2,18 @@ from typing import Literal, Optional, Dict
 import datetime
 
 from pydantic import BaseModel
-from stripe2qbo.qbo.auth import Token
 
+from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.QBO import QBO
 import stripe2qbo.qbo.models as qbo_models
-from stripe2qbo.stripe.stripe_transactions import (
-    Transaction,
-    Invoice,
-)
+from stripe2qbo.stripe.models import Payout, Transaction, Invoice
 from stripe2qbo.db.schemas import Settings
+from stripe2qbo.transforms import (
+    payment_from_charge,
+    qbo_invoice_from_stripe_invoice,
+    transfer_from_payout,
+    expense_from_transaction,
+)
 
 
 class TransactionSync(BaseModel):
@@ -20,6 +23,7 @@ class TransactionSync(BaseModel):
     amount: int
     description: str
     status: Optional[Literal["pending", "success", "failed"]] = None
+    transfer_id: Optional[str] = None
 
 
 qbo = QBO()
@@ -27,87 +31,6 @@ qbo = QBO()
 
 def _timestamp_to_date(timestamp: int) -> datetime.datetime:
     return datetime.datetime.fromtimestamp(timestamp)
-
-
-def tax_detail_from_invoice(
-    invoice: Invoice, settings: Settings
-) -> qbo_models.TaxDetail:
-    """Create a QBO TaxDetail from a Stripe Invoice.
-    This isn't required. Adding Tax codes to the InvoiceLines is usually sufficient.
-    However, if you want to override QBO's calculated tax amounts, this is necessary.
-    Useful to ensure Stripe invoice and QBO invoice have same total tax amounts
-
-    Args:
-        invoice (Invoice): Stripe invoice
-
-    Returns:
-        qbo.TaxDetail: QBO TaxDetail object
-    """
-    assert invoice.lines is not None  # TODO: enforce this in Invoice model
-
-    tax_details: Dict[str, qbo_models.TaxLineModel] = {}
-    total_tax = invoice.tax or 0
-    total_taxable_amount = 0
-    for line in invoice.lines:
-        for tax_amount in line.tax_amounts:
-            assert tax_amount.tax_rate is not None
-            total_taxable_amount += tax_amount.taxable_amount
-
-            # TODO: custom settings for stripe tax rates
-            # stripe_tax_rate_id = tax_amount.tax_rate.id
-
-            tax_code_id = settings.default_tax_code_id
-            if tax_code_id == "TAX":
-                # No rates associated with this psuedo tax code.
-                # The expected TaxDetail object only requires TotalTax
-                # TODO: seperate tax logic for US and non US locales
-                continue
-
-            tax_code = qbo.get_tax_code(tax_code_id)
-
-            if tax_code is None:
-                raise Exception(f"Tax code {tax_code_id} not found")
-
-            tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
-
-            detail = tax_details.get(tax_code_id)
-            if detail is None:
-                tax_details[tax_code_id] = qbo_models.TaxLineModel(
-                    Amount=tax_amount.amount / 100,
-                    TaxLineDetail=qbo_models.TaxLineDetail(
-                        TaxRateRef=tax_rate_ref,
-                        NetAmountTaxable=tax_amount.taxable_amount / 100,
-                        TaxPercent=tax_amount.tax_rate.percentage,
-                    ),
-                )
-            else:
-                detail.Amount += tax_amount.amount / 100
-                detail.TaxLineDetail.NetAmountTaxable += tax_amount.taxable_amount / 100
-
-    untaxed_amount = invoice.amount_due - total_tax - total_taxable_amount
-
-    if untaxed_amount > 0:
-        tax_code_id = settings.exempt_tax_code_id
-        if tax_code_id != "NON":
-            # No rates associated with the NON psuedo tax code.
-            tax_code = qbo.get_tax_code(tax_code_id)
-            if tax_code is None:
-                raise Exception(f"Tax code {tax_code_id} not found")
-
-            tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
-            tax_details[tax_code_id] = qbo_models.TaxLineModel(
-                Amount=0,
-                TaxLineDetail=qbo_models.TaxLineDetail(
-                    TaxRateRef=tax_rate_ref,
-                    NetAmountTaxable=(untaxed_amount) / 100,
-                    TaxPercent=0,
-                ),
-            )
-
-    return qbo_models.TaxDetail(
-        TaxLine=list(tax_details.values()),
-        TotalTax=total_tax / 100,
-    )
 
 
 def get_income_account_for_product(product_name: str, settings: Settings) -> str:
@@ -123,24 +46,7 @@ def get_income_account_for_product(product_name: str, settings: Settings) -> str
         str: QBO income account name
     """
     # TODO: product settings
-    # product_settings = []  # settings.product_settings
-    # product_setting = next(
-    #     (prod for prod in product_settings if prod.product_name == product_name),
-    #     None,
-    # )
-    # if product_setting is None:
-    #     qbo_income_account_id = settings.default_income_account_id
-    # else:
-    #     income_account_name = (
-    #         product_setting.income_account_name
-    #         if product_setting.income_account_name
-    #         else product_name
-    #     )
-    #     qbo_income_account_id = qbo.get_or_create_account(income_account_name,
-    #                                                           "Income")
-
-    # If no product settings, and no default, use the product name for an income account
-    qbo_income_account_id = settings.default_income_account_id
+    qbo_income_account_id = None  # settings.default_income_account_id
     if qbo_income_account_id is None:
         qbo_income_account_id = qbo.get_or_create_account(product_name, "Income")
 
@@ -187,13 +93,9 @@ def check_for_existing(
 def sync_invoice(
     invoice: Invoice,
     qbo_customer_id: str,
-    description: Optional[str] = None,
-    settings: Optional[Settings] = None,
+    settings: Settings,
 ) -> str:
     """Sync a Stripe invoice to QBO."""
-    assert settings is not None
-    assert invoice.lines is not None
-
     qbo_invoice_id = check_for_existing(
         "Invoice",
         qbo_customer_id=qbo_customer_id,
@@ -204,46 +106,35 @@ def sync_invoice(
         print(f"Invoice {invoice.id} already synced")  # TODO configurable logging
         return qbo_invoice_id
 
-    invoice_lines = []
-    for line in invoice.lines:
-        qbo_account_id = get_income_account_for_product(line.product.name, settings)
-        qbo_item = qbo.get_or_create_item(line.product.name, qbo_account_id)
-        # TODO: customize QBO item with product settings
+    tax_codes: Dict[str, qbo_models.TaxCode | None] = {}
 
-        # TODO: override with specific tax settings, similar to product logic
-        tax_code_id = settings.exempt_tax_code_id
-        if line.tax_amounts:
-            tax_code_id = settings.default_tax_code_id
-
-        invoice_line = qbo_models.InvoiceLine(
-            Description=line.description,
-            Amount=line.amount / 100,
-            SalesItemLineDetail=qbo_models.SalesItemLineDetail(
-                ItemRef=qbo_item,
-                TaxCodeRef=qbo_models.TaxCodeRef(value=tax_code_id)
-                if tax_code_id
-                else None,
-            ),
-        )
-        invoice_lines.append(invoice_line)
-
-    tax_detail = tax_detail_from_invoice(invoice, settings)
-
-    print(f"Creating invoice for {invoice.id}")
-    invoice_id = qbo.create_invoice(
-        qbo_customer_id,
-        invoice_lines,
-        created_date=_timestamp_to_date(invoice.created),
-        due_date=_timestamp_to_date(invoice.due_date) if invoice.due_date else None,
-        currency=invoice.currency.upper(),  # type: ignore
-        private_note=f"{description}\n{invoice.id}",
-        tax_detail=tax_detail,
-        inv_number=invoice.number,
+    # TAX and NON will throw an error if queried..
+    tax_codes[settings.default_tax_code_id] = (
+        qbo.get_tax_code(settings.default_tax_code_id)
+        if settings.default_tax_code_id != "TAX"
+        else None
+    )
+    tax_codes[settings.exempt_tax_code_id] = (
+        qbo.get_tax_code(settings.exempt_tax_code_id)
+        if settings.exempt_tax_code_id != "NON"
+        else None
     )
 
-    print(f"Created invoice {invoice_id} for {invoice.id}")
+    qbo_invoice = qbo_invoice_from_stripe_invoice(
+        invoice, qbo_customer_id, tax_codes, settings
+    )
 
-    return invoice_id
+    for line in qbo_invoice.Line:
+        product = line.SalesItemLineDetail.ItemRef
+        if product.value is None and product.name is not None:
+            income_account_id = get_income_account_for_product(product.name, settings)
+            line.SalesItemLineDetail.ItemRef = qbo.get_or_create_item(
+                product.name, income_account_id
+            )  # type: ignore
+
+    qbo_invoice_id = qbo.create_invoice(qbo_invoice)
+    print(f"Created invoice {qbo_invoice_id} for {invoice.id}")
+    return qbo_invoice_id
 
 
 def sync_invoice_payment(
@@ -253,30 +144,24 @@ def sync_invoice_payment(
     settings: Settings,
 ) -> str:
     assert transaction.charge is not None
-
     qbo_payment_id = check_for_existing(
         "Payment",
         qbo_customer_id,
         _timestamp_to_date(transaction.charge.created),
         transaction.charge.id,
     )
-
     if qbo_payment_id is not None:
         print(f"Payment {transaction.charge.id} already synced")
         return qbo_payment_id
 
-    qbo_stripe_bank_account_id = settings.stripe_clearing_account_id
-
-    payment_id = qbo.create_invoice_payment(
-        qbo_invoice_id,
+    payment = payment_from_charge(
+        transaction.charge,
         qbo_customer_id,
-        transaction.charge.amount / 100,
-        _timestamp_to_date(transaction.charge.created),
-        qbo_stripe_bank_account_id,
-        transaction.currency.upper(),  # type: ignore
-        transaction.exchange_rate,
-        private_note=f"{transaction.description}\n{transaction.charge.id}",
+        settings,
+        exchange_rate=transaction.exchange_rate,
+        invoice_id=qbo_invoice_id,
     )
+    payment_id = qbo.create_payment(payment)
     print(f"Created payment {payment_id} for {transaction.charge.id}")
     return payment_id
 
@@ -293,56 +178,23 @@ def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
         print(f"Expense for {transaction.id} already synced")
         return expense_id
 
-    amount = (
-        transaction.fee / 100
-        if transaction.type in ["charge", "payment"]
-        else -transaction.amount / 100
-    )
+    expense = expense_from_transaction(transaction, settings)
+    expense_id = qbo.create_expense(expense)
 
-    expense_id = qbo.create_expense(
-        amount,
-        _timestamp_to_date(transaction.created),
-        settings.stripe_clearing_account_id,
-        settings.stripe_vendor_id,
-        settings.stripe_fee_account_id,
-        description=transaction.description,
-        private_note=f"""
-            {transaction.description}
-            {transaction.id}
-            {transaction.charge.id if transaction.charge else None}
-            {transaction.invoice.id if transaction.invoice else None}
-        """,
-    )
     print(f"Created expense {expense_id} for stripe fee {transaction.id}")
     return expense_id
 
 
-def sync_payout(transaction: Transaction, settings: Settings) -> str:
-    assert transaction.type == "payout"
-    assert transaction.payout is not None
-    transfer_id = check_for_existing("Transfer", private_note=transaction.payout.id)
-
+def sync_payout(payout: Payout, settings: Settings) -> str:
+    transfer_id = check_for_existing("Transfer", private_note=payout.id)
     if transfer_id is not None:
-        print(f"Transfer {transaction.id} already synced")
+        print(f"Payout {payout.id} already synced")
         return transfer_id
 
-    if transaction.amount < 0:
-        amount = transaction.amount * -1
-        to_account = settings.stripe_payout_account_id
-        from_account = settings.stripe_clearing_account_id
-    else:
-        amount = transaction.amount
-        to_account = settings.stripe_clearing_account_id
-        from_account = settings.stripe_payout_account_id
+    transfer = transfer_from_payout(payout, settings)
+    transfer_id = qbo.create_transfer(transfer)
 
-    transfer_id = qbo.create_transfer(
-        amount / 100,
-        _timestamp_to_date(transaction.created),
-        from_account,
-        to_account,
-        private_note=f"{transaction.description}\n{transaction.id}\n{transaction.payout.id}",  # noqa
-    )
-    print(f"Created transfer {transfer_id} for {transaction.payout.id}")
+    print(f"Created transfer {transfer_id} for {payout.id}")
     return transfer_id
 
 
@@ -378,7 +230,6 @@ def sync_transaction(
             qbo_invoice_id = sync_invoice(
                 transaction.invoice,
                 qbo_customer.Id,
-                description=transaction.description,
                 settings=settings,
             )
 
@@ -386,7 +237,9 @@ def sync_transaction(
 
         sync_stripe_fee(transaction, settings)
     elif transaction.type == "payout":
-        sync_payout(transaction, settings)
+        assert transaction.payout is not None
+        transfer_id = sync_payout(transaction.payout, settings)
+        sync_status.transfer_id = transfer_id
     else:
         sync_status.status = "failed"
 

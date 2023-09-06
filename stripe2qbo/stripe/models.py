@@ -43,6 +43,7 @@ class Charge(BaseModel):
     amount: float  # cents
     created: int  # timestamp
     description: Optional[str]
+    currency: Literal["usd", "cad"]
 
 
 class Customer(BaseModel):
@@ -54,6 +55,10 @@ class Customer(BaseModel):
 
 class Payout(BaseModel):
     id: str
+    amount: int
+    arrival_date: int  # timestamp
+    created: int  # timestamp
+    description: str
 
 
 class Transaction(BaseModel):

@@ -12,20 +12,6 @@ stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 
 
-@pytest.fixture
-def test_customer():
-    stripe_customer = stripe.Customer.create(
-        email="test@example.com",
-        name="Test Customer",
-        source="tok_visa",
-        stripe_account=ACCOUNT_ID,
-    )
-
-    yield stripe_customer
-
-    stripe.Customer.delete(stripe_customer.id, stripe_account=ACCOUNT_ID)
-
-
 def test_charge_transaction(test_customer):
     test_charge = stripe.Charge.create(
         amount=1000,
@@ -104,7 +90,7 @@ def test_invoice_transaction(test_customer):
 
 
 @pytest.mark.skip(reason="TODO: ensure available balance is nonzero")
-def test_payout_transaction(test_customer):
+def test_payout_transaction():
     test_payout = stripe.Payout.create(
         amount=1,
         currency="usd",

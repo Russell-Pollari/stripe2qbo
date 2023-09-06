@@ -34,6 +34,6 @@ def qbo_request(
 
     # TODO: get intuit_tid from response headers and log it
     if "Fault" in response.json():
-        raise Exception(f"Error making request: {response.json()['Fault']}")
+        raise Exception(f"Error making request: {response.json()}")
 
     return response

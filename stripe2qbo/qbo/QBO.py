@@ -1,17 +1,18 @@
-from datetime import datetime
-from typing import Any, Optional, Mapping, List
+from typing import Any, Optional, Mapping
 from requests import Response
 
 from stripe2qbo.qbo.auth import Token
+from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.qbo.models import (
     Customer,
-    InvoiceLine,
+    Expense,
+    Invoice,
     ItemRef,
+    Payment,
     QBOCurrency,
     TaxCode,
-    TaxDetail,
+    Transfer,
 )
-from stripe2qbo.qbo.qbo_request import qbo_request
 
 
 class QBO:
@@ -59,9 +60,9 @@ class QBO:
         if len(customers) == 0:
             return None
         else:
-            return customers[0]
+            return Customer(**customers[0])
 
-    def create_customer(self, customer_name: str, currency: str) -> Customer:
+    def create_customer(self, customer_name: str, currency: QBOCurrency) -> Customer:
         response = self._request(
             path="customer",
             method="POST",
@@ -76,14 +77,18 @@ class QBO:
             raise Exception(f"Error creating customer: {response.json()}")
         return Customer(**response.json()["Customer"])
 
-    def get_or_create_customer(self, customer_name: str, currency: str) -> Customer:
+    def get_or_create_customer(
+        self, customer_name: str, currency: QBOCurrency
+    ) -> Customer:
         customer = self.get_customer_by_name(customer_name)
         if customer is None:
             customer = self.create_customer(customer_name, currency)
 
-            if customer.CurrencyRef.value != currency:
-                # if already exists with different currency, create a new one
-                return self.create_customer(f"{customer_name} ({currency})", currency)
+        if customer.CurrencyRef.value != currency:
+            # if already exists with different currency, create a new one
+            return self.get_or_create_customer(
+                f"{customer_name} ({currency})", currency
+            )
 
         return customer
 
@@ -139,7 +144,6 @@ class QBO:
 
         if len(accounts) > 1:
             raise Exception(f"Multiple accounts found with {account_name}")
-
         return accounts[0]["Id"]
 
     def get_or_create_account(self, account_name: str, account_type: str) -> str:
@@ -148,127 +152,32 @@ class QBO:
             return acount_id
         return self.create_account(account_name, account_type)
 
-    def create_invoice(
-        self,
-        customer_id: str,
-        lines: List[InvoiceLine],
-        created_date: Optional[datetime],
-        currency: Optional[QBOCurrency] = "USD",
-        private_note: Optional[str] = None,
-        due_date: Optional[datetime] = None,
-        txn_date: Optional[datetime] = None,
-        tax_detail: Optional[TaxDetail] = None,
-        inv_number: Optional[str] = None,
-    ) -> str:
-
-        body = {
-            "CustomerRef": {
-                "value": customer_id,
-            },
-            "CurrencyRef": {
-                "value": currency,
-            },
-            "Line": [line.model_dump() for line in lines],
-            "TxnDate": txn_date.strftime("%Y-%m-%d") if txn_date else None,
-            "DueDate": due_date.strftime("%Y-%m-%d") if due_date else None,
-            "TxnTaxDetail": tax_detail.model_dump() if tax_detail else None,
-            "PrivateNote": private_note,
-            "DocNumber": inv_number,
-        }
-
-        if due_date:
-            body["DueDate"] = due_date.strftime("%Y-%m-%d")
-        if created_date:
-            body["TxnDate"] = created_date.strftime("%Y-%m-%d")
-
+    def create_invoice(self, invoice: Invoice) -> str:
         response = self._request(
             path="invoice",
             method="POST",
-            body=body,
+            body=invoice.model_dump(),
         )
         return response.json()["Invoice"]["Id"]
 
-    def create_invoice_payment(
+    def create_payment(
         self,
-        invoice_id: Optional[str],
-        customer_id: str,
-        amount: float,
-        date: datetime,
-        qbo_account_id: str,
-        currency: QBOCurrency,
-        exchange_rate: Optional[float],
-        private_note: str = "",
+        payment: Payment,
     ) -> str:
         # TODO: Payment method?
-
-        body = {
-            "TotalAmt": amount,
-            "CustomerRef": {"value": customer_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "DepositToAccountRef": {"value": qbo_account_id},
-            "PrivateNote": private_note,
-            "CurrencyRef": {"value": currency},
-            "ExchangeRate": exchange_rate or "1",
-        }
-
-        if invoice_id:
-            body["Line"] = [
-                {
-                    "Amount": amount,
-                    "LinkedTxn": [{"TxnId": invoice_id, "TxnType": "Invoice"}],
-                }
-            ]
-        response = self._request(path="/payment", body=body, method="POST")
-
+        response = self._request(
+            path="/payment", body=payment.model_dump(), method="POST"
+        )
         return response.json()["Payment"]["Id"]
 
-    def create_expense(
-        self,
-        amount: float,
-        date: datetime,
-        bank_account_id: str,
-        vendor_id: str,
-        expense_account_id: str,
-        private_note: str = "",
-        description: Optional[str] = None,
-    ) -> str:
-        body = {
-            "TotalAmt": amount,
-            "AccountRef": {"value": bank_account_id},
-            "PaymentType": "Check",
-            "Line": [
-                {
-                    "Amount": amount,
-                    "DetailType": "AccountBasedExpenseLineDetail",
-                    "AccountBasedExpenseLineDetail": {
-                        "AccountRef": {"value": expense_account_id},
-                    },
-                    "Description": description,
-                }
-            ],
-            "EntityRef": {"value": vendor_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "PrivateNote": private_note,
-        }
-
-        response = self._request(path="/purchase", body=body, method="POST")
+    def create_expense(self, expense: Expense) -> str:
+        response = self._request(
+            path="/purchase", body=expense.model_dump(), method="POST"
+        )
         return response.json()["Purchase"]["Id"]
 
-    def create_transfer(
-        self,
-        amount: float,
-        date: datetime,
-        source_account_id: str,
-        destination_account_id: str,
-        private_note: str = "",
-    ) -> str:
-        body = {
-            "Amount": amount,
-            "FromAccountRef": {"value": source_account_id},
-            "ToAccountRef": {"value": destination_account_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "PrivateNote": private_note,
-        }
-
-        response = self._request(path="/transfer", body=body, method="POST")
+    def create_transfer(self, transfer: Transfer) -> str:
+        response = self._request(
+            path="/transfer", body=transfer.model_dump(), method="POST"
+        )
         return response.json()["Transfer"]["Id"]
