@@ -3,7 +3,6 @@ from datetime import datetime
 from typing import Annotated, List, Optional
 
 from sqlalchemy.orm import Session
-from starlette.requests import Request
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
 import stripe
@@ -48,7 +47,6 @@ async def stripe_oauth_callback(
 
 @router.post("/disconnect")
 async def disconnect_stripe(
-    request: Request,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> None:
