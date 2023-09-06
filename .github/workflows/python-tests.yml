@@ -1,0 +1,37 @@
+name: Python linter
+
+on:
+    push:
+        branches: ['main']
+    pull_request:
+        branches: ['main']
+
+permissions:
+    contents: read
+
+jobs:
+    build:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+            - name: Set up Python 3.11.4
+              uses: actions/setup-python@v3
+              with:
+                  python-version: '3.11.4'
+            - name: Install dependencies
+              run: |
+                  python -m pip install --upgrade pip
+                  pip install -r requirements.txt
+            - name: Load QBO token
+              run: |
+                  echo ${{ secrets.QBO_TOKEN }} > qbo_token.json
+            - name: run tests
+              env:
+                  QBO_BASE_URL: ${{ secrets.QBO_BASE_URL }}
+                  QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
+                  QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
+                  STRIPE_CLIENT_ID: ${{ secrets.STRIPE_CLIENT_ID }}
+                  TEST_STRIPE_ACCOUNT_ID: ${{ secrets.TEST_STRIPE_ACCOUNT_ID }}
+                  TEST_STRIPE_API_KEY: ${{ secrets.TEST_STRIPE_SECRET_KEY }}
+              run: pytest
