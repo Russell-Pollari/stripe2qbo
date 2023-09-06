@@ -23,5 +23,5 @@ jobs:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
     - run: npm ci
-    - run: eslint .
-    - run: prettier . --check
+    - run: npx eslint .
+    - run: npx prettier . --check
