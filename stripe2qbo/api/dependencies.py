@@ -62,9 +62,7 @@ def get_qbo_token(
         db.commit()
         db.refresh(token)
 
-    token = Token.model_validate(token, from_attributes=True)
-
-    return token
+    return Token.model_validate(token, from_attributes=True)
 
 
 def get_stripe_user_id(user: Annotated[User, Depends(get_current_user)]) -> str:

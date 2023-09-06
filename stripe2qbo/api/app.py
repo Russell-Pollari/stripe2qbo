@@ -124,7 +124,11 @@ async def sync_many(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_ws)],
 ):
-    # Most dependencies are not defines for websocket scope
+    if user.stripe_user_id is None:
+        await websocket.send_json({"status": "Not authenticated"})
+        await websocket.close()
+        return
+    # Most dependencies are not defined for websocket scope
     settings_orm = (
         db.query(SyncSettings)
         .where(SyncSettings.qbo_realm_id == user.qbo_realm_id)

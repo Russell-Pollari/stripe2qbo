@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import os
 import stripe
 
@@ -30,14 +30,15 @@ def build_transaction(txn: stripe.BalanceTransaction, account_id: str) -> Transa
         if inv:
             lines: List[InvoiceLine] = []
             for line in inv.lines.data:
+                product: Dict[str, Any] = {}
                 if line.plan:
                     product = stripe.Product.retrieve(
                         line.plan.product, stripe_account=account_id
-                    )
+                    ).to_dict()
                 elif line.price:
                     product = stripe.Product.retrieve(
                         line.price.product, stripe_account=account_id
-                    )
+                    ).to_dict()
                 else:
                     product = {"name": "Unknown"}
                 tax_amounts = []

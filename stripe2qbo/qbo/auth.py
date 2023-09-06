@@ -1,8 +1,8 @@
 import os
 from datetime import datetime, timedelta
 
-from intuitlib.client import AuthClient
-from intuitlib.enums import Scopes
+from intuitlib.client import AuthClient  # type: ignore
+from intuitlib.enums import Scopes  # type: ignore
 from pydantic import BaseModel
 
 
