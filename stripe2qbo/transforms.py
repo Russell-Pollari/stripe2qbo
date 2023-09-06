@@ -1,4 +1,4 @@
-from typing import Dict, cast
+from typing import Dict, cast, Optional
 import datetime
 
 
@@ -194,3 +194,35 @@ def qbo_invoice_from_stripe_invoice(
         qbo_invoice.DueDate = _timestamp_to_date(invoice.due_date).strftime("%Y-%m-%d")
 
     return qbo_invoice
+
+
+def payment_from_charge(
+    charge: stripe_models.Charge,
+    customer_id: str,
+    settings: Settings,
+    invoice_id: Optional[str] = None,
+    exchange_rate: Optional[float] = 1,
+) -> qbo_models.Payment:
+    currency = cast(qbo_models.QBOCurrency, charge.currency.upper())
+
+    payment = qbo_models.Payment(
+        TotalAmt=charge.amount / 100,
+        CurrencyRef=qbo_models.CurrencyRef(value=currency),
+        CustomerRef=qbo_models.ItemRef(value=customer_id),
+        DepositToAccountRef=qbo_models.ItemRef(
+            value=settings.stripe_clearing_account_id
+        ),
+        TxnDate=_timestamp_to_date(charge.created).strftime("%Y-%m-%d"),
+        PrivateNote=f"{charge.description}\n{charge.id}",
+        ExchangeRate=cast(float, exchange_rate),
+    )
+
+    if invoice_id:
+        payment.Line = [
+            qbo_models.PaymentLine(
+                Amount=payment.TotalAmt,
+                LinkedTxn=[qbo_models.LinkedTxn(TxnId=invoice_id)],
+            )
+        ]
+
+    return payment

@@ -10,6 +10,7 @@ from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import TaxCode
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
 from stripe2qbo.transforms import (
+    payment_from_charge,
     qbo_invoice_from_stripe_invoice,
     transfer_from_payout,
     expense_from_transaction,
@@ -260,3 +261,48 @@ def test_invoice_transform_with_tax(
 
     # assert qbo_invoice.TxnTaxDetail.TaxLine[1].Amount == 0
     # assert qbo_invoice.TxnTaxDetail.TaxLine[1].TaxLineDetail.NetAmountTaxable == 5
+
+
+def test_payment_from_charge(test_customer, test_settings):
+    test_charge = stripe.Charge.create(
+        amount=1000,
+        currency="usd",
+        customer=test_customer.id,
+        stripe_account=ACCOUNT_ID,
+    )
+
+    txn = stripe.BalanceTransaction.list(
+        limit=1,
+        type="charge",
+        stripe_account=ACCOUNT_ID,
+        expand=["data.source", "data.source.customer"],
+    ).data[0]
+
+    transaction = build_transaction(txn, ACCOUNT_ID)
+
+    assert transaction.charge is not None
+    assert transaction.charge.id == test_charge.id
+    assert transaction.customer is not None
+
+    payment = payment_from_charge(
+        transaction.charge,
+        test_customer.id,
+        test_settings,
+        exchange_rate=transaction.exchange_rate,
+    )
+
+    assert payment is not None
+    assert payment.CustomerRef.value == test_customer.id
+    assert payment.CurrencyRef.value == "USD"
+    assert payment.TotalAmt == 10
+    assert payment.TxnDate == datetime.fromtimestamp(
+        transaction.charge.created
+    ).strftime("%Y-%m-%d")
+    assert (
+        payment.PrivateNote
+        == f"{transaction.charge.description}\n{transaction.charge.id}"
+    )
+    assert payment.DepositToAccountRef.value == test_settings.stripe_clearing_account_id
+    assert payment.ExchangeRate == transaction.exchange_rate
+
+    assert payment.Line is None

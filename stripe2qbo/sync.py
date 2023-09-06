@@ -9,6 +9,7 @@ import stripe2qbo.qbo.models as qbo_models
 from stripe2qbo.stripe.models import Payout, Transaction, Invoice
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.transforms import (
+    payment_from_charge,
     qbo_invoice_from_stripe_invoice,
     transfer_from_payout,
     expense_from_transaction,
@@ -143,30 +144,24 @@ def sync_invoice_payment(
     settings: Settings,
 ) -> str:
     assert transaction.charge is not None
-
     qbo_payment_id = check_for_existing(
         "Payment",
         qbo_customer_id,
         _timestamp_to_date(transaction.charge.created),
         transaction.charge.id,
     )
-
     if qbo_payment_id is not None:
         print(f"Payment {transaction.charge.id} already synced")
         return qbo_payment_id
 
-    qbo_stripe_bank_account_id = settings.stripe_clearing_account_id
-
-    payment_id = qbo.create_invoice_payment(
-        qbo_invoice_id,
+    payment = payment_from_charge(
+        transaction.charge,
         qbo_customer_id,
-        transaction.charge.amount / 100,
-        _timestamp_to_date(transaction.charge.created),
-        qbo_stripe_bank_account_id,
-        transaction.currency.upper(),  # type: ignore
-        transaction.exchange_rate,
-        private_note=f"{transaction.description}\n{transaction.charge.id}",
+        settings,
+        exchange_rate=transaction.exchange_rate,
+        invoice_id=qbo_invoice_id,
     )
+    payment_id = qbo.create_payment(payment)
     print(f"Created payment {payment_id} for {transaction.charge.id}")
     return payment_id
 

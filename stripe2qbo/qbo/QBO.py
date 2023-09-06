@@ -1,18 +1,18 @@
-from datetime import datetime
 from typing import Any, Optional, Mapping
 from requests import Response
 
 from stripe2qbo.qbo.auth import Token
+from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.qbo.models import (
     Customer,
     Expense,
     Invoice,
     ItemRef,
+    Payment,
     QBOCurrency,
     TaxCode,
     Transfer,
 )
-from stripe2qbo.qbo.qbo_request import qbo_request
 
 
 class QBO:
@@ -160,38 +160,14 @@ class QBO:
         )
         return response.json()["Invoice"]["Id"]
 
-    def create_invoice_payment(
+    def create_payment(
         self,
-        invoice_id: Optional[str],
-        customer_id: str,
-        amount: float,
-        date: datetime,
-        qbo_account_id: str,
-        currency: QBOCurrency,
-        exchange_rate: Optional[float],
-        private_note: str = "",
+        payment: Payment,
     ) -> str:
         # TODO: Payment method?
-
-        body = {
-            "TotalAmt": amount,
-            "CustomerRef": {"value": customer_id},
-            "TxnDate": date.strftime("%Y-%m-%d"),
-            "DepositToAccountRef": {"value": qbo_account_id},
-            "PrivateNote": private_note,
-            "CurrencyRef": {"value": currency},
-            "ExchangeRate": exchange_rate or "1",
-        }
-
-        if invoice_id:
-            body["Line"] = [
-                {
-                    "Amount": amount,
-                    "LinkedTxn": [{"TxnId": invoice_id, "TxnType": "Invoice"}],
-                }
-            ]
-        response = self._request(path="/payment", body=body, method="POST")
-
+        response = self._request(
+            path="/payment", body=payment.model_dump(), method="POST"
+        )
         return response.json()["Payment"]["Id"]
 
     def create_expense(self, expense: Expense) -> str:

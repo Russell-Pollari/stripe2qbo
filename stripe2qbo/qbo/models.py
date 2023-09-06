@@ -13,7 +13,6 @@ class CompanyInfo(BaseModel):
 
 class CurrencyRef(BaseModel):
     value: QBOCurrency
-    # name: Optional[str] = None
 
 
 class ItemRef(BaseModel):
@@ -122,3 +121,24 @@ class Invoice(BaseModel):
     DepositToAccountRef: Optional[ItemRef] = None
     ARAccountRef: Optional[ItemRef] = None
     Line: List[InvoiceLine]
+
+
+class LinkedTxn(BaseModel):
+    TxnId: str
+    TxnType: Literal["Invoice"] = "Invoice"
+
+
+class PaymentLine(BaseModel):
+    Amount: float
+    LinkedTxn: List["LinkedTxn"]
+
+
+class Payment(BaseModel):
+    TotalAmt: float
+    CustomerRef: ItemRef
+    TxnDate: str
+    DepositToAccountRef: ItemRef
+    CurrencyRef: CurrencyRef
+    ExchangeRate: float
+    Line: Optional[List[PaymentLine]] = None
+    PrivateNote: str
