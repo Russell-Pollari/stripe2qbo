@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Dict
+from typing import Literal, Optional, Dict, cast
 import datetime
 
 from pydantic import BaseModel
@@ -23,7 +23,11 @@ class TransactionSync(BaseModel):
     amount: int
     description: str
     status: Optional[Literal["pending", "success", "failed"]] = None
+    # QBO ids
     transfer_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    expense_id: Optional[str] = None
 
 
 qbo = QBO()
@@ -127,12 +131,14 @@ def sync_invoice(
     for line in qbo_invoice.Line:
         product = line.SalesItemLineDetail.ItemRef
         if product.value is None and product.name is not None:
-            income_account_id = get_income_account_for_product(product.name, settings)
-            line.SalesItemLineDetail.ItemRef = qbo.get_or_create_item(
-                product.name, income_account_id
-            )  # type: ignore
+            income_account_id = qbo.get_or_create_account(product.name, "Income")
+            line.SalesItemLineDetail.ItemRef = cast(
+                qbo_models.ProductItemRef,
+                qbo.get_or_create_item(product.name, income_account_id),
+            )
 
     qbo_invoice_id = qbo.create_invoice(qbo_invoice)
+
     print(f"Created invoice {qbo_invoice_id} for {invoice.id}")
     return qbo_invoice_id
 
@@ -208,17 +214,16 @@ def sync_transaction(
         status="success",
     )
     if transaction.type == "stripe_fee":
-        sync_stripe_fee(transaction, settings)
+        expense_id = sync_stripe_fee(transaction, settings)
+        sync_status.expense_id = expense_id
     elif transaction.type in ["charge", "payment"]:
         assert transaction.charge is not None
 
-        currency: qbo_models.QBOCurrency = transaction.currency.upper()  # type: ignore
+        currency = cast(qbo_models.QBOCurrency, transaction.charge.currency.upper())
 
         if transaction.customer is not None:
             qbo_customer = qbo.get_or_create_customer(
-                transaction.customer.name
-                or transaction.customer.description
-                or transaction.customer.email,  # type: ignore
+                cast(str, transaction.customer.name),
                 currency,
             )
         else:
@@ -232,10 +237,15 @@ def sync_transaction(
                 qbo_customer.Id,
                 settings=settings,
             )
+            sync_status.invoice_id = qbo_invoice_id
 
-        sync_invoice_payment(qbo_customer.Id, qbo_invoice_id, transaction, settings)
+        payment_id = sync_invoice_payment(
+            qbo_customer.Id, qbo_invoice_id, transaction, settings
+        )
+        sync_status.payment_id = payment_id
 
-        sync_stripe_fee(transaction, settings)
+        expense_id = sync_stripe_fee(transaction, settings)
+        sync_status.expense_id = expense_id
     elif transaction.type == "payout":
         assert transaction.payout is not None
         transfer_id = sync_payout(transaction.payout, settings)
