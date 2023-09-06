@@ -1,4 +1,4 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Dict
 import datetime
 
 from pydantic import BaseModel
@@ -45,7 +45,7 @@ def get_income_account_for_product(product_name: str, settings: Settings) -> str
         str: QBO income account name
     """
     # TODO: product settings
-    qbo_income_account_id = settings.default_income_account_id
+    qbo_income_account_id = None  # settings.default_income_account_id
     if qbo_income_account_id is None:
         qbo_income_account_id = qbo.get_or_create_account(product_name, "Income")
 
@@ -105,7 +105,23 @@ def sync_invoice(
         print(f"Invoice {invoice.id} already synced")  # TODO configurable logging
         return qbo_invoice_id
 
-    qbo_invoice = qbo_invoice_from_stripe_invoice(invoice, qbo_customer_id, settings)
+    tax_codes: Dict[str, qbo_models.TaxCode | None] = {}
+
+    # TAX and NON will throw an error if queried..
+    tax_codes[settings.default_tax_code_id] = (
+        qbo.get_tax_code(settings.default_tax_code_id)
+        if settings.default_tax_code_id != "TAX"
+        else None
+    )
+    tax_codes[settings.exempt_tax_code_id] = (
+        qbo.get_tax_code(settings.exempt_tax_code_id)
+        if settings.exempt_tax_code_id != "NON"
+        else None
+    )
+
+    qbo_invoice = qbo_invoice_from_stripe_invoice(
+        invoice, qbo_customer_id, tax_codes, settings
+    )
 
     for line in qbo_invoice.Line:
         product = line.SalesItemLineDetail.ItemRef

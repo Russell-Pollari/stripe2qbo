@@ -2,31 +2,19 @@ import os
 from datetime import datetime
 
 from dotenv import load_dotenv
-import pytest
 import stripe
 
-from stripe2qbo.db.schemas import Settings
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
-from stripe2qbo.sync import transfer_from_payout, expense_from_transaction
-from stripe2qbo.transforms import qbo_invoice_from_stripe_invoice
+from stripe2qbo.transforms import (
+    qbo_invoice_from_stripe_invoice,
+    transfer_from_payout,
+    expense_from_transaction,
+)
 
 load_dotenv()
 
 stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
-
-
-@pytest.fixture
-def test_settings():
-    return Settings(
-        stripe_clearing_account_id="1",
-        stripe_payout_account_id="2",
-        stripe_vendor_id="3",
-        stripe_fee_account_id="4",
-        default_income_account_id="5",
-        default_tax_code_id="6",
-        exempt_tax_code_id="7",
-    )
 
 
 def test_transfer_from_payout(test_settings):

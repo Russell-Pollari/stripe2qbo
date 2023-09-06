@@ -13,17 +13,12 @@ class CompanyInfo(BaseModel):
 
 class CurrencyRef(BaseModel):
     value: QBOCurrency
-    name: Optional[str] = None
+    # name: Optional[str] = None
 
 
 class ItemRef(BaseModel):
     value: str
     name: Optional[str] = None
-
-
-class TaxRateRef(BaseModel):
-    value: str
-    name: Optional[str]
 
 
 class TaxCodeRef(BaseModel):
@@ -37,7 +32,7 @@ class Customer(BaseModel):
 
 
 class TaxRateDetail(BaseModel):
-    TaxRateRef: TaxRateRef
+    TaxRateRef: ItemRef
 
 
 class TaxRateList(BaseModel):
@@ -50,7 +45,7 @@ class TaxCode(BaseModel):
 
 
 class TaxLineDetail(BaseModel):
-    # TaxRateRef: TaxRateRef
+    TaxRateRef: Optional[ItemRef] = None
     PercentBased: bool = True
     TaxPercent: float
     NetAmountTaxable: float
@@ -124,4 +119,6 @@ class Invoice(BaseModel):
     PrivateNote: str
     DocNumber: Optional[str] = None
     TxnTaxDetail: Optional[TaxDetail] = None
+    DepositToAccountRef: Optional[ItemRef] = None
+    ARAccountRef: Optional[ItemRef] = None
     Line: List[InvoiceLine]

@@ -60,9 +60,9 @@ class QBO:
         if len(customers) == 0:
             return None
         else:
-            return customers[0]
+            return Customer(**customers[0])
 
-    def create_customer(self, customer_name: str, currency: str) -> Customer:
+    def create_customer(self, customer_name: str, currency: QBOCurrency) -> Customer:
         response = self._request(
             path="customer",
             method="POST",
@@ -77,14 +77,19 @@ class QBO:
             raise Exception(f"Error creating customer: {response.json()}")
         return Customer(**response.json()["Customer"])
 
-    def get_or_create_customer(self, customer_name: str, currency: str) -> Customer:
+    def get_or_create_customer(
+        self, customer_name: str, currency: QBOCurrency
+    ) -> Customer:
         customer = self.get_customer_by_name(customer_name)
         if customer is None:
             customer = self.create_customer(customer_name, currency)
 
-            if customer.CurrencyRef.value != currency:
-                # if already exists with different currency, create a new one
-                return self.create_customer(f"{customer_name} ({currency})", currency)
+        print("currency", currency)
+        print("CUSTOMER", customer)
+
+        if customer.CurrencyRef.value != currency:
+            # if already exists with different currency, create a new one
+            return self.create_customer(f"{customer_name} ({currency})", currency)
 
         return customer
 
@@ -140,7 +145,6 @@ class QBO:
 
         if len(accounts) > 1:
             raise Exception(f"Multiple accounts found with {account_name}")
-
         return accounts[0]["Id"]
 
     def get_or_create_account(self, account_name: str, account_type: str) -> str:

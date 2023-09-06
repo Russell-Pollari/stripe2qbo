@@ -1,5 +1,6 @@
-from typing import Dict
+from typing import Dict, cast
 import datetime
+
 
 import stripe2qbo.qbo.models as qbo_models
 import stripe2qbo.stripe.models as stripe_models
@@ -38,9 +39,12 @@ def expense_from_transaction(
     transaction: stripe_models.Transaction, settings: Settings
 ) -> qbo_models.Expense:
     if transaction.type in ["charge", "payment"]:
+        charge = cast(stripe_models.Charge, transaction.charge)
         amount = transaction.fee / 100
+        description = f"Stripe feee for charge {charge.id}"
     else:
         amount = -transaction.amount / 100
+        description = transaction.description or ""
 
     return qbo_models.Expense(
         TotalAmt=amount,
@@ -48,7 +52,7 @@ def expense_from_transaction(
         EntityRef=qbo_models.ItemRef(value=settings.stripe_vendor_id),
         TxnDate=_timestamp_to_date(transaction.created).strftime("%Y-%m-%d"),
         PrivateNote=f"""
-            {transaction.description}
+            {description}
             {transaction.id}
             {transaction.charge.id if transaction.charge else None}
         """,
@@ -88,7 +92,9 @@ def qbo_invoice_line_from_stripe_invoice_line(
 
 
 def tax_detail_from_invoice(
-    invoice: stripe_models.Invoice, settings: Settings
+    invoice: stripe_models.Invoice,
+    tax_codes: Dict[str, qbo_models.TaxCode | None],
+    settings: Settings,
 ) -> qbo_models.TaxDetail:
     """Create a QBO TaxDetail from a Stripe Invoice.
 
@@ -114,6 +120,13 @@ def tax_detail_from_invoice(
 
             tax_code_id = settings.default_tax_code_id
 
+            if tax_code_id == "TAX":
+                # Don't need TaxLineDetail if using default tax code
+                continue
+
+            tax_code = cast(qbo_models.TaxCode, tax_codes[tax_code_id])
+            tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
+
             detail = tax_details.get(tax_code_id)
             if detail is not None:
                 detail.Amount += tax_amount.amount / 100
@@ -122,6 +135,7 @@ def tax_detail_from_invoice(
                 tax_details[tax_code_id] = qbo_models.TaxLineModel(
                     Amount=tax_amount.amount / 100,
                     TaxLineDetail=qbo_models.TaxLineDetail(
+                        TaxRateRef=tax_rate_ref,
                         NetAmountTaxable=tax_amount.taxable_amount / 100,
                         TaxPercent=tax_amount.tax_rate.percentage,
                     ),
@@ -129,11 +143,14 @@ def tax_detail_from_invoice(
 
     untaxed_amount = invoice.amount_due - total_tax - total_taxable_amount
 
-    if untaxed_amount > 0:
+    if untaxed_amount > 0 and settings.exempt_tax_code_id != "NON":
         tax_code_id = settings.exempt_tax_code_id
+        tax_code = cast(qbo_models.TaxCode, tax_codes[tax_code_id])
+        tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef
         tax_details[tax_code_id] = qbo_models.TaxLineModel(
             Amount=0,
             TaxLineDetail=qbo_models.TaxLineDetail(
+                TaxRateRef=tax_rate_ref,
                 NetAmountTaxable=(untaxed_amount) / 100,
                 TaxPercent=0,
             ),
@@ -148,6 +165,7 @@ def tax_detail_from_invoice(
 def qbo_invoice_from_stripe_invoice(
     invoice: stripe_models.Invoice,
     customer_id: str,
+    tax_codes: Dict[str, qbo_models.TaxCode | None],
     settings: Settings,
 ) -> qbo_models.Invoice:
     invoice_lines = [
@@ -158,13 +176,13 @@ def qbo_invoice_from_stripe_invoice(
         for line in invoice.lines
     ]
 
-    tax_detail = tax_detail_from_invoice(invoice, settings)
+    tax_detail = tax_detail_from_invoice(invoice, tax_codes, settings)
 
     qbo_invoice = qbo_models.Invoice(
         CustomerRef=qbo_models.ItemRef(value=customer_id),
-        CurrencyRef=qbo_models.CurrencyRef(
-            value=invoice.currency.upper(),  # type: ignore
-        ),
+        CurrencyRef={
+            "value": invoice.currency.upper(),  # type: ignore
+        },
         TxnDate=_timestamp_to_date(invoice.created).strftime("%Y-%m-%d"),
         Line=invoice_lines,
         DocNumber=invoice.number,
