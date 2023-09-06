@@ -99,19 +99,27 @@ The default tax code to use for all invoice line items with zero tax. (e.g. TAX 
 
 ## Development
 
-### Server
+Ensure `pre-commit` is installed
+
+`$ pip install pre-commit`
+
+### Start dev server
 
 `$ python -m uvicorn stripe2qbo.api.app:app --reload`
 
-### Client
+### Build and watch client
 
 `$ npm run dev`
+
+(The client will re-build on changes, but you may have to refresh the browser manually to see changes)
 
 #### Tests
 
 `$ pytest`
 
 Requires `TEST_STRIPE_API_KEY` and `TEST_STRIPE_ACCOUNT_ID` env vars to be set.
+
+When first running tests, you will need to ensure a `test_token` for QBO is saved. Run pytest with `-s` flag and follow the prompts to generate and save a token.
 
 ## ROADMAP:
 
