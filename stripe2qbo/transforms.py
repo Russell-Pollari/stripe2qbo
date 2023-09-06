@@ -41,7 +41,7 @@ def expense_from_transaction(
     if transaction.type in ["charge", "payment"]:
         charge = cast(stripe_models.Charge, transaction.charge)
         amount = transaction.fee / 100
-        description = f"Stripe feee for charge {charge.id}"
+        description = f"Stripe fee for charge {charge.id}"
     else:
         amount = -transaction.amount / 100
         description = transaction.description or ""

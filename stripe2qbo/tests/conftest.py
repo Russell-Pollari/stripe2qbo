@@ -6,6 +6,7 @@ import pytest
 import stripe
 from dotenv import load_dotenv
 
+from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.auth import (
     Token,
@@ -75,3 +76,12 @@ def test_settings() -> Settings:
         default_tax_code_id="TAX",
         exempt_tax_code_id="NON",
     )
+
+
+@pytest.fixture
+def test_qbo(test_token) -> QBO:
+    qbo = QBO()
+    qbo.set_token(test_token)
+    assert qbo.access_token is not None
+    assert qbo.realm_id is not None
+    return qbo

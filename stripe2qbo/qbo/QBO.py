@@ -84,12 +84,11 @@ class QBO:
         if customer is None:
             customer = self.create_customer(customer_name, currency)
 
-        print("currency", currency)
-        print("CUSTOMER", customer)
-
         if customer.CurrencyRef.value != currency:
             # if already exists with different currency, create a new one
-            return self.create_customer(f"{customer_name} ({currency})", currency)
+            return self.get_or_create_customer(
+                f"{customer_name} ({currency})", currency
+            )
 
         return customer
 

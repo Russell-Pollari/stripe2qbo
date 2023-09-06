@@ -3,7 +3,6 @@ from datetime import datetime
 import os
 
 from dotenv import load_dotenv
-import pytest
 import stripe
 
 from stripe2qbo.db.schemas import Settings
@@ -19,15 +18,6 @@ load_dotenv()
 
 stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
-
-
-@pytest.fixture
-def test_qbo(test_token) -> QBO:
-    qbo = QBO()
-    qbo.set_token(test_token)
-    assert qbo.access_token is not None
-    assert qbo.realm_id is not None
-    return qbo
 
 
 def test_qbo_request(test_qbo: QBO, test_token):
