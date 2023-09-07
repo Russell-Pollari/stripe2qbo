@@ -29,6 +29,8 @@ class User(Base):
     stripe_user_id: Mapped[str | None] = mapped_column(nullable=True)
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
 
+    transactions = relationship("TransactionSync", back_populates="id")
+
 
 class QBOToken(Base):
     __tablename__ = "qbo_tokens"
@@ -53,7 +55,10 @@ class TransactionSync(Base):
     description: Mapped[str] = mapped_column(nullable=False)
     stripe_id: Mapped[str] = mapped_column(nullable=False)
     qbo_account_id: Mapped[str] = mapped_column(nullable=False)
-    status: Optional[Literal["pending", "success", "failed"]] = None
+    status: Mapped[
+        Optional[Literal["pending", "success", "failed"]] | None
+    ] = mapped_column(nullable=False)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     # QBO ids
     transfer_id: Mapped[str | None] = mapped_column(nullable=True)
     invoice_id: Mapped[str | None] = mapped_column(nullable=True)
