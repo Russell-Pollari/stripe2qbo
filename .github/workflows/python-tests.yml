@@ -24,8 +24,10 @@ jobs:
                   python -m pip install --upgrade pip
                   pip install -r requirements.txt
             - name: Load QBO token
+              env:
+                  QBO_TOKEN: ${{ secrets.QBO_TOKEN }}
               run: |
-                  echo ${{ secrets.QBO_TOKEN }} > test_token.json
+                  echo "$QBO_TOKEN" > test_token.json
             - name: run tests
               env:
                   QBO_BASE_URL: ${{ secrets.QBO_BASE_URL }}
