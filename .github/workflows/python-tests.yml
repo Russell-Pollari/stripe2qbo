@@ -32,6 +32,7 @@ jobs:
                   QBO_BASE_URL: ${{ secrets.QBO_BASE_URL }}
                   QBO_CLIENT_ID: ${{ secrets.QBO_CLIENT_ID }}
                   QBO_CLIENT_SECRET: ${{ secrets.QBO_CLIENT_SECRET }}
+                  QBO_REDIRECT_URI: ${{ secrets.QBO_REDIRECT_URI }}
                   STRIPE_CLIENT_ID: ${{ secrets.STRIPE_CLIENT_ID }}
                   TEST_STRIPE_ACCOUNT_ID: ${{ secrets.TEST_STRIPE_ACCOUNT_ID }}
                   TEST_STRIPE_API_KEY: ${{ secrets.TEST_STRIPE_API_KEY }}
