@@ -129,7 +129,6 @@ Here's a rough roadmap of what's on the way to make this generally useful:
 -   [ ] DB model for transactions, show historical data on login
 -   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
 
--   [ ] Add test suite and CI/CD
 -   [ ] Handle differente currencies when getting and creating accounts (e.g. default income account)
 -   [ ] Product settings to customize behaviour of individual products
 -   [ ] Tax settings to customize behaviour of taxes
