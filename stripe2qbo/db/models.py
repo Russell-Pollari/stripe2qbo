@@ -1,3 +1,4 @@
+from typing import Optional, Literal
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -40,3 +41,23 @@ class QBOToken(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
 
     user = relationship("User", back_populates="qbo_token")
+
+
+class TransactionSync(Base):
+    __tablename__ = "transaction_sync"
+
+    id: Mapped[str] = mapped_column(primary_key=True)
+    created: Mapped[int] = mapped_column(nullable=False)
+    type: Mapped[str] = mapped_column(nullable=False)
+    amount: Mapped[int] = mapped_column(nullable=False)
+    description: Mapped[str] = mapped_column(nullable=False)
+    stripe_id: Mapped[str] = mapped_column(nullable=False)
+    qbo_account_id: Mapped[str] = mapped_column(nullable=False)
+    status: Optional[Literal["pending", "success", "failed"]] = None
+    # QBO ids
+    transfer_id: Mapped[str | None] = mapped_column(nullable=True)
+    invoice_id: Mapped[str | None] = mapped_column(nullable=True)
+    payment_id: Mapped[str | None] = mapped_column(nullable=True)
+    expense_id: Mapped[str | None] = mapped_column(nullable=True)
+
+    user = relationship("User", back_populates="stripe_user_id")
