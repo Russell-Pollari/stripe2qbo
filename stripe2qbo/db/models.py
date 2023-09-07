@@ -1,4 +1,4 @@
-from typing import Optional, Literal
+from typing import Literal
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -29,7 +29,7 @@ class User(Base):
     stripe_user_id: Mapped[str | None] = mapped_column(nullable=True)
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
 
-    transactions = relationship("TransactionSync", back_populates="id")
+    transactions = relationship("TransactionSync", back_populates="transactions")
 
 
 class QBOToken(Base):
@@ -55,9 +55,9 @@ class TransactionSync(Base):
     description: Mapped[str] = mapped_column(nullable=False)
     stripe_id: Mapped[str] = mapped_column(nullable=False)
     qbo_account_id: Mapped[str] = mapped_column(nullable=False)
-    status: Mapped[
-        Optional[Literal["pending", "success", "failed"]] | None
-    ] = mapped_column(nullable=False)
+    status: Mapped[Literal["pending", "success", "failed"] | None] = mapped_column(
+        nullable=False
+    )
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     # QBO ids
     transfer_id: Mapped[str | None] = mapped_column(nullable=True)
@@ -65,4 +65,4 @@ class TransactionSync(Base):
     payment_id: Mapped[str | None] = mapped_column(nullable=True)
     expense_id: Mapped[str | None] = mapped_column(nullable=True)
 
-    user = relationship("User", back_populates="stripe_user_id")
+    user = relationship("User", back_populates="user")
