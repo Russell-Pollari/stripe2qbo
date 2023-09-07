@@ -28,8 +28,9 @@ class User(Base):
     qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=False)
     stripe_user_id: Mapped[str | None] = mapped_column(nullable=True)
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
-
-    transactions = relationship("TransactionSync", back_populates="transactions")
+    transactions: Mapped["TransactionSync"] = relationship(
+        "TransactionSync", back_populates="user"
+    )
 
 
 class QBOToken(Base):
@@ -58,11 +59,11 @@ class TransactionSync(Base):
     status: Mapped[Literal["pending", "success", "failed"] | None] = mapped_column(
         nullable=False
     )
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     # QBO ids
     transfer_id: Mapped[str | None] = mapped_column(nullable=True)
     invoice_id: Mapped[str | None] = mapped_column(nullable=True)
     payment_id: Mapped[str | None] = mapped_column(nullable=True)
     expense_id: Mapped[str | None] = mapped_column(nullable=True)
 
-    user = relationship("User", back_populates="user")
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    user = relationship("User", back_populates="transactions")
