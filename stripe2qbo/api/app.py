@@ -33,6 +33,9 @@ load_dotenv()
 
 app = FastAPI()
 
+if not os.path.exists("static"):
+    os.mkdir("static")
+
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 app.include_router(qbo.router)
