@@ -9,7 +9,8 @@ from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import ProductItemRef, QBOCurrency, TaxCode
-from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
+from stripe2qbo.stripe.models import Transaction
+from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.transforms import (
     expense_from_transaction,
     qbo_invoice_from_stripe_invoice,
@@ -42,32 +43,30 @@ def test_create_account(test_qbo: QBO):
     assert response.json()["Account"]["CurrencyRef"]["value"] == test_qbo.home_currency
 
 
-def test_create_expense(test_qbo: QBO, test_customer, test_settings):
-    stripe.Charge.create(
-        amount=1000,
-        currency="usd",
-        customer=test_customer.id,
-        stripe_account=ACCOUNT_ID,
-    )
-    txn = stripe.BalanceTransaction.list(
-        limit=1,
-        type="charge",
-        stripe_account=ACCOUNT_ID,
-        expand=["data.source", "data.source.customer"],
-    ).data[0]
-    transaction = build_transaction(txn, ACCOUNT_ID)
-    expense = expense_from_transaction(transaction, test_settings)
-
+def test_create_expense(
+    test_qbo: QBO,
+    test_settings: Settings,
+    test_charge_transaction: Transaction,
+):
+    expense = expense_from_transaction(test_charge_transaction, test_settings)
     expense_id = test_qbo.create_expense(expense)
 
     response = test_qbo._request(path=f"/purchase/{expense_id}")
-
     assert response.status_code == 200
     assert response.json()["Purchase"]["Id"] == expense_id
     assert response.json()["Purchase"]["TxnDate"] == datetime.fromtimestamp(
-        transaction.created
+        test_charge_transaction.created
     ).strftime("%Y-%m-%d")
-    assert response.json()["Purchase"]["TotalAmt"] == transaction.fee / 100
+    assert (
+        response.json()["Purchase"]["CurrencyRef"]["value"]
+        == test_charge_transaction.currency.upper()
+    )
+    assert (
+        response.json()["Purchase"]["ExchangeRate"]
+        == test_charge_transaction.exchange_rate
+        or 1.0
+    )
+    assert response.json()["Purchase"]["TotalAmt"] == test_charge_transaction.fee / 100
     assert (
         response.json()["Purchase"]["EntityRef"]["value"]
         == test_settings.stripe_vendor_id

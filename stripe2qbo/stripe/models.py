@@ -48,9 +48,9 @@ class Charge(BaseModel):
 
 class Customer(BaseModel):
     id: str
-    name: Optional[str]
-    description: Optional[str]
-    email: Optional[str]
+    name: Optional[str] = None
+    description: Optional[str] = None
+    email: Optional[str] = None
 
 
 class Payout(BaseModel):

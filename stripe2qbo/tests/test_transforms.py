@@ -8,6 +8,7 @@ import stripe
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import TaxCode
+from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
 from stripe2qbo.transforms import (
     payment_from_charge,
@@ -51,41 +52,30 @@ def test_transfer_from_payout(test_settings: Settings):
     )
 
 
-def test_expense_from_transaction(test_customer, test_settings: Settings):
-    test_charge = stripe.Charge.create(
-        amount=1000,
-        currency="usd",
-        customer=test_customer.id,
-        stripe_account=ACCOUNT_ID,
-    )
-
-    txn = stripe.BalanceTransaction.list(
-        limit=1,
-        type="charge",
-        stripe_account=ACCOUNT_ID,
-        expand=["data.source", "data.source.customer"],
-    ).data[0]
-
-    transaction = build_transaction(txn, ACCOUNT_ID)
-
-    expense = expense_from_transaction(transaction, test_settings)
+def test_expense_from_transaction(
+    test_charge_transaction: Transaction, test_settings: Settings
+):
+    assert test_charge_transaction.charge is not None
+    expense = expense_from_transaction(test_charge_transaction, test_settings)
 
     assert expense is not None
     assert expense.AccountRef.value == test_settings.stripe_clearing_account_id
     assert expense.EntityRef.value == test_settings.stripe_vendor_id
-    assert expense.TotalAmt == transaction.fee / 100
-    assert expense.TxnDate == datetime.fromtimestamp(transaction.created).strftime(
-        "%Y-%m-%d"
-    )
+    assert expense.TotalAmt == test_charge_transaction.fee / 100
+    assert expense.CurrencyRef.value == test_charge_transaction.currency.upper()
+    assert expense.ExchangeRate == test_charge_transaction.exchange_rate or 1.0
+    assert expense.TxnDate == datetime.fromtimestamp(
+        test_charge_transaction.created
+    ).strftime("%Y-%m-%d")
     assert (
         expense.PrivateNote
         == f"""
-            Stripe fee for charge {test_charge.id}
-            {transaction.id}
-            {test_charge.id}
+            Stripe fee for charge {test_charge_transaction.charge.id}
+            {test_charge_transaction.id}
+            {test_charge_transaction.charge.id}
         """
     )
-    assert expense.Line[0].Amount == transaction.fee / 100
+    assert expense.Line[0].Amount == test_charge_transaction.fee / 100
     assert (
         expense.Line[0].AccountBasedExpenseLineDetail.AccountRef.value
         == test_settings.stripe_fee_account_id

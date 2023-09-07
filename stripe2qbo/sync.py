@@ -21,7 +21,7 @@ class TransactionSync(BaseModel):
     created: int
     type: str
     amount: int
-    description: str
+    description: Optional[str] = None
     status: Optional[Literal["pending", "success", "failed"]] = None
     # QBO ids
     transfer_id: Optional[str] = None
@@ -164,7 +164,7 @@ def sync_invoice_payment(
         transaction.charge,
         qbo_customer_id,
         settings,
-        exchange_rate=transaction.exchange_rate,
+        exchange_rate=transaction.exchange_rate or 1.0,
         invoice_id=qbo_invoice_id,
     )
     payment_id = qbo.create_payment(payment)
@@ -223,7 +223,7 @@ def sync_transaction(
 
         if transaction.customer is not None:
             qbo_customer = qbo.get_or_create_customer(
-                cast(str, transaction.customer.name),
+                cast(str, transaction.customer.name or transaction.customer.id),
                 currency,
             )
         else:

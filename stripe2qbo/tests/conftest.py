@@ -14,6 +14,9 @@ from stripe2qbo.qbo.auth import (
     refresh_auth_token,
     get_auth_url,
 )
+from stripe2qbo.stripe.models import Transaction
+from stripe2qbo.stripe.stripe_transactions import get_transaction
+
 
 stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
@@ -65,7 +68,7 @@ def test_token() -> Token:
 
 
 @pytest.fixture
-def test_qbo(test_token) -> QBO:
+def test_qbo(test_token: Token) -> QBO:
     qbo = QBO()
     qbo.set_token(test_token)
     assert qbo.access_token is not None
@@ -100,3 +103,24 @@ def test_settings(test_qbo: QBO) -> Settings:
         default_tax_code_id="TAX",
         exempt_tax_code_id="NON",
     )
+
+
+@pytest.fixture(params=["usd", "cad"])
+def test_charge_transaction(
+    test_customer: stripe.Customer, request: pytest.FixtureRequest
+) -> Transaction:
+    stripe.Charge.create(
+        amount=1000,
+        currency=request.param,
+        customer=test_customer.id,
+        stripe_account=ACCOUNT_ID,
+    )
+    txn = stripe.BalanceTransaction.list(
+        limit=1,
+        type="charge",
+        stripe_account=ACCOUNT_ID,
+        expand=["data.source", "data.source.customer"],
+    ).data[0]
+
+    transaction = get_transaction(txn.id, ACCOUNT_ID)
+    return transaction
