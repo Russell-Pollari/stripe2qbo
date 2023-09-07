@@ -1,3 +1,4 @@
+from pprint import pprint
 from typing import Dict, cast
 from datetime import datetime
 import os
@@ -49,32 +50,33 @@ def test_create_expense(
     test_charge_transaction: Transaction,
 ):
     expense = expense_from_transaction(test_charge_transaction, test_settings)
+    currency = test_charge_transaction.currency.upper()
+
     expense_id = test_qbo.create_expense(expense)
 
     response = test_qbo._request(path=f"/purchase/{expense_id}")
     assert response.status_code == 200
-    assert response.json()["Purchase"]["Id"] == expense_id
-    assert response.json()["Purchase"]["TxnDate"] == datetime.fromtimestamp(
+    purchase = response.json()["Purchase"]
+
+    pprint(purchase)
+    assert purchase is not None
+    assert purchase["Id"] == expense_id
+    assert purchase["TxnDate"] == datetime.fromtimestamp(
         test_charge_transaction.created
     ).strftime("%Y-%m-%d")
-    assert (
-        response.json()["Purchase"]["CurrencyRef"]["value"]
-        == test_charge_transaction.currency.upper()
-    )
-    assert (
-        response.json()["Purchase"]["ExchangeRate"]
-        == test_charge_transaction.exchange_rate
-        or 1.0
-    )
-    assert response.json()["Purchase"]["TotalAmt"] == test_charge_transaction.fee / 100
-    assert (
-        response.json()["Purchase"]["EntityRef"]["value"]
-        == test_settings.stripe_vendor_id
-    )
-    assert (
-        response.json()["Purchase"]["AccountRef"]["value"]
-        == test_settings.stripe_clearing_account_id
-    )
+    assert purchase["CurrencyRef"]["value"] == currency
+    assert purchase["TotalAmt"] == test_charge_transaction.fee / 100
+    if currency == "USD":
+        assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id
+        assert (
+            purchase["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
+        )
+    else:
+        assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id_cad
+        assert (
+            purchase["AccountRef"]["value"]
+            == test_settings.stripe_clearing_account_id_cad
+        )
 
 
 def test_create_invoice(test_qbo: QBO, test_customer, test_settings: Settings):

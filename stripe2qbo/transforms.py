@@ -44,12 +44,20 @@ def expense_from_transaction(
         description = transaction.description or ""
 
     currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
+
+    # TODO: compare to home currency
+    if currency == "CAD":
+        account_id = settings.stripe_clearing_account_id_cad
+        vendor_id = settings.stripe_vendor_id_cad
+    else:
+        account_id = settings.stripe_clearing_account_id
+        vendor_id = settings.stripe_vendor_id
+
     return qbo_models.Expense(
         TotalAmt=amount,
         CurrencyRef=qbo_models.CurrencyRef(value=currency),
-        ExchangeRate=transaction.exchange_rate or 1.0,
-        AccountRef=qbo_models.ItemRef(value=settings.stripe_clearing_account_id),
-        EntityRef=qbo_models.ItemRef(value=settings.stripe_vendor_id),
+        AccountRef=qbo_models.ItemRef(value=account_id),
+        EntityRef=qbo_models.ItemRef(value=vendor_id),
         TxnDate=_timestamp_to_date(transaction.created).strftime("%Y-%m-%d"),
         PrivateNote=f"""
             {description}

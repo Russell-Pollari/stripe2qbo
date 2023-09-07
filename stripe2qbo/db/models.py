@@ -16,19 +16,15 @@ class SyncSettings(Base):
     # TODO: support arbitrary currencies?
     stripe_clearing_account_id: Mapped[str]
     stripe_clearing_account_id_cad: Mapped[str]
-    stripe_clearing_account_id_usd: Mapped[str]
 
     stripe_payout_account_id: Mapped[str]
     stripe_payout_account_id_cad: Mapped[str]
-    stripe_payout_account_id_usd: Mapped[str]
 
     stripe_vendor_id: Mapped[str]
     stripe_vendor_id_cad: Mapped[str]
-    stripe_vendor_id_usd: Mapped[str]
 
     stripe_fee_account_id: Mapped[str]
     stripe_fee_account_id_cad: Mapped[str]
-    stripe_fee_account_id_usd: Mapped[str]
 
     default_income_account_id: Mapped[str]
     default_tax_code_id: Mapped[str]

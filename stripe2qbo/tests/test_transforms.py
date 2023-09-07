@@ -56,14 +56,19 @@ def test_expense_from_transaction(
     test_charge_transaction: Transaction, test_settings: Settings
 ):
     assert test_charge_transaction.charge is not None
+    currency = test_charge_transaction.currency.upper()
     expense = expense_from_transaction(test_charge_transaction, test_settings)
 
     assert expense is not None
-    assert expense.AccountRef.value == test_settings.stripe_clearing_account_id
-    assert expense.EntityRef.value == test_settings.stripe_vendor_id
+    assert expense.CurrencyRef.value == currency
+    if currency == "USD":
+        assert expense.AccountRef.value == test_settings.stripe_clearing_account_id
+        assert expense.EntityRef.value == test_settings.stripe_vendor_id
+    else:
+        assert expense.AccountRef.value == test_settings.stripe_clearing_account_id_cad
+        assert expense.EntityRef.value == test_settings.stripe_vendor_id_cad
+
     assert expense.TotalAmt == test_charge_transaction.fee / 100
-    assert expense.CurrencyRef.value == test_charge_transaction.currency.upper()
-    assert expense.ExchangeRate == test_charge_transaction.exchange_rate or 1.0
     assert expense.TxnDate == datetime.fromtimestamp(
         test_charge_transaction.created
     ).strftime("%Y-%m-%d")
