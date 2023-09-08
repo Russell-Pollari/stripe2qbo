@@ -1,3 +1,5 @@
+from typing import Optional, Literal
+
 from pydantic import BaseModel
 
 
@@ -22,3 +24,20 @@ class Settings(BaseModel):
         "populate_by_name": True,
         "from_attributes": True,
     }
+
+
+class TransactionSync(BaseModel):
+    id: str
+    user_id: str
+    created: int
+    type: str
+    amount: int
+    description: str
+    stripe_id: str
+    qbo_account_id: Optional[str] = None
+    status: Optional[Literal["pending", "success", "failed"]] = None
+    # QBO ids
+    transfer_id: Optional[str] = None
+    invoice_id: Optional[str] = None
+    payment_id: Optional[str] = None
+    expense_id: Optional[str] = None
