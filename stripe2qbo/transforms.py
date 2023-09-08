@@ -1,12 +1,9 @@
 from typing import Dict, cast, Optional
 import datetime
 
-
+from stripe2qbo.db.schemas import Settings
 import stripe2qbo.qbo.models as qbo_models
 import stripe2qbo.stripe.models as stripe_models
-
-
-from stripe2qbo.db.schemas import Settings
 
 
 def _timestamp_to_date(timestamp: int) -> datetime.datetime:
@@ -36,7 +33,9 @@ def transfer_from_payout(
 
 
 def expense_from_transaction(
-    transaction: stripe_models.Transaction, settings: Settings
+    transaction: stripe_models.Transaction,
+    settings: Settings,
+    exchange_rate: float = 1.0,
 ) -> qbo_models.Expense:
     if transaction.type in ["charge", "payment"]:
         charge = cast(stripe_models.Charge, transaction.charge)
@@ -46,10 +45,21 @@ def expense_from_transaction(
         amount = -transaction.amount / 100
         description = transaction.description or ""
 
+    currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
+
+    if currency == "CAD":
+        account_id = settings.stripe_clearing_account_id_cad
+        vendor_id = settings.stripe_vendor_id_cad
+    else:
+        account_id = settings.stripe_clearing_account_id
+        vendor_id = settings.stripe_vendor_id
+
     return qbo_models.Expense(
         TotalAmt=amount,
-        AccountRef=qbo_models.ItemRef(value=settings.stripe_clearing_account_id),
-        EntityRef=qbo_models.ItemRef(value=settings.stripe_vendor_id),
+        ExchangeRate=exchange_rate,
+        CurrencyRef=qbo_models.CurrencyRef(value=currency),
+        AccountRef=qbo_models.ItemRef(value=account_id),
+        EntityRef=qbo_models.ItemRef(value=vendor_id),
         TxnDate=_timestamp_to_date(transaction.created).strftime("%Y-%m-%d"),
         PrivateNote=f"""
             {description}
@@ -201,7 +211,7 @@ def payment_from_charge(
     customer_id: str,
     settings: Settings,
     invoice_id: Optional[str] = None,
-    exchange_rate: Optional[float] = 1,
+    exchange_rate: float = 1.0,
 ) -> qbo_models.Payment:
     currency = cast(qbo_models.QBOCurrency, charge.currency.upper())
 
