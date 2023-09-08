@@ -19,11 +19,12 @@ class QBO:
     realm_id: str | None = None
     access_token: str | None = None
     home_currency: QBOCurrency | None = None
+    using_sales_tax: bool = False
 
     def set_token(self, token: Token) -> None:
         self.realm_id = token.realm_id
         self.access_token = token.access_token
-        self.home_currency = self._get_home_currency()
+        self._set_preferences()
 
     def _request(
         self, path: str, method: str = "GET", body: Optional[Mapping[str, Any]] = None
@@ -46,10 +47,13 @@ class QBO:
             raise Exception(f"Query failed: {response.json()}")
         return response
 
-    def _get_home_currency(self) -> QBOCurrency:
+    def _set_preferences(self) -> None:
         response = self._request(path="/preferences")
         currency_prefs = response.json()["Preferences"]["CurrencyPrefs"]
-        return currency_prefs["HomeCurrency"]["value"]
+        tax_prefs = response.json()["Preferences"]["TaxPrefs"]
+
+        self.home_currency = currency_prefs["HomeCurrency"]["value"]
+        self.using_sales_tax = tax_prefs["UsingSalesTax"]
 
     def get_tax_code(self, tax_code_id: str) -> Optional[TaxCode]:
         response = self._query(f"select * from TaxCode where Id = '{tax_code_id}'")

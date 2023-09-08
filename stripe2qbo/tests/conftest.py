@@ -90,8 +90,7 @@ def test_settings(test_qbo: QBO) -> Settings:
     )
     stripe_vendor_id = test_qbo.get_or_create_vendor("Stripe")
 
-    # TODO: default tax settings?
-
+    # TODO: default tax settings - depending on QBO locale and preferences
     return Settings(
         stripe_clearing_account_id=stripe_clearing_account_id,
         stripe_payout_account_id=stripe_payout_account_id,
