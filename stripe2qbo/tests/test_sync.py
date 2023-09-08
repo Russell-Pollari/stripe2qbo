@@ -1,9 +1,11 @@
 import os
 from datetime import datetime
 
+import pytest
 from dotenv import load_dotenv
 import stripe
 from stripe2qbo.db.schemas import Settings
+from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.auth import Token
 
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
@@ -16,6 +18,9 @@ stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 
 
+@pytest.mark.skip(
+    reason="Esure that the test Stripe account has a payout or available balance"
+)
 def test_sync_payout(test_token: Token, test_settings: Settings):
     txn = stripe.BalanceTransaction.list(
         limit=1, type="payout", stripe_account=ACCOUNT_ID, expand=["data.source"]
@@ -67,7 +72,12 @@ def test_sync_payout(test_token: Token, test_settings: Settings):
         )
 
 
-def test_sync_invoice(test_token: Token, test_settings: Settings, test_customer):
+def test_sync_invoice(
+    test_token: Token,
+    test_settings: Settings,
+    test_customer: stripe.Customer,
+    test_qbo: QBO,
+):
     stripe.InvoiceItem.create(
         customer=test_customer.id,
         amount=1000,
@@ -135,7 +145,11 @@ def test_sync_invoice(test_token: Token, test_settings: Settings, test_customer)
     assert invoice["Line"][0]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product 2"
     assert invoice["Line"][1]["Amount"] == 10
     assert invoice["Line"][1]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product 1"
-    assert invoice["TxnTaxDetail"]["TotalTax"] == 0
+
+    test_qbo.set_token(test_token)
+
+    if test_qbo.using_sales_tax:
+        assert invoice["TxnTaxDetail"]["TotalTax"] == 0
 
     response = qbo_request(
         path=f"/payment/{sync.payment_id}",

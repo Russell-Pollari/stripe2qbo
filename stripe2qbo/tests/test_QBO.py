@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import stripe
 
 from stripe2qbo.db.schemas import Settings
+from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import ProductItemRef, QBOCurrency, TaxCode
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
@@ -20,7 +21,7 @@ stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 
 
-def test_qbo_request(test_qbo: QBO, test_token):
+def test_qbo_request(test_qbo: QBO, test_token: Token):
     response = test_qbo._request(
         path=f"/companyinfo/{test_token.realm_id}",
     )
@@ -28,6 +29,17 @@ def test_qbo_request(test_qbo: QBO, test_token):
     assert response.status_code == 200
     assert response.json()["CompanyInfo"]["CompanyName"] is not None
     assert response.json()["CompanyInfo"]["Country"] is not None
+
+
+def test_create_account(test_qbo: QBO):
+    account_id = test_qbo.get_or_create_account("Test Expense Account", "Expense")
+
+    response = test_qbo._request(path=f"/account/{account_id}")
+    assert response.status_code == 200
+    assert response.json()["Account"]["Id"] == account_id
+    assert response.json()["Account"]["Name"] == "Test Expense Account"
+    assert response.json()["Account"]["AccountType"] == "Expense"
+    assert response.json()["Account"]["CurrencyRef"]["value"] == test_qbo.home_currency
 
 
 def test_create_expense(test_qbo: QBO, test_customer, test_settings):
