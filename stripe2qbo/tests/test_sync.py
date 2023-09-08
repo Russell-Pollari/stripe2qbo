@@ -1,6 +1,7 @@
 import os
 from datetime import datetime
 
+import pytest
 from dotenv import load_dotenv
 import stripe
 from stripe2qbo.db.schemas import Settings
@@ -17,6 +18,9 @@ stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 
 
+@pytest.mark.skip(
+    reason="Esure that the test Stripe account has a payout or available balance"
+)
 def test_sync_payout(test_token: Token, test_settings: Settings):
     txn = stripe.BalanceTransaction.list(
         limit=1, type="payout", stripe_account=ACCOUNT_ID, expand=["data.source"]
