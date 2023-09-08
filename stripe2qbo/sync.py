@@ -184,7 +184,16 @@ def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
         print(f"Expense for {transaction.id} already synced")
         return expense_id
 
-    expense = expense_from_transaction(transaction, settings)
+    currency = transaction.currency.upper()
+    if qbo.home_currency != currency:
+        date = _timestamp_to_date(transaction.created).strftime("%Y-%m-%d")
+        exchange_rate = qbo._request(
+            path=f"/exchangerate?sourcecurrencycode={currency}&asofdate={date}"
+        ).json()["ExchangeRate"]["Rate"]
+    else:
+        exchange_rate = 1.0
+
+    expense = expense_from_transaction(transaction, settings, exchange_rate)
     expense_id = qbo.create_expense(expense)
 
     print(f"Created expense {expense_id} for stripe fee {transaction.id}")

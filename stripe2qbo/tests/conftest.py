@@ -144,14 +144,14 @@ def test_invoice_transaction(
         customer=test_customer.id,
         amount=1000,
         currency=request.param,
-        description="Product X cad",
+        description="Product A",
         stripe_account=ACCOUNT_ID,
     )
     stripe.InvoiceItem.create(
         customer=test_customer.id,
         amount=500,
         currency=request.param,
-        description="Product Z cad",
+        description="Product B",
         stripe_account=ACCOUNT_ID,
     )
     test_invoice = stripe.Invoice.create(

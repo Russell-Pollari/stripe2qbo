@@ -4,11 +4,12 @@ from datetime import datetime
 import pytest
 from dotenv import load_dotenv
 import stripe
+
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.auth import Token
-
-from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
+from stripe2qbo.stripe.stripe_transactions import build_transaction
+from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.sync import sync_transaction
 
@@ -75,36 +76,15 @@ def test_sync_payout(test_token: Token, test_settings: Settings):
 def test_sync_invoice(
     test_token: Token,
     test_settings: Settings,
-    test_customer: stripe.Customer,
+    test_invoice_transaction: Transaction,
     test_qbo: QBO,
 ):
-    stripe.InvoiceItem.create(
-        customer=test_customer.id,
-        amount=1000,
-        currency="usd",
-        description="Product 1",
-        stripe_account=ACCOUNT_ID,
-    )
-    stripe.InvoiceItem.create(
-        customer=test_customer.id,
-        amount=500,
-        currency="usd",
-        description="Product 2",
-        stripe_account=ACCOUNT_ID,
-    )
-    test_invoice = stripe.Invoice.create(
-        customer=test_customer.id,
-        stripe_account=ACCOUNT_ID,
-        collection_method="send_invoice",
-        currency="usd",
-        days_until_due=30,
-    )
-    stripe.Invoice.pay(test_invoice.id, stripe_account=ACCOUNT_ID)
-    txn = stripe.BalanceTransaction.list(limit=1, stripe_account=ACCOUNT_ID).data[0]
-    transaction = get_transaction(txn.id, ACCOUNT_ID)
+    transaction = test_invoice_transaction
     assert transaction.invoice is not None
     assert transaction.invoice.due_date is not None
     assert transaction.charge is not None
+    assert transaction.customer is not None
+    invoice_currency = transaction.invoice.currency.upper()
 
     sync = sync_transaction(transaction, test_settings, test_token)
 
@@ -120,6 +100,7 @@ def test_sync_invoice(
         realm_id=test_token.realm_id,
     )
     assert response.status_code == 200
+
     invoice = response.json()["Invoice"]
     assert invoice is not None
     assert invoice["Id"] == sync.invoice_id
@@ -134,17 +115,17 @@ def test_sync_invoice(
         == f"{transaction.invoice.number}\n{transaction.invoice.id}"
     )
     assert invoice["CustomerRef"]["name"] in [
-        test_customer.name,
-        f"{test_customer.name} (USD)",
+        transaction.customer.name,
+        f"{transaction.customer.name} ({invoice_currency})",
     ]
     assert invoice["TotalAmt"] == transaction.invoice.amount_due / 100
-    assert invoice["CurrencyRef"]["value"] == "USD"
+    assert invoice["CurrencyRef"]["value"] == invoice_currency
     assert invoice["DocNumber"] == transaction.invoice.number
     assert len(invoice["Line"]) == len(transaction.invoice.lines) + 1
     assert invoice["Line"][0]["Amount"] == 5
-    assert invoice["Line"][0]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product 2"
+    assert invoice["Line"][0]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product B"
     assert invoice["Line"][1]["Amount"] == 10
-    assert invoice["Line"][1]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product 1"
+    assert invoice["Line"][1]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product A"
 
     test_qbo.set_token(test_token)
 
@@ -169,11 +150,11 @@ def test_sync_invoice(
         == f"{transaction.charge.description}\n{transaction.charge.id}"
     )
     assert payment["CustomerRef"]["name"] in [
-        test_customer.name,
-        f"{test_customer.name} (USD)",
+        transaction.customer.name,
+        f"{transaction.customer.name} ({invoice_currency})",
     ]
     assert payment["TotalAmt"] == transaction.charge.amount / 100
-    assert payment["CurrencyRef"]["value"] == "USD"
+    assert payment["CurrencyRef"]["value"] == invoice_currency
     assert (
         payment["DepositToAccountRef"]["value"]
         == test_settings.stripe_clearing_account_id
@@ -195,10 +176,21 @@ def test_sync_invoice(
         transaction.charge.created
     ).strftime("%Y-%m-%d")
     assert f"Stripe fee for charge {transaction.charge.id}" in expense["PrivateNote"]
-    assert expense["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
-    assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id
+
+    if transaction.currency != "cad":
+        assert (
+            expense["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
+        )
+        assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id
+    else:
+        assert (
+            expense["AccountRef"]["value"]
+            == test_settings.stripe_clearing_account_id_cad
+        )
+        assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id_cad
+
     assert expense["TotalAmt"] == transaction.fee / 100
-    assert expense["CurrencyRef"]["value"] == "USD"
+    assert expense["CurrencyRef"]["value"] == transaction.currency.upper()
     assert expense["Line"][0]["Amount"] == transaction.fee / 100
     assert (
         expense["Line"][0]["AccountBasedExpenseLineDetail"]["AccountRef"]["value"]

@@ -48,10 +48,16 @@ def test_create_expense(
     test_charge_transaction: Transaction,
 ):
     currency = test_charge_transaction.currency.upper()
-    date = datetime.fromtimestamp(test_charge_transaction.created).strftime("%Y-%m-%d")
-    exchange_rate = test_qbo._request(
-        path=f"/exchangerate?sourcecurrencycode={currency}&asofdate={date}"
-    ).json()["ExchangeRate"]["Rate"]
+
+    if currency != test_qbo.home_currency:
+        date = datetime.fromtimestamp(test_charge_transaction.created).strftime(
+            "%Y-%m-%d"
+        )
+        exchange_rate = test_qbo._request(
+            path=f"/exchangerate?sourcecurrencycode={currency}&asofdate={date}"
+        ).json()["ExchangeRate"]["Rate"]
+    else:
+        exchange_rate = 1.0
 
     expense = expense_from_transaction(
         test_charge_transaction, test_settings, exchange_rate
