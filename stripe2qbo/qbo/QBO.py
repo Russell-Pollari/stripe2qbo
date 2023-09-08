@@ -66,6 +66,9 @@ class QBO:
     def get_or_create_vendor(
         self, vendor_name: str, currency: Optional[QBOCurrency] = None
     ) -> str:
+        if currency is None:
+            currency = self.home_currency
+
         response = self._query(
             f"select * from Vendor where DisplayName = '{vendor_name}'"
         )
@@ -76,6 +79,8 @@ class QBO:
                 return self.get_or_create_vendor(
                     f"{vendor_name} ({currency})", currency
                 )
+            else:
+                return vendors[0]["Id"]
 
         response = self._request(
             path="vendor",
