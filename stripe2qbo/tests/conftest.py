@@ -64,24 +64,40 @@ def test_token() -> Token:
     return token
 
 
-# TODO: setting this up correctly for a new test account?
-@pytest.fixture
-def test_settings() -> Settings:
-    return Settings(
-        stripe_clearing_account_id="100",
-        stripe_payout_account_id="35",
-        stripe_vendor_id="64",
-        stripe_fee_account_id="92",
-        default_income_account_id="95",
-        default_tax_code_id="TAX",
-        exempt_tax_code_id="NON",
-    )
-
-
 @pytest.fixture
 def test_qbo(test_token) -> QBO:
     qbo = QBO()
     qbo.set_token(test_token)
     assert qbo.access_token is not None
     assert qbo.realm_id is not None
+    assert qbo.home_currency is not None
     return qbo
+
+
+@pytest.fixture
+def test_settings(test_qbo: QBO) -> Settings:
+    stripe_clearing_account_id = test_qbo.get_or_create_account(
+        "Stripe", "Bank", account_sub_type="Checking"
+    )
+    stripe_payout_account_id = test_qbo.get_or_create_account(
+        "Stripe Payouts", "Bank", account_sub_type="Checking"
+    )
+    sync_stripe_fee_account_id = test_qbo.get_or_create_account(
+        "Stripe Fees", "Expense", account_sub_type="OtherBusinessExpenses"
+    )
+    default_income_account_id = test_qbo.get_or_create_account(
+        "Stripe Income", "Income", account_sub_type="SalesOfProductIncome"
+    )
+    stripe_vendor_id = test_qbo.get_or_create_vendor("Stripe")
+
+    # TODO: default tax settings?
+
+    return Settings(
+        stripe_clearing_account_id=stripe_clearing_account_id,
+        stripe_payout_account_id=stripe_payout_account_id,
+        stripe_vendor_id=stripe_vendor_id,
+        stripe_fee_account_id=sync_stripe_fee_account_id,
+        default_income_account_id=default_income_account_id,
+        default_tax_code_id="TAX",
+        exempt_tax_code_id="NON",
+    )

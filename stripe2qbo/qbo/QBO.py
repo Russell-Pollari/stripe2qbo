@@ -18,10 +18,12 @@ from stripe2qbo.qbo.models import (
 class QBO:
     realm_id: str | None = None
     access_token: str | None = None
+    home_currency: QBOCurrency | None = None
 
     def set_token(self, token: Token) -> None:
         self.realm_id = token.realm_id
         self.access_token = token.access_token
+        self.home_currency = self._get_home_currency()
 
     def _request(
         self, path: str, method: str = "GET", body: Optional[Mapping[str, Any]] = None
@@ -44,6 +46,11 @@ class QBO:
             raise Exception(f"Query failed: {response.json()}")
         return response
 
+    def _get_home_currency(self) -> QBOCurrency:
+        response = self._request(path="/preferences")
+        currency_prefs = response.json()["Preferences"]["CurrencyPrefs"]
+        return currency_prefs["HomeCurrency"]["value"]
+
     def get_tax_code(self, tax_code_id: str) -> Optional[TaxCode]:
         response = self._query(f"select * from TaxCode where Id = '{tax_code_id}'")
         tax_codes = response.json()["QueryResponse"].get("TaxCode", [])
@@ -51,6 +58,32 @@ class QBO:
             return None
         else:
             return TaxCode(**tax_codes[0])
+
+    def get_or_create_vendor(
+        self, vendor_name: str, currency: Optional[QBOCurrency] = None
+    ) -> str:
+        response = self._query(
+            f"select * from Vendor where DisplayName = '{vendor_name}'"
+        )
+        vendors = response.json()["QueryResponse"].get("Vendor", [])
+        if len(vendors) > 0:
+            if vendors[0]["CurrencyRef"]["value"] != currency:
+                # if already exists with different currency, create a new one
+                return self.get_or_create_vendor(
+                    f"{vendor_name} ({currency})", currency
+                )
+
+        response = self._request(
+            path="vendor",
+            method="POST",
+            body={
+                "DisplayName": vendor_name,
+                "CurrencyRef": {
+                    "value": currency or self.home_currency,
+                },
+            },
+        )
+        return response.json()["Vendor"]["Id"]
 
     def get_customer_by_name(self, customer_name: str) -> Optional[Customer]:
         response = self._query(
@@ -127,30 +160,61 @@ class QBO:
             item = self.create_item(item_name, account_id)
         return item
 
-    def create_account(self, account_name: str, account_type: str) -> str:
+    def create_account(
+        self,
+        account_name: str,
+        account_type: str,
+        account_sub_type: Optional[str] = None,
+        currency: Optional[QBOCurrency] = None,
+    ) -> str:
         body = {
             "Name": account_name,
             "AccountType": account_type,
+            "CurrencyRef": {
+                "value": currency or self.home_currency,
+            },
         }
+        if account_sub_type is not None:
+            body["AccountSubType"] = account_sub_type
         response = self._request(path="/account", body=body, method="POST")
         return response.json()["Account"]["Id"]
 
-    def get_account_id(self, account_name: str) -> Optional[str]:
+    def get_account_id(
+        self, account_name: str, currency: Optional[QBOCurrency] = None
+    ) -> Optional[str]:
+        if currency is None:
+            currency = self.home_currency
+
         response = self._query(f"select * from Account where Name = '{account_name}'")
         accounts = response.json()["QueryResponse"].get("Account", [])
-
+        accounts = [
+            account
+            for account in accounts
+            if account["CurrencyRef"]["value"] == currency
+        ]
         if len(accounts) == 0:
             return None
 
-        if len(accounts) > 1:
-            raise Exception(f"Multiple accounts found with {account_name}")
         return accounts[0]["Id"]
 
-    def get_or_create_account(self, account_name: str, account_type: str) -> str:
-        acount_id = self.get_account_id(account_name)
-        if acount_id is not None:
-            return acount_id
-        return self.create_account(account_name, account_type)
+    def get_or_create_account(
+        self,
+        account_name: str,
+        account_type: str,
+        account_sub_type: Optional[str] = None,
+        currency: Optional[QBOCurrency] = None,
+    ) -> str:
+        if currency is None:
+            currency = self.home_currency
+        account_id = self.get_account_id(account_name, currency=currency)
+        if account_id is not None:
+            return account_id
+        return self.create_account(
+            account_name,
+            account_type,
+            currency=currency,
+            account_sub_type=account_sub_type,
+        )
 
     def create_invoice(self, invoice: Invoice) -> str:
         response = self._request(
