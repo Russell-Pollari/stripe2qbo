@@ -125,23 +125,22 @@ When first running tests, you will need to ensure a `test_token` for QBO is save
 
 Here's a rough roadmap of what's on the way to make this generally useful:
 
--   [ ] Add currency as parameter on tests
 -   [ ] DB model for transactions, show historical data on login
+-   [ ] Refactor sync.py and transforms.py function into class
 -   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
 -   [ ] Deploy
--   [ ] Test with multiple QBO account -> QBO tax enabled and not | multi currency enabled and not | different regions (US vs. not)
-
--   [ ] Handle differente currencies when getting and creating accounts (e.g. default income account)
+-   [ ] Test with multiple QBO accounts -> tax enabled and not | multicurrency enabled and not | different regions (US vs. not)
+-   [ ] Test with multiple Stripe accounts -> different currencies
 -   [ ] Product settings to customize behaviour of individual products
 -   [ ] Tax settings to customize behaviour of taxes
 -   [ ] Handling time zones when parsing dates?
 -   [ ] Migrations framework for DB
 -   [ ] Support all Stripe transaction types/variants (e.g. refunds, transfers, etc.)
--   [ ] Create new QBO accounts from Sync Settings
+-   [ ] Create new QBO accounts from client
 -   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
 -   [ ] Add more info to transaction table - e.g. fees, tax, customer, etc.
 -   [ ] Speed up backend with concurrent requests
 -   [ ] Support all currencies
--   ~[ ] Find matches / sync status from historical data
--   ~[ ] Sync payment methods (e.g. credit cards, ACH)
--   ~[ ] Multiple connections (Stripe, QBO) per user?
+-   [ ] Find matches / sync status from historical data
+-   [ ] Sync payment methods (e.g. credit cards, ACH)
+-   [ ] Multiple connections (Stripe, QBO) per user?
