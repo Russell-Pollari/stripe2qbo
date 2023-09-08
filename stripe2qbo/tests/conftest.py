@@ -82,8 +82,14 @@ def test_settings(test_qbo: QBO) -> Settings:
     stripe_clearing_account_id = test_qbo.get_or_create_account(
         "Stripe", "Bank", account_sub_type="Checking"
     )
+    stripe_clearing_account_id_cad = test_qbo.get_or_create_account(
+        "Stripe CAD", "Bank", account_sub_type="Checking", currency="CAD"
+    )
     stripe_payout_account_id = test_qbo.get_or_create_account(
         "Stripe Payouts", "Bank", account_sub_type="Checking"
+    )
+    stripe_payout_account_id_cad = test_qbo.get_or_create_account(
+        "Stripe Payouts CAD", "Bank", account_sub_type="Checking", currency="CAD"
     )
     sync_stripe_fee_account_id = test_qbo.get_or_create_account(
         "Stripe Fees", "Expense", account_sub_type="OtherBusinessExpenses"
@@ -92,15 +98,16 @@ def test_settings(test_qbo: QBO) -> Settings:
         "Stripe Income", "Income", account_sub_type="SalesOfProductIncome"
     )
     stripe_vendor_id = test_qbo.get_or_create_vendor("Stripe")
+    stripe_vendor_id_cad = test_qbo.get_or_create_vendor("Stripe CAD", "CAD")
 
     # TODO: default tax settings - depending on QBO locale and preferences
     return Settings(
         stripe_clearing_account_id=stripe_clearing_account_id,
-        stripe_clearing_account_id_cad=stripe_clearing_account_id,
+        stripe_clearing_account_id_cad=stripe_clearing_account_id_cad,
         stripe_payout_account_id=stripe_payout_account_id,
-        stripe_payout_account_id_cad=stripe_payout_account_id,
+        stripe_payout_account_id_cad=stripe_payout_account_id_cad,
         stripe_vendor_id=stripe_vendor_id,
-        stripe_vendor_id_cad=stripe_vendor_id,
+        stripe_vendor_id_cad=stripe_vendor_id_cad,
         stripe_fee_account_id=sync_stripe_fee_account_id,
         default_income_account_id=default_income_account_id,
         default_tax_code_id="TAX",
@@ -124,6 +131,38 @@ def test_charge_transaction(
         stripe_account=ACCOUNT_ID,
         expand=["data.source", "data.source.customer"],
     ).data[0]
+
+    transaction = get_transaction(txn.id, ACCOUNT_ID)
+    return transaction
+
+
+@pytest.fixture(params=["usd", "cad"])
+def test_invoice_transaction(
+    test_customer: stripe.Customer, request: pytest.FixtureRequest
+) -> Transaction:
+    stripe.InvoiceItem.create(
+        customer=test_customer.id,
+        amount=1000,
+        currency=request.param,
+        description="Product X cad",
+        stripe_account=ACCOUNT_ID,
+    )
+    stripe.InvoiceItem.create(
+        customer=test_customer.id,
+        amount=500,
+        currency=request.param,
+        description="Product Z cad",
+        stripe_account=ACCOUNT_ID,
+    )
+    test_invoice = stripe.Invoice.create(
+        customer=test_customer.id,
+        stripe_account=ACCOUNT_ID,
+        collection_method="send_invoice",
+        currency=request.param,
+        days_until_due=30,
+    )
+    stripe.Invoice.pay(test_invoice.id, stripe_account=ACCOUNT_ID)
+    txn = stripe.BalanceTransaction.list(limit=1, stripe_account=ACCOUNT_ID).data[0]
 
     transaction = get_transaction(txn.id, ACCOUNT_ID)
     return transaction
