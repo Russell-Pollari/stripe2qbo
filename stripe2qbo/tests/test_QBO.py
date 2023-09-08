@@ -49,7 +49,9 @@ def test_create_expense(
     test_settings: Settings,
     test_charge_transaction: Transaction,
 ):
-    expense = expense_from_transaction(test_charge_transaction, test_settings)
+    expense = expense_from_transaction(
+        test_charge_transaction, test_settings, test_qbo.home_currency  # type: ignore
+    )
     currency = test_charge_transaction.currency.upper()
 
     expense_id = test_qbo.create_expense(expense)
@@ -66,6 +68,14 @@ def test_create_expense(
     ).strftime("%Y-%m-%d")
     assert purchase["CurrencyRef"]["value"] == currency
     assert purchase["TotalAmt"] == test_charge_transaction.fee / 100
+
+    if currency != test_qbo.home_currency:
+        assert purchase["ExchangeRate"] == 1.0 / (
+            test_charge_transaction.exchange_rate or 1.0
+        )
+    else:
+        assert purchase["ExchangeRate"] == test_charge_transaction.exchange_rate or 1.0
+
     if currency == "USD":
         assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id
         assert (

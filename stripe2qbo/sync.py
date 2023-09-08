@@ -184,7 +184,9 @@ def sync_stripe_fee(transaction: Transaction, settings: Settings) -> str:
         print(f"Expense for {transaction.id} already synced")
         return expense_id
 
-    expense = expense_from_transaction(transaction, settings)
+    expense = expense_from_transaction(
+        transaction, settings, qbo.home_currency  # type: ignore
+    )
     expense_id = qbo.create_expense(expense)
 
     print(f"Created expense {expense_id} for stripe fee {transaction.id}")

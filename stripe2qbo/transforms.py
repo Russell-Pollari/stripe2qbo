@@ -33,7 +33,9 @@ def transfer_from_payout(
 
 
 def expense_from_transaction(
-    transaction: stripe_models.Transaction, settings: Settings
+    transaction: stripe_models.Transaction,
+    settings: Settings,
+    home_currency: qbo_models.QBOCurrency,
 ) -> qbo_models.Expense:
     if transaction.type in ["charge", "payment"]:
         charge = cast(stripe_models.Charge, transaction.charge)
@@ -45,7 +47,13 @@ def expense_from_transaction(
 
     currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
 
-    # TODO: compare to home currency
+    if currency != home_currency:
+        # Things get weird when the transaction currency does not match home currency
+        # QBO does not allow for expense accounts in different currencies
+        exchange_rate = 1.0 / (transaction.exchange_rate or 1.0)
+    else:
+        exchange_rate = transaction.exchange_rate or 1.0
+
     if currency == "CAD":
         account_id = settings.stripe_clearing_account_id_cad
         vendor_id = settings.stripe_vendor_id_cad
@@ -55,6 +63,7 @@ def expense_from_transaction(
 
     return qbo_models.Expense(
         TotalAmt=amount,
+        ExchangeRate=exchange_rate,
         CurrencyRef=qbo_models.CurrencyRef(value=currency),
         AccountRef=qbo_models.ItemRef(value=account_id),
         EntityRef=qbo_models.ItemRef(value=vendor_id),

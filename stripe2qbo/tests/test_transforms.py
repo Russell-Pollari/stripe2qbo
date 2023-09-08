@@ -57,7 +57,9 @@ def test_expense_from_transaction(
 ):
     assert test_charge_transaction.charge is not None
     currency = test_charge_transaction.currency.upper()
-    expense = expense_from_transaction(test_charge_transaction, test_settings)
+    expense = expense_from_transaction(
+        test_charge_transaction, test_settings
+    )  # type: ignore
 
     assert expense is not None
     assert expense.CurrencyRef.value == currency

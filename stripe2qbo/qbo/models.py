@@ -85,6 +85,7 @@ class ExpenseLine(BaseModel):
 
 class Expense(BaseModel):
     CurrencyRef: CurrencyRef
+    ExchangeRate: Optional[float] = 1.0
     PaymentType: Literal["Check"] = "Check"
     TotalAmt: float
     AccountRef: ItemRef
