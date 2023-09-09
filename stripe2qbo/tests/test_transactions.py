@@ -1,42 +1,49 @@
 import pytest
 
-from typing import Annotated
-
-from sqlalchemy.orm import Session
-from fastapi import Depends
-
-from stripe2qbo.api.dependencies import get_current_user, get_db
 from stripe2qbo.api.routers.transaction_router import (
     get_all_transactions,
     get_transaction_by_id,
 )
+
 from stripe2qbo.db.models import TransactionSync, User, QBOToken
+from stripe2qbo.db.database import SessionLocal
+
+db = SessionLocal()
 
 pytest_plugins = ("pytest_asyncio",)
 
 
-@pytest.fixture
 def create_user():
     test_qbo_token = QBOToken(
-        realm_id="123",
+        realm_id="88584198",
         access_token="123",
         refresh_token="123",
         expires_at="123",
         refresh_token_expires_at="123",
         user_id=1,
     )
-    test_qbo_token.save()
+    db.add(test_qbo_token)
+    db.commit()
+    db.refresh(test_qbo_token)
 
     test_user = User(
-        id=1, qbo_realm_id="123", stripe_user_id="1234", qbo_token=test_qbo_token
+        id=831838932,
+        qbo_realm_id="88584198",
+        stripe_user_id="1234",
+        qbo_token=test_qbo_token,
     )
 
-    test_user.save()
+    db.add(test_user)
+    db.commit()
+    db.refresh(test_user)
+
+    return test_user
 
 
 def create_transactionSyncs():
     transaction_sync1 = TransactionSync(
-        id="123",
+        id="124",
+        user_id=831838932,
         created=123,
         type="charge",
         amount=1000,
@@ -45,26 +52,49 @@ def create_transactionSyncs():
         qbo_account_id="123",
         status="pending",
     )
+    db.add(transaction_sync1)
+    db.commit()
+    db.refresh(transaction_sync1)
+
     transaction_sync2 = TransactionSync(
-        id="456",
+        id="452",
+        user_id=831838932,
         created=456,
         type="charge",
         amount=1000,
         description="Test Charge",
-        stripe_id="456",
-        qbo_account_id="456",
+        stripe_id="123",
+        qbo_account_id="123",
         status="pending",
     )
-    transaction_sync1.save()
-    transaction_sync2.save()
+
+    db.add(transaction_sync2)
+    db.commit()
+    db.refresh(transaction_sync2)
+
+
+def remove_transactionSyncs():
+    db.query(TransactionSync).delete()
+    db.commit()
+
+
+def remove_user():
+    db.query(User).delete()
+    db.commit()
+
+
+def remove_qbo_token():
+    db.query(QBOToken).delete()
+    db.commit()
+
+
+test_user = create_user()
+create_transactionSyncs()
 
 
 @pytest.mark.asyncio
 async def test_get_all_transactions():
-    test_value = await get_all_transactions(
-        user=Annotated[User, Depends(get_current_user)],
-        db=Annotated[Session, Depends(get_db)],
-    )
+    test_value = await get_all_transactions(test_user, db)
 
     assert len(test_value) > 1
     assert test_value[0].id == "123"
@@ -73,11 +103,7 @@ async def test_get_all_transactions():
 
 @pytest.mark.asyncio
 async def test_get_transaction_by_id():
-    test_value = await get_transaction_by_id(
-        user=Annotated[User, Depends(get_current_user)],
-        db=Annotated[Session, Depends(get_db)],
-        transaction_id="123",
-    )
+    test_value = await get_transaction_by_id(test_user, db, 831838932)
 
     assert test_value.id == "123"
     assert test_value.created == 123
@@ -87,3 +113,8 @@ async def test_get_transaction_by_id():
     assert test_value.stripe_id == "123"
     assert test_value.qbo_account_id == "123"
     assert test_value.status == "pending"
+
+
+remove_transactionSyncs()
+remove_user()
+remove_qbo_token()
