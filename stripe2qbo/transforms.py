@@ -35,7 +35,6 @@ def transfer_from_payout(
 def expense_from_transaction(
     transaction: stripe_models.Transaction,
     settings: Settings,
-    exchange_rate: float = 1.0,
 ) -> qbo_models.Expense:
     if transaction.type in ["charge", "payment"]:
         charge = cast(stripe_models.Charge, transaction.charge)
@@ -46,17 +45,12 @@ def expense_from_transaction(
         description = transaction.description or ""
 
     currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
-
-    if currency == "CAD":
-        account_id = settings.stripe_clearing_account_id_cad
-        vendor_id = settings.stripe_vendor_id_cad
-    else:
-        account_id = settings.stripe_clearing_account_id
-        vendor_id = settings.stripe_vendor_id
+    account_id = settings.stripe_clearing_account_id
+    vendor_id = settings.stripe_vendor_id
 
     return qbo_models.Expense(
         TotalAmt=amount,
-        ExchangeRate=exchange_rate,
+        ExchangeRate=transaction.exchange_rate or 1.0,
         CurrencyRef=qbo_models.CurrencyRef(value=currency),
         AccountRef=qbo_models.ItemRef(value=account_id),
         EntityRef=qbo_models.ItemRef(value=vendor_id),
@@ -177,6 +171,7 @@ def qbo_invoice_from_stripe_invoice(
     customer_id: str,
     tax_codes: Dict[str, qbo_models.TaxCode | None],
     settings: Settings,
+    exchange_rate: float = 1.0,
 ) -> qbo_models.Invoice:
     invoice_lines = [
         qbo_invoice_line_from_stripe_invoice_line(
@@ -193,6 +188,7 @@ def qbo_invoice_from_stripe_invoice(
         CurrencyRef={
             "value": invoice.currency.upper(),  # type: ignore
         },
+        ExchangeRate=exchange_rate,
         TxnDate=_timestamp_to_date(invoice.created).strftime("%Y-%m-%d"),
         Line=invoice_lines,
         DocNumber=invoice.number,

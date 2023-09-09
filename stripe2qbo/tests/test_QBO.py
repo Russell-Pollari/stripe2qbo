@@ -49,19 +49,7 @@ def test_create_expense(
 ):
     currency = test_charge_transaction.currency.upper()
 
-    if currency != test_qbo.home_currency:
-        date = datetime.fromtimestamp(test_charge_transaction.created).strftime(
-            "%Y-%m-%d"
-        )
-        exchange_rate = test_qbo._request(
-            path=f"/exchangerate?sourcecurrencycode={currency}&asofdate={date}"
-        ).json()["ExchangeRate"]["Rate"]
-    else:
-        exchange_rate = 1.0
-
-    expense = expense_from_transaction(
-        test_charge_transaction, test_settings, exchange_rate
-    )
+    expense = expense_from_transaction(test_charge_transaction, test_settings)
     expense_id = test_qbo.create_expense(expense)
 
     response = test_qbo._request(path=f"/purchase/{expense_id}")
@@ -75,23 +63,9 @@ def test_create_expense(
     ).strftime("%Y-%m-%d")
     assert purchase["CurrencyRef"]["value"] == currency
     assert purchase["TotalAmt"] == test_charge_transaction.fee / 100
-
-    if currency != test_qbo.home_currency:
-        assert purchase["ExchangeRate"] == exchange_rate
-    else:
-        assert purchase["ExchangeRate"] == 1.0
-
-    if currency == "USD":
-        assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id
-        assert (
-            purchase["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
-        )
-    else:
-        assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id_cad
-        assert (
-            purchase["AccountRef"]["value"]
-            == test_settings.stripe_clearing_account_id_cad
-        )
+    assert purchase["ExchangeRate"] == test_charge_transaction.exchange_rate or 1.0
+    assert purchase["EntityRef"]["value"] == test_settings.stripe_vendor_id
+    assert purchase["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
 
 
 def test_create_invoice(

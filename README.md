@@ -125,10 +125,8 @@ When first running tests, you will need to ensure a `test_token` for QBO is save
 
 Here's a rough roadmap of what's on the way to make this generally useful:
 
--   [ ] Ensure correct exchange rate on all transactions, confirm with tests
 -   [ ] Show previously synced transactions on login
 -   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
--   [ ] Refactor sync.py and transforms.py function into class
 -   [ ] Deploy with automated pipeline
 -   [ ] Test with multiple QBO accounts -> tax enabled and not | multicurrency enabled and not | different regions (US vs. not)
 -   [ ] Test with multiple Stripe accounts -> different currencies

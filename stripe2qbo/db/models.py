@@ -12,20 +12,10 @@ class SyncSettings(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=False)
-
-    # TODO: support arbitrary currencies?
     stripe_clearing_account_id: Mapped[str]
-    stripe_clearing_account_id_cad: Mapped[str]
-
     stripe_payout_account_id: Mapped[str]
-    stripe_payout_account_id_cad: Mapped[str]
-
     stripe_vendor_id: Mapped[str]
-    stripe_vendor_id_cad: Mapped[str]
-
     stripe_fee_account_id: Mapped[str]
-    stripe_fee_account_id_cad: Mapped[str]
-
     default_income_account_id: Mapped[str]
     default_tax_code_id: Mapped[str]
     exempt_tax_code_id: Mapped[str]
