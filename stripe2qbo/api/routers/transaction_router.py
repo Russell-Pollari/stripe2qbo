@@ -1,10 +1,10 @@
-from typing import Annotated
+from typing import Annotated, List
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends
 
 from stripe2qbo.api.dependencies import get_current_user, get_db
-from stripe2qbo.db.models import User
+from stripe2qbo.db.models import User, TransactionSync as TransactionSyncORM
 
 from stripe2qbo.db.schemas import TransactionSync
 
@@ -18,8 +18,14 @@ router = APIRouter(
 async def get_all_transactions(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
-) -> TransactionSync:
-    return db.query(TransactionSync).filter(TransactionSync.user_id == user.id).all()
+) -> List[TransactionSync]:
+    transactions = (
+        db.query(TransactionSyncORM).filter(TransactionSyncORM.user_id == user.id).all()
+    )
+    return [
+        TransactionSync.model_validate(tsx, from_attributes=True)
+        for tsx in transactions
+    ]
 
 
 @router.get("/{transaction_id}")
@@ -28,9 +34,10 @@ async def get_transaction_by_id(
     db: Annotated[Session, Depends(get_db)],
     transaction_id: str,
 ) -> TransactionSync:
-    return (
-        db.query(TransactionSync)
-        .filter(TransactionSync.user_id == user.id)
-        .filter(TransactionSync.id == transaction_id)
+    transaction = (
+        db.query(TransactionSyncORM)
+        .filter(TransactionSyncORM.user_id == user.id)
+        .filter(TransactionSyncORM.id == transaction_id)
         .first()
     )
+    return TransactionSync.model_validate(transaction, from_attributes=True)
