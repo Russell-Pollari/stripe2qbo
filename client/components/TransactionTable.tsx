@@ -6,6 +6,20 @@ import { setIsSyncing, setSyncStatus } from '../store/sync';
 import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
 
+const formatAmount = (amount: number) => {
+    let amount_string = (amount / 100).toLocaleString();
+    if (!amount_string.split('.')[1]) {
+        amount_string = `${amount_string}.00`;
+    }
+    if (amount_string.split('.')[1].length === 1) {
+        amount_string = `${amount_string}0`;
+    }
+    if (amount < 0) {
+        return `($${amount_string.slice(1)})`;
+    }
+    return `$${amount_string}`;
+};
+
 const TransactionTable = () => {
     const transactions = useSelector((state: RootState) => state.transactions);
     const dispatch = useDispatch();
@@ -59,27 +73,38 @@ const TransactionTable = () => {
             </div>
             <table className="text-left table-auto w-full">
                 <thead>
-                    <tr>
-                        <th>Created</th>
+                    <tr className="border-b-2 border-green-300">
                         <th>Type</th>
-                        <th>Amount</th>
+                        <th className="text-right">Amount</th>
+                        <th className="text-right">Fee</th>
+                        <th />
                         <th>Description</th>
+                        <th>Created</th>
                         <th>Sync status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody className="text-gray-700">
                     {transactions.map((transaction: Transaction) => (
                         <tr key={transaction.id}>
+                            <td className="font-semibold text-black">
+                                {transaction.type}
+                            </td>
+
+                            <td className="text-right">
+                                {formatAmount(transaction.amount)}
+                            </td>
+                            <td className="text-right">
+                                ({formatAmount(transaction.fee)})
+                            </td>
+                            <td className="px-2">
+                                {transaction.currency.toUpperCase()}
+                            </td>
+                            <td>{transaction.description}</td>
                             <td>
                                 {new Date(transaction.created * 1000)
                                     .toDateString()
                                     .slice(0, 10)}
                             </td>
-                            <td>{transaction.type}</td>
-                            <td>
-                                ${(transaction.amount / 100).toLocaleString()}
-                            </td>
-                            <td>{transaction.description}</td>
                             <td>
                                 {transaction.status}
                                 {transaction.status !== 'success' && (

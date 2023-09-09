@@ -161,7 +161,7 @@ class Stripe2QBO:
             **transaction.model_dump(),
         )
 
-        if transaction.type not in ["charge", "payout", "stripe_fee"]:
+        if transaction.type not in ["charge", "payout", "stripe_fee", "payment"]:
             sync_status.status = "failed"
             return sync_status
 

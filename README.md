@@ -131,6 +131,7 @@ Here's a rough roadmap of what's on the way to make this generally useful:
 -   [ ] Test with multiple QBO accounts -> tax enabled and not | multicurrency enabled and not | different regions (US vs. not)
 -   [ ] Test with multiple Stripe accounts -> different currencies
 -   [ ] Product settings to customize behaviour of individual products
+-   [ ] Handle display name clashes across QBO data (e.g. vendor with same name as customer)
 -   [ ] Tax settings to customize behaviour of taxes
 -   [ ] Handling time zones when parsing dates?
 -   [ ] Migrations framework for DB
@@ -140,6 +141,7 @@ Here's a rough roadmap of what's on the way to make this generally useful:
 -   [ ] Add more info to transaction table - e.g. fees, tax, customer, etc.
 -   [ ] Speed up backend with concurrent requests
 -   [ ] Support all currencies
+-   [ ] Make Stripe App with embedded UI for Stripe dashboard
 -   [ ] Find matches / sync status from historical data
 -   [ ] Sync payment methods (e.g. credit cards, ACH)
 -   [ ] Multiple connections (Stripe, QBO) per user?

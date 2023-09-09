@@ -74,7 +74,7 @@ async def get_qbo_info(token: Annotated[Token, Depends(get_qbo_token)]) -> Compa
 async def get_qbo_accounts(token: Annotated[Token, Depends(get_qbo_token)]):
     try:
         response = qbo_request(
-            "/query?query=select * from Account",
+            "/query?query=select * from Account MAXRESULTS 1000",
             access_token=token.access_token,
             realm_id=token.realm_id,
         )
@@ -88,7 +88,7 @@ async def get_qbo_accounts(token: Annotated[Token, Depends(get_qbo_token)]):
 async def get_qbo_vendors(token: Annotated[Token, Depends(get_qbo_token)]):
     try:
         response = qbo_request(
-            "/query?query=select * from Vendor",
+            "/query?query=select * from Vendor MAXRESULTS 1000",
             access_token=token.access_token,
             realm_id=token.realm_id,
         )
@@ -102,7 +102,7 @@ async def get_qbo_vendors(token: Annotated[Token, Depends(get_qbo_token)]):
 async def get_qbo_taxcodes(token: Annotated[Token, Depends(get_qbo_token)]):
     try:
         response = qbo_request(
-            "/query?query=select * from TaxCode",
+            "/query?query=select * from TaxCode MAXRESULTS 1000",
             access_token=token.access_token,
             realm_id=token.realm_id,
         )
