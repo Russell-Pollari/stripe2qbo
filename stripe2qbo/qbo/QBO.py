@@ -21,6 +21,10 @@ class QBO:
     home_currency: QBOCurrency | None = None
     using_sales_tax: bool = False
 
+    def __init__(self, token: Optional[Token] = None) -> None:
+        if token is not None:
+            self.set_token(token)
+
     def set_token(self, token: Token) -> None:
         self.realm_id = token.realm_id
         self.access_token = token.access_token
@@ -54,6 +58,15 @@ class QBO:
 
         self.home_currency = currency_prefs["HomeCurrency"]["value"]
         self.using_sales_tax = tax_prefs["UsingSalesTax"]
+
+    def get_exchange_rate(self, currency: QBOCurrency, date: str) -> float:
+        if self.home_currency == currency:
+            return 1.0
+
+        response = self._request(
+            path=f"/exchangerate?sourcecurrencycode={currency}&asofdate={date}"
+        )
+        return response.json()["ExchangeRate"]["Rate"]
 
     def get_tax_code(self, tax_code_id: str) -> Optional[TaxCode]:
         response = self._query(f"select * from TaxCode where Id = '{tax_code_id}'")

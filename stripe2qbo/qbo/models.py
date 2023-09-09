@@ -115,6 +115,7 @@ class InvoiceLine(BaseModel):
 class Invoice(BaseModel):
     CustomerRef: ItemRef
     CurrencyRef: CurrencyRef
+    ExchangeRate: float
     TxnDate: Optional[str] = None
     DueDate: Optional[str] = None
     PrivateNote: str

@@ -63,12 +63,8 @@ def test_expense_from_transaction(
 
     assert expense is not None
     assert expense.CurrencyRef.value == currency
-    if currency == "USD":
-        assert expense.AccountRef.value == test_settings.stripe_clearing_account_id
-        assert expense.EntityRef.value == test_settings.stripe_vendor_id
-    else:
-        assert expense.AccountRef.value == test_settings.stripe_clearing_account_id_cad
-        assert expense.EntityRef.value == test_settings.stripe_vendor_id_cad
+    assert expense.AccountRef.value == test_settings.stripe_clearing_account_id
+    assert expense.EntityRef.value == test_settings.stripe_vendor_id
 
     assert expense.TotalAmt == test_charge_transaction.fee / 100
     assert expense.TxnDate == datetime.fromtimestamp(

@@ -10,7 +10,8 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from stripe2qbo.stripe.stripe_transactions import get_transaction
-from stripe2qbo.sync import TransactionSync, sync_transaction
+from stripe2qbo.sync import TransactionSync
+from stripe2qbo.Stripe2QBO import Stripe2QBO
 from stripe2qbo.api.routers import qbo, stripe_router
 from stripe2qbo.api.dependencies import (
     get_current_user_ws,
@@ -115,7 +116,8 @@ async def sync_single_transaction(
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
 ) -> TransactionSync:
     transaction = get_transaction(transaction_id, account_id=stripe_user_id)
-    transaction_sync = sync_transaction(transaction, settings, qbo_token)
+    syncer = Stripe2QBO(settings, qbo_token)
+    transaction_sync = syncer.sync(transaction)
 
     return transaction_sync
 
@@ -140,13 +142,15 @@ async def sync_many(
     settings = Settings.model_validate(settings_orm)
     qbo_token = get_qbo_token(user, db)
 
+    syncer = Stripe2QBO(settings, qbo_token)
+
     await websocket.accept()
     await websocket.send_json(
         {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
     for transaction_id in transaction_ids:
         transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
-        transaction_sync = sync_transaction(transaction, settings, qbo_token)
+        transaction_sync = syncer.sync(transaction)
 
         await websocket.send_json(
             {

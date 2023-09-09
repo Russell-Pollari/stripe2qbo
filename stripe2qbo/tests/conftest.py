@@ -82,14 +82,8 @@ def test_settings(test_qbo: QBO) -> Settings:
     stripe_clearing_account_id = test_qbo.get_or_create_account(
         "Stripe", "Bank", account_sub_type="Checking"
     )
-    stripe_clearing_account_id_cad = test_qbo.get_or_create_account(
-        "Stripe CAD", "Bank", account_sub_type="Checking", currency="CAD"
-    )
     stripe_payout_account_id = test_qbo.get_or_create_account(
         "Stripe Payouts", "Bank", account_sub_type="Checking"
-    )
-    stripe_payout_account_id_cad = test_qbo.get_or_create_account(
-        "Stripe Payouts CAD", "Bank", account_sub_type="Checking", currency="CAD"
     )
     sync_stripe_fee_account_id = test_qbo.get_or_create_account(
         "Stripe Fees", "Expense", account_sub_type="OtherBusinessExpenses"
@@ -98,16 +92,12 @@ def test_settings(test_qbo: QBO) -> Settings:
         "Stripe Income", "Income", account_sub_type="SalesOfProductIncome"
     )
     stripe_vendor_id = test_qbo.get_or_create_vendor("Stripe")
-    stripe_vendor_id_cad = test_qbo.get_or_create_vendor("Stripe CAD", "CAD")
 
     # TODO: default tax settings - depending on QBO locale and preferences
     return Settings(
         stripe_clearing_account_id=stripe_clearing_account_id,
-        stripe_clearing_account_id_cad=stripe_clearing_account_id_cad,
         stripe_payout_account_id=stripe_payout_account_id,
-        stripe_payout_account_id_cad=stripe_payout_account_id_cad,
         stripe_vendor_id=stripe_vendor_id,
-        stripe_vendor_id_cad=stripe_vendor_id_cad,
         stripe_fee_account_id=sync_stripe_fee_account_id,
         default_income_account_id=default_income_account_id,
         default_tax_code_id="TAX",

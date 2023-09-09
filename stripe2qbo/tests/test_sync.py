@@ -11,7 +11,7 @@ from stripe2qbo.qbo.auth import Token
 from stripe2qbo.stripe.stripe_transactions import build_transaction
 from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.qbo.qbo_request import qbo_request
-from stripe2qbo.sync import sync_transaction
+from stripe2qbo.Stripe2QBO import Stripe2QBO
 
 load_dotenv()
 
@@ -30,7 +30,9 @@ def test_sync_payout(test_token: Token, test_settings: Settings):
     transaction = build_transaction(txn, ACCOUNT_ID)
     assert transaction.payout is not None
 
-    sync = sync_transaction(transaction, test_settings, test_token)
+    syncer = Stripe2QBO(test_settings, test_token)
+    sync = syncer.sync(transaction)
+
     assert sync.status == "success"
     assert sync.transfer_id is not None
     assert sync.id == transaction.id
@@ -86,7 +88,8 @@ def test_sync_invoice(
     assert transaction.customer is not None
     invoice_currency = transaction.invoice.currency.upper()
 
-    sync = sync_transaction(transaction, test_settings, test_token)
+    syncer = Stripe2QBO(test_settings, test_token)
+    sync = syncer.sync(transaction)
 
     assert sync.status == "success"
     assert sync.id == transaction.id
@@ -177,18 +180,8 @@ def test_sync_invoice(
     ).strftime("%Y-%m-%d")
     assert f"Stripe fee for charge {transaction.charge.id}" in expense["PrivateNote"]
 
-    if transaction.currency != "cad":
-        assert (
-            expense["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
-        )
-        assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id
-    else:
-        assert (
-            expense["AccountRef"]["value"]
-            == test_settings.stripe_clearing_account_id_cad
-        )
-        assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id_cad
-
+    assert expense["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
+    assert expense["EntityRef"]["value"] == test_settings.stripe_vendor_id
     assert expense["TotalAmt"] == transaction.fee / 100
     assert expense["CurrencyRef"]["value"] == transaction.currency.upper()
     assert expense["Line"][0]["Amount"] == transaction.fee / 100
