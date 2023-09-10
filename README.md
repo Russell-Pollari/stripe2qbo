@@ -126,7 +126,10 @@ When first running tests, you will need to ensure a `test_token` for QBO is save
 Here's a rough roadmap of what's on the way to make this generally useful:
 
 -   [ ] Show previously synced transactions on login
--   [ ] Show details of a synced transaction (e.g. Customer, Invoice, Products, Stripe fee)
+-   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
+-   [ ] Migrations framework for DB
+-   [ ] Store and display info about synced customers and products
+-   [ ] Sync quantity and unit price with invoice
 -   [ ] Deploy with automated pipeline
 -   [ ] Test with multiple QBO accounts -> tax enabled and not | multicurrency enabled and not | different regions (US vs. not)
 -   [ ] Test with multiple Stripe accounts -> different currencies
@@ -134,11 +137,8 @@ Here's a rough roadmap of what's on the way to make this generally useful:
 -   [ ] Handle display name clashes across QBO data (e.g. vendor with same name as customer)
 -   [ ] Tax settings to customize behaviour of taxes
 -   [ ] Handling time zones when parsing dates?
--   [ ] Migrations framework for DB
 -   [ ] Support all Stripe transaction types/variants (e.g. refunds, transfers, etc.)
 -   [ ] Create new QBO accounts from client
--   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
--   [ ] Add more info to transaction table - e.g. fees, tax, customer, etc.
 -   [ ] Speed up backend with concurrent requests
 -   [ ] Support all currencies
 -   [ ] Make Stripe App with embedded UI for Stripe dashboard

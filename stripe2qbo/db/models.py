@@ -52,10 +52,11 @@ class TransactionSync(Base):
     id: Mapped[str] = mapped_column(primary_key=True)
     created: Mapped[int] = mapped_column(nullable=False)
     type: Mapped[str] = mapped_column(nullable=False)
+    fee: Mapped[int] = mapped_column(nullable=False)
+    currency: Mapped[str] = mapped_column(nullable=False)
     amount: Mapped[int] = mapped_column(nullable=False)
     description: Mapped[str] = mapped_column(nullable=False)
     stripe_id: Mapped[str] = mapped_column(nullable=False)
-    qbo_account_id: Mapped[str] = mapped_column(nullable=False)
     status: Mapped[Literal["pending", "success", "failed"] | None] = mapped_column(
         nullable=False
     )

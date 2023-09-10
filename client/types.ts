@@ -62,4 +62,8 @@ export type Transaction = {
     status: string;
     fee: number;
     currency: string;
+    invoice_id: string | null;
+    expense_id: string | null;
+    payment_id: string | null;
+    transfer_id: string | null;
 };

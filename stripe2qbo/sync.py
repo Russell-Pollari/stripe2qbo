@@ -13,7 +13,7 @@ class TransactionSync(BaseModel):
     fee: int
     currency: str
     description: Optional[str] = None
-    status: Optional[Literal["pending", "success", "failed"]] = None
+    status: Optional[Literal["pending", "success", "failed"]] = "pending"
     transfer_id: Optional[str] = None
     invoice_id: Optional[str] = None
     payment_id: Optional[str] = None
