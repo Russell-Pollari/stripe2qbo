@@ -1,10 +1,11 @@
 import * as React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { addTransaction } from '../store/transactions';
+import { addTransaction, selectTransaction } from '../store/transactions';
 import { setIsSyncing, setSyncStatus } from '../store/sync';
 import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
+import SyncDetails from './SyncDetails';
 
 const formatAmount = (amount: number) => {
     let amount_string = (amount / 100).toLocaleString();
@@ -21,7 +22,12 @@ const formatAmount = (amount: number) => {
 };
 
 const TransactionTable = () => {
-    const transactions = useSelector((state: RootState) => state.transactions);
+    const transactions = useSelector(
+        (state: RootState) => state.transactions.transactions
+    );
+    const selectedTransaction = useSelector(
+        (state: RootState) => state.transactions.selectedTransaction
+    );
     const dispatch = useDispatch();
 
     const syncTransaction = async (transaction: Transaction) => {
@@ -63,6 +69,9 @@ const TransactionTable = () => {
 
     return (
         <div className="text-left mt-4 p-4 shadow-lg">
+            {selectedTransaction !== null && (
+                <SyncDetails transaction={transactions[selectedTransaction]} />
+            )}
             <div className="text-right">
                 <button
                     className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
@@ -81,45 +90,58 @@ const TransactionTable = () => {
                         <th>Description</th>
                         <th>Created</th>
                         <th>Sync status</th>
+                        <th />
                     </tr>
                 </thead>
                 <tbody className="text-gray-700">
-                    {transactions.map((transaction: Transaction) => (
-                        <tr key={transaction.id}>
-                            <td className="font-semibold text-black">
-                                {transaction.type}
-                            </td>
+                    {transactions.map(
+                        (transaction: Transaction, index: number) => (
+                            <tr key={transaction.id}>
+                                <td className="font-semibold text-black">
+                                    {transaction.type}
+                                </td>
 
-                            <td className="text-right">
-                                {formatAmount(transaction.amount)}
-                            </td>
-                            <td className="text-right">
-                                ({formatAmount(transaction.fee)})
-                            </td>
-                            <td className="px-2">
-                                {transaction.currency.toUpperCase()}
-                            </td>
-                            <td>{transaction.description}</td>
-                            <td>
-                                {new Date(transaction.created * 1000)
-                                    .toDateString()
-                                    .slice(0, 10)}
-                            </td>
-                            <td>
-                                {transaction.status}
-                                {transaction.status !== 'success' && (
+                                <td className="text-right">
+                                    {formatAmount(transaction.amount)}
+                                </td>
+                                <td className="text-right">
+                                    ({formatAmount(transaction.fee)})
+                                </td>
+                                <td className="px-2">
+                                    {transaction.currency.toUpperCase()}
+                                </td>
+                                <td>{transaction.description}</td>
+                                <td>
+                                    {new Date(transaction.created * 1000)
+                                        .toDateString()
+                                        .slice(0, 10)}
+                                </td>
+                                <td>
+                                    {transaction.status}
+                                    {transaction.status !== 'success' && (
+                                        <button
+                                            className="inline-block bg-slate-300 hover:bg-slate-500 text-gray-800 font-bold p-2 rounded-full text-sm"
+                                            onClick={() =>
+                                                syncTransaction(transaction)
+                                            }
+                                        >
+                                            Sync
+                                        </button>
+                                    )}
+                                </td>
+                                <td>
                                     <button
-                                        className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
+                                        className="inline-block bg-slate-300 hover:bg-slate-500 text-gray-800 font-bold p-2 rounded-full text-sm"
                                         onClick={() =>
-                                            syncTransaction(transaction)
+                                            dispatch(selectTransaction(index))
                                         }
                                     >
-                                        Sync
+                                        View details
                                     </button>
-                                )}
-                            </td>
-                        </tr>
-                    ))}
+                                </td>
+                            </tr>
+                        )
+                    )}
                 </tbody>
             </table>
         </div>
