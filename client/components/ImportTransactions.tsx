@@ -25,7 +25,7 @@ const ImportTransactions = () => {
         dispatch(setSyncStatus('Importing transactions...'));
 
         const queryString = new URLSearchParams(options).toString();
-        const response = await fetch('/stripe/transactions?' + queryString);
+        const response = await fetch('/api/stripe/transactions?' + queryString);
 
         if (response.status === 200) {
             const data: Transaction[] = await response.json();

@@ -38,7 +38,7 @@ const SyncSettings = () => {
         : getDefaultSettings({ accounts, vendors, taxCodes });
 
     return (
-        <div className="w-64 shadow-lg p-4">
+        <div className="shadow-lg p-4">
             <h3 className="font-semibold mb-4">Sync Settings</h3>
             {!companyInfo ? (
                 <div className="text-center">Missing QBO connection</div>

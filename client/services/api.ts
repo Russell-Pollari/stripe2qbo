@@ -11,7 +11,7 @@ import {
 export const api = createApi({
     reducerPath: 'api',
     baseQuery: fetchBaseQuery({
-        baseUrl: '/',
+        baseUrl: '/api/',
     }),
     tagTypes: ['Settings', 'Stripe', 'User'],
     endpoints: (builder) => ({

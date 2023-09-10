@@ -33,9 +33,12 @@ const TransactionTable = () => {
     const syncTransaction = async (transaction: Transaction) => {
         dispatch(setSyncStatus('Syncing 1 transaction'));
         dispatch(setIsSyncing(true));
-        const response = await fetch(`/sync?transaction_id=${transaction.id}`, {
-            method: 'POST',
-        });
+        const response = await fetch(
+            `/api/sync?transaction_id=${transaction.id}`,
+            {
+                method: 'POST',
+            }
+        );
         const data = await response.json();
         dispatch(addTransaction(data));
         dispatch(setSyncStatus(''));
@@ -48,7 +51,9 @@ const TransactionTable = () => {
             t.id,
         ]);
         const queryString = new URLSearchParams(transaction_ids).toString();
-        const ws = new WebSocket(`ws://localhost:8000/syncmany?${queryString}`);
+        const ws = new WebSocket(
+            `ws://localhost:8000/api/syncmany?${queryString}`
+        );
         ws.onopen = () => {
             dispatch(setIsSyncing(true));
         };
