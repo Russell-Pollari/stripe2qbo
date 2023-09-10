@@ -10,6 +10,8 @@ class TransactionSync(BaseModel):
     created: int
     type: str
     amount: int
+    fee: int
+    currency: str
     description: Optional[str] = None
     status: Optional[Literal["pending", "success", "failed"]] = None
     transfer_id: Optional[str] = None

@@ -103,7 +103,6 @@ def save_settings(
             .where(SyncSettings.qbo_realm_id == realm_id)
             .values(**settings.model_dump())
         )
-        print(update_query)
         db.execute(update_query)
     db.commit()
 

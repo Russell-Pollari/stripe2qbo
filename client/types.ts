@@ -60,4 +60,6 @@ export type Transaction = {
     description: string;
     amount: number;
     status: string;
+    fee: number;
+    currency: string;
 };
