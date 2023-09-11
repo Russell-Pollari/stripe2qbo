@@ -39,42 +39,22 @@ if not os.path.exists("static"):
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
-app.include_router(qbo.router)
-app.include_router(stripe_router.router)
+app.include_router(qbo.router, prefix="/api")
+app.include_router(stripe_router.router, prefix="/api")
 
 
-@app.get("/")
-async def index() -> HTMLResponse:
-    return HTMLResponse(
-        content="""
-            <html>
-                <head>
-                    <meta name="viewport" content="width=device-width, initial-scale=1">
-                    <title>Stripe2QBO</title>
-                    <link rel="stylesheet" href="/static/index.css">
-                </head>
-                <body>
-                    <div id="root"></div>
-                    <script src="/static/index.js"></script>
-                </body>
-            </html>
-        """,
-        status_code=200,
-    )
-
-
-@app.get("/userId")
+@app.get("/api/userId")
 async def user_id(user: Annotated[User, Depends(get_current_user)]) -> int:
     return user.id
 
 
-@app.post("/logout")
+@app.post("/api/logout")
 async def logout(request: Request) -> None:
     request.session.clear()
     return None
 
 
-@app.get("/settings")
+@app.get("/api/settings")
 def get_settings(
     token: Annotated[Token, Depends(get_qbo_token)],
     db: Annotated[Session, Depends(get_db)],
@@ -85,7 +65,7 @@ def get_settings(
     return Settings.model_validate(sync_settings)
 
 
-@app.post("/settings")
+@app.post("/api/settings")
 def save_settings(
     settings: Settings,
     token: Annotated[Token, Depends(get_qbo_token)],
@@ -107,7 +87,7 @@ def save_settings(
     db.commit()
 
 
-@app.post("/sync")
+@app.post("/api/sync")
 async def sync_single_transaction(
     transaction_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
@@ -121,17 +101,17 @@ async def sync_single_transaction(
     return transaction_sync
 
 
-@app.websocket("/syncmany")
+@app.websocket("/api/syncmany")
 async def sync_many(
     websocket: WebSocket,
     transaction_ids: Annotated[list[str], Query()],
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_ws)],
 ):
-    if user.stripe_user_id is None:
-        await websocket.send_json({"status": "Not authenticated"})
-        await websocket.close()
-        return
+    # if user.stripe_user_id is None:
+    #     await websocket.send_json({"status": "Not authenticated"})
+    #     await websocket.close()
+    #     return
     # Most dependencies are not defined for websocket scope
     settings_orm = (
         db.query(SyncSettings)
@@ -148,7 +128,9 @@ async def sync_many(
         {"status": f"Syncing {len(transaction_ids)} transactions"}
     )
     for transaction_id in transaction_ids:
-        transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
+        transaction = get_transaction(
+            transaction_id, account_id=os.getenv("STRIPE_ACCOUNT_ID", "")
+        )
         transaction_sync = syncer.sync(transaction)
 
         await websocket.send_json(
@@ -158,3 +140,23 @@ async def sync_many(
         )
 
     await websocket.close()
+
+
+@app.get("/{path:path}")
+async def catch_all(path: str) -> HTMLResponse:
+    return HTMLResponse(
+        content="""
+            <html>
+                <head>
+                    <meta name="viewport" content="width=device-width, initial-scale=1">
+                    <title>Stripe2QBO</title>
+                    <link rel="stylesheet" href="/static/index.css">
+                </head>
+                <body>
+                    <div id="root"></div>
+                    <script src="/static/index.js"></script>
+                </body>
+            </html>
+        """,
+        status_code=200,
+    )
