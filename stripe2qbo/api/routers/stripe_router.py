@@ -17,7 +17,8 @@ from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.sync import TransactionSync
 from stripe2qbo.api.dependencies import get_db, get_current_user, get_stripe_user_id
 from stripe2qbo.db.models import User
-from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
+
+# from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
 
 load_dotenv()
 
@@ -93,24 +94,24 @@ async def get_stripe_transactions(
         )
         transactions.extend(txns)
 
-        for txn in txns:
-            t = TransactionSync(**txn.model_dump())
-            is_imported = (
-                db.query(TransactionSyncORM)
-                .where(TransactionSyncORM.id == t.id)
-                .first()
-                is not None
-            )
-            if not is_imported:
-                db.add(
-                    TransactionSyncORM(
-                        stripe_id=stripe_user_id,
-                        user_id=user.id,
-                        **t.model_dump(),
-                    )
-                )
+        # for txn in txns:
+        #     t = TransactionSync(**txn.model_dump())
+        #     is_imported = (
+        #         db.query(TransactionSyncORM)
+        #         .where(TransactionSyncORM.id == t.id)
+        #         .first()
+        #         is not None
+        #     )
+        #     if not is_imported:
+        #         db.add(
+        #             TransactionSyncORM(
+        #                 stripe_id=stripe_user_id,
+        #                 user_id=user.id,
+        #                 **t.model_dump(),
+        #             )
+        #         )
 
-        db.commit()
+        # db.commit()
         if len(txns) < 100:
             break
         starting_after = txns[-1].id
