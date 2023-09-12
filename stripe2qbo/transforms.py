@@ -124,7 +124,7 @@ def tax_detail_from_invoice(
 
             tax_code_id = settings.default_tax_code_id
 
-            if tax_code_id == "TAX":
+            if tax_code_id == "TAX" or tax_code_id == "":
                 # Don't need TaxLineDetail if using default tax code
                 continue
 
@@ -147,7 +147,11 @@ def tax_detail_from_invoice(
 
     untaxed_amount = invoice.amount_due - total_tax - total_taxable_amount
 
-    if untaxed_amount > 0 and settings.exempt_tax_code_id != "NON":
+    if (
+        untaxed_amount > 0
+        and settings.exempt_tax_code_id != "NON"
+        and settings.exempt_tax_code_id != ""
+    ):
         tax_code_id = settings.exempt_tax_code_id
         tax_code = cast(qbo_models.TaxCode, tax_codes[tax_code_id])
         tax_rate_ref = tax_code.SalesTaxRateList.TaxRateDetail[0].TaxRateRef

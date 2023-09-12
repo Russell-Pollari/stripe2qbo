@@ -12,8 +12,8 @@ const settingsFormSchema = object().shape({
     defaultIncomeAccountId: string().required(
         'Default Income Account is required'
     ),
-    defaultTaxCodeId: string().required('Default Tax Code is required'),
-    exemptTaxCodeId: string().required('Exempt Tax Code is required'),
+    defaultTaxCodeId: string(),
+    exemptTaxCodeId: string(),
 });
 
 export default settingsFormSchema;
