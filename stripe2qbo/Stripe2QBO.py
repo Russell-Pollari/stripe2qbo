@@ -63,7 +63,6 @@ class Stripe2QBO:
             self._settings,
             exchange_rate=self._exchange_rate,
         )
-        print("INVOICE", stripe_invoice.number)
 
         for line in qbo_invoice.Line:
             product = line.SalesItemLineDetail.ItemRef
