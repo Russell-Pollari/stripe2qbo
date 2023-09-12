@@ -62,6 +62,8 @@ def get_settings(
     realm_id = token.realm_id
     query = select(SyncSettings).where(SyncSettings.qbo_realm_id == realm_id)
     sync_settings = db.execute(query).scalar_one_or_none()
+    if sync_settings is None:
+        return None
     return Settings.model_validate(sync_settings)
 
 

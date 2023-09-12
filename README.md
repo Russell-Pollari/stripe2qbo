@@ -43,13 +43,19 @@ STRIPE_API_KEY=<Your Stripe API key>
 # Stripe Connect Oauth
 STRIPE_CLIENT_ID=<Your Stripe client id, found in Connect settings>
 STRIPE_REDIRECT_URL=http://localhost:8000/stripe/oauth2/callback
+```
 
-# If you don't want to use Stripe Connect, you can set your Stripe account ID explicitly as an env variable
+If you don't want to use Stripe Connect, you can set your Stripe account ID explicitly as an env variable
+
+```
 STRIPE_ACCOUNT_ID=<Your Stripe account id, found in Account settings>
 
 ```
 
-Make sure to update your QBO and Stripe Conenct settings with the correct redirect URLs.
+By default, a local SQLite database will be created with path=`./stripe2qbo.db`. You can use postgres by setting the
+POSTGRES_URI env variable.
+
+> Make sure to update your QBO and Stripe Conenct settings with the correct redirect URLs.
 
 ## Development
 
@@ -65,9 +71,9 @@ Run React client in dev mode
 
 `$ npm run dev`
 
-(The client will re-build on changes, but you may have to refresh the browser manually to see changes)
+(Both client and server will re-build on changes, but you will have to refresh the browser manually to see ui changes)
 
-### Tests
+### Testing
 
 `$ pytest`
 
@@ -116,3 +122,7 @@ The default tax code to use for all invoice line items with non-zero tax. (e.g. 
 The default tax code to use for all invoice line items with zero tax. (e.g. TAX or Exempt)
 
 > 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
+
+```
+
+```
