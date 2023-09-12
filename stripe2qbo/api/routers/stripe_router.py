@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Annotated, List, Optional
 
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 import stripe
 from dotenv import load_dotenv
@@ -51,6 +51,10 @@ async def disconnect_stripe(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> None:
+    if os.getenv("STRIPE_API_KEY") is not None:
+        raise HTTPException(
+            status_code=400, detail="Not allowed while STRIPE_API_KEY is set"
+        )
     user.stripe_user_id = None
     db.commit()
 
