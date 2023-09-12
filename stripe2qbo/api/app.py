@@ -108,10 +108,13 @@ async def sync_many(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_ws)],
 ):
-    # if user.stripe_user_id is None:
-    #     await websocket.send_json({"status": "Not authenticated"})
-    #     await websocket.close()
-    #     return
+    stripe_user_id = os.getenv("STRIPE_ACCOUNT_ID", user.stripe_user_id)
+
+    if stripe_user_id is None:
+        await websocket.send_json({"status": "Not authenticated"})
+        await websocket.close()
+        return
+
     # Most dependencies are not defined for websocket scope
     settings_orm = (
         db.query(SyncSettings)
