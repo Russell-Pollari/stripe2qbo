@@ -67,9 +67,8 @@ def get_qbo_token(
 
 
 def get_stripe_user_id(user: Annotated[User, Depends(get_current_user)]) -> str:
-    return os.getenv("STRIPE_ACCOUNT_ID", "")
-    # stripe_user_id = user.stripe_user_id
-    # if stripe_user_id is None:
-    #     raise HTTPException(status_code=401, detail="Not authenticated")
+    stripe_user_id = os.getenv("STRIPE_ACCOUNT_ID", user.stripe_user_id)
+    if stripe_user_id is None:
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # return stripe_user_id
+    return stripe_user_id
