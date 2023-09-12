@@ -116,28 +116,3 @@ The default tax code to use for all invoice line items with non-zero tax. (e.g. 
 The default tax code to use for all invoice line items with zero tax. (e.g. TAX or Exempt)
 
 > 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
-
-## ROADMAP:
-
-Here's a rough roadmap of what's on the way to make this generally useful:
-
--   [ ] Show previously synced transactions on login
--   [ ] Prettify transaction table - pagination, sorting, filtering, etc. (MUI Data table)
--   [ ] Migrations framework for DB
--   [ ] Store and display info about synced customers and products
--   [ ] Sync quantity and unit price with invoice
--   [ ] Deploy with automated pipeline
--   [ ] Test with multiple QBO accounts -> tax enabled and not | multicurrency enabled and not | different regions (US vs. not)
--   [ ] Test with multiple Stripe accounts -> different currencies
--   [ ] Product settings to customize behaviour of individual products
--   [ ] Handle display name clashes across QBO data (e.g. vendor with same name as customer)
--   [ ] Tax settings to customize behaviour of taxes
--   [ ] Handling time zones when parsing dates?
--   [ ] Support all Stripe transaction types/variants (e.g. refunds, transfers, etc.)
--   [ ] Create new QBO accounts from client
--   [ ] Speed up backend with concurrent requests
--   [ ] Support all currencies
--   [ ] Make Stripe App with embedded UI for Stripe dashboard
--   [ ] Find matches / sync status from historical data
--   [ ] Sync payment methods (e.g. credit cards, ACH)
--   [ ] Multiple connections (Stripe, QBO) per user?
