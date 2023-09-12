@@ -81,7 +81,7 @@ async def get_qbo_accounts(token: Annotated[Token, Depends(get_qbo_token)]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error making request: {e}")
 
-    return response.json()["QueryResponse"]["Account"]
+    return response.json()["QueryResponse"].get("Account", [])
 
 
 @router.get("/vendors")
@@ -95,7 +95,7 @@ async def get_qbo_vendors(token: Annotated[Token, Depends(get_qbo_token)]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error making request: {e}")
 
-    return response.json()["QueryResponse"]["Vendor"]
+    return response.json()["QueryResponse"].get("Vendor", [])
 
 
 @router.get("/taxcodes")
