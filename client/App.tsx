@@ -6,7 +6,7 @@ import { useGetCurrentUserQuery, useGetCompanyInfoQuery } from './services/api';
 import Tabs from './components/Tabs';
 
 const login = () => {
-    fetch('/qbo/oauth2')
+    fetch('/api/qbo/oauth2')
         .then((response) => response.json())
         .then((data: string) => {
             location.href = data;
