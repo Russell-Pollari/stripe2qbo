@@ -23,7 +23,11 @@ const StripeConnection = () => {
             title="Stripe account"
             isLoading={isLoading}
             disconnect={() => {
-                disconnect();
+                disconnect()
+                    .unwrap()
+                    .catch((e) => {
+                        alert(e?.data?.detail);
+                    });
             }}
         >
             {stripeInfo && !error ? (
