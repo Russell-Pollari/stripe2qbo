@@ -28,7 +28,7 @@ class Settings(BaseModel):
 
 class TransactionSync(BaseModel):
     id: str
-    user_id: str
+    user_id: int
     created: int
     type: str
     amount: int

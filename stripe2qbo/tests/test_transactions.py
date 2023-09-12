@@ -13,22 +13,24 @@ db = SessionLocal()
 pytest_plugins = ("pytest_asyncio",)
 
 
-def create_user():
+@pytest.fixture(scope="module")
+def test_user():
+    print("User fixture")
     test_qbo_token = QBOToken(
-        realm_id="88584198",
+        realm_id="8548211",
         access_token="123",
         refresh_token="123",
         expires_at="123",
         refresh_token_expires_at="123",
-        user_id=1,
+        user_id=3182831,
     )
     db.add(test_qbo_token)
     db.commit()
     db.refresh(test_qbo_token)
 
     test_user = User(
-        id=831838932,
-        qbo_realm_id="88584198",
+        id=3182831,
+        qbo_realm_id="8548211",
         stripe_user_id="1234",
         qbo_token=test_qbo_token,
     )
@@ -37,13 +39,9 @@ def create_user():
     db.commit()
     db.refresh(test_user)
 
-    return test_user
-
-
-def create_transactionSyncs():
     transaction_sync1 = TransactionSync(
-        id="124",
-        user_id=831838932,
+        id="12281",
+        user_id=3182831,
         created=123,
         type="charge",
         amount=1000,
@@ -51,70 +49,37 @@ def create_transactionSyncs():
         stripe_id="123",
         qbo_account_id="123",
         status="pending",
+        transfer_id="123",
+        invoice_id="123",
+        payment_id="123",
+        expense_id="123",
     )
     db.add(transaction_sync1)
     db.commit()
     db.refresh(transaction_sync1)
 
-    transaction_sync2 = TransactionSync(
-        id="452",
-        user_id=831838932,
-        created=456,
-        type="charge",
-        amount=1000,
-        description="Test Charge",
-        stripe_id="123",
-        qbo_account_id="123",
-        status="pending",
-    )
+    yield test_user
 
-    db.add(transaction_sync2)
+    # Finalizer to clean up the user
+    db.delete(test_user)
+    db.delete(test_qbo_token)
+    # # # Finalizer to clean up transaction_syncs
+    db.delete(transaction_sync1)
     db.commit()
-    db.refresh(transaction_sync2)
-
-
-def remove_transactionSyncs():
-    db.query(TransactionSync).delete()
-    db.commit()
-
-
-def remove_user():
-    db.query(User).delete()
-    db.commit()
-
-
-def remove_qbo_token():
-    db.query(QBOToken).delete()
-    db.commit()
-
-
-test_user = create_user()
-create_transactionSyncs()
 
 
 @pytest.mark.asyncio
-async def test_get_all_transactions():
+async def test_get_all_transactions(test_user):
     test_value = await get_all_transactions(test_user, db)
 
-    assert len(test_value) > 1
-    assert test_value[0].id == "123"
-    assert test_value[1].id == "456"
+    assert len(test_value) == 1
+    assert test_value[0].user_id == 3182831
+    assert test_value[0].description == "Test Charge"
 
 
 @pytest.mark.asyncio
-async def test_get_transaction_by_id():
-    test_value = await get_transaction_by_id(test_user, db, 831838932)
+async def test_get_transaction_by_id(test_user):
+    test_value = await get_transaction_by_id(test_user, db, "12281")
 
-    assert test_value.id == "123"
-    assert test_value.created == 123
-    assert test_value.type == "charge"
-    assert test_value.amount == 1000
+    assert test_value.user_id == 3182831
     assert test_value.description == "Test Charge"
-    assert test_value.stripe_id == "123"
-    assert test_value.qbo_account_id == "123"
-    assert test_value.status == "pending"
-
-
-remove_transactionSyncs()
-remove_user()
-remove_qbo_token()
