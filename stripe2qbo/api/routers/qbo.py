@@ -109,4 +109,4 @@ async def get_qbo_taxcodes(token: Annotated[Token, Depends(get_qbo_token)]):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error making request: {e}")
 
-    return response.json()["QueryResponse"]["TaxCode"]
+    return response.json()["QueryResponse"].get("TaxCode", [])
