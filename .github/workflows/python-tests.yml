@@ -10,7 +10,7 @@ permissions:
     contents: read
 
 jobs:
-    build:
+    test:
         runs-on: ubuntu-latest
 
         steps:
@@ -27,6 +27,8 @@ jobs:
               env:
                   QBO_TOKEN: ${{ secrets.QBO_TEST_TOKEN }}
               run: echo "$QBO_TOKEN" > test_token.json
+            - name: Run DB migrations
+              run: alembic upgrade head
             - name: run tests
               env:
                   QBO_BASE_URL: ${{ secrets.QBO_BASE_URL }}
