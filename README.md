@@ -52,10 +52,16 @@ STRIPE_ACCOUNT_ID=<Your Stripe account id, found in Account settings>
 
 ```
 
-By default, a local SQLite database will be created with path=`./stripe2qbo.db`. You can use postgres by setting the
+> Make sure to update your QBO and Stripe Connect settings with the correct redirect URLs.
+
+## Database
+
+By default, a local SQLite database will be created with path=`./stripe2qbo.db`. You can use a postgres db by setting the
 POSTGRES_URI env variable.
 
-> Make sure to update your QBO and Stripe Conenct settings with the correct redirect URLs.
+Initialize the database:
+
+`$ alembic upgrade head`
 
 ## Development
 
@@ -72,6 +78,10 @@ Run React client in dev mode
 `$ npm run dev`
 
 (Both client and server will re-build on changes, but you will have to refresh the browser manually to see ui changes)
+
+To create migrations
+
+`$ alembic revision --autogenerate -m "migration name"`
 
 ### Testing
 

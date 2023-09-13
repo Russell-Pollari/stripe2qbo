@@ -21,12 +21,8 @@ from stripe2qbo.api.dependencies import (
     get_current_user,
 )
 from stripe2qbo.qbo.auth import Token
-
-from stripe2qbo.db.database import engine
-from stripe2qbo.db.models import Base, SyncSettings, User
+from stripe2qbo.db.models import SyncSettings, User
 from stripe2qbo.db.schemas import Settings
-
-Base.metadata.create_all(bind=engine)
 
 
 load_dotenv()
