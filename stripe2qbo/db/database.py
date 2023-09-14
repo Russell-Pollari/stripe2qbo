@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 POSTGRES_URI = os.getenv("POSTGRES_URI")
-print(POSTGRES_URI)
+
 connect_args = {}
 
 if POSTGRES_URI is None:

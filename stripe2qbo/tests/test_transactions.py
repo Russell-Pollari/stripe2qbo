@@ -15,7 +15,6 @@ pytest_plugins = ("pytest_asyncio",)
 
 @pytest.fixture(scope="module")
 def test_user():
-    print("User fixture")
     test_qbo_token = QBOToken(
         realm_id="8548211",
         access_token="123",
@@ -58,7 +57,6 @@ def test_user():
     )
     db.add(transaction_sync1)
     db.commit()
-    db.refresh(transaction_sync1)
 
     yield test_user
 
