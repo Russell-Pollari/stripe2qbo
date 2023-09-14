@@ -9,8 +9,8 @@ const NavTab = ({ to, label }: { to: string; label }) => {
             <NavLink
                 to={to}
                 className={({ isActive }) =>
-                    `${!!isActive && 'text-black border-green-600'}
-                            mr-2 inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-green-300`
+                    `${!!isActive && 'text-black border-green-400'}
+                            mr-2 inline-block p-4 border-b-2 rounded-t-lg hover:text-gray-600 hover:border-green-300`
                 }
             >
                 {label}

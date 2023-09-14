@@ -37,8 +37,6 @@ const SyncSettings = () => {
         ? settings
         : getDefaultSettings({ accounts, vendors, taxCodes });
 
-    console.log(accounts);
-
     return (
         <div className="shadow-lg p-4">
             <h3 className="font-semibold mb-4">Sync Settings</h3>
@@ -47,6 +45,8 @@ const SyncSettings = () => {
             ) : (
                 <Formik
                     validationSchema={schema}
+                    validateOnBlur={false}
+                    validateOnChange={false}
                     initialValues={defaultSettings}
                     onSubmit={async (values: Settings, { setSubmitting }) => {
                         await updateSettings(values);
