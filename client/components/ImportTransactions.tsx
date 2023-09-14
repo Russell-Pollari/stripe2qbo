@@ -8,6 +8,7 @@ import type { RootState } from '../store/store';
 import type { SyncOptions, Transaction } from '../types';
 import SubmitButton from './SubmitButton';
 import { useGetStripeInfoQuery } from '../services/api';
+import { Popover } from '@headlessui/react';
 
 const ImportTransactions = () => {
     const dispatch = useDispatch();
@@ -41,18 +42,23 @@ const ImportTransactions = () => {
     };
 
     return (
-        <div>
-            <div className="shadow-lg p-4">
-                <h3 className="font-semibold mb-4">Stripe transactions</h3>
-                <Formik
-                    initialValues={{ from_date: '2023-08-28', to_date: '' }}
-                    onSubmit={async (values: SyncOptions) => {
-                        await importTransactions(values);
-                    }}
+        <div className="text-center">
+            <Popover className="inline relative">
+                <Popover.Button
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+                    disabled={!!status}
                 >
-                    <Form>
-                        <div className="flex justify-between">
-                            <div>
+                    {isSyncing ? `${status}...` : 'Import Stripe Transactions'}
+                </Popover.Button>
+                <Popover.Panel className="absolute z-10 bg-white p-4 left-0 shadow-lg text-left">
+                    <Formik
+                        initialValues={{ from_date: '2023-08-28', to_date: '' }}
+                        onSubmit={async (values: SyncOptions) => {
+                            await importTransactions(values);
+                        }}
+                    >
+                        <Form>
+                            <div className="flex justify-between mb-2">
                                 <label
                                     className="font-semibold mx-2"
                                     htmlFor="from_date"
@@ -76,15 +82,18 @@ const ImportTransactions = () => {
                                     type="date"
                                 />
                             </div>
-                            <div>
-                                <SubmitButton isSubmitting={isSyncing}>
-                                    {isSyncing ? `${status}...` : 'Import'}
-                                </SubmitButton>
+                            <div className="text-center">
+                                <Popover.Button
+                                    as={SubmitButton}
+                                    isSubmitting={isSyncing}
+                                >
+                                    Import
+                                </Popover.Button>
                             </div>
-                        </div>
-                    </Form>
-                </Formik>
-            </div>
+                        </Form>
+                    </Formik>
+                </Popover.Panel>
+            </Popover>
         </div>
     );
 };
