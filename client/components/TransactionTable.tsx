@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { addTransaction, selectTransaction } from '../store/transactions';
@@ -6,6 +7,7 @@ import { setIsSyncing, setSyncStatus } from '../store/sync';
 import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
 import SyncDetails from './SyncDetails';
+import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 
 const formatAmount = (amount: number) => {
     let amount_string = (amount / 100).toLocaleString();
@@ -28,13 +30,16 @@ const TransactionTable = () => {
     const selectedTransaction = useSelector(
         (state: RootState) => state.transactions.selectedTransaction
     );
+    const [selectedTransactionIds, setSelectedTransactionIds] = useState<
+        string[]
+    >([]);
     const dispatch = useDispatch();
 
-    const syncTransaction = async (transaction: Transaction) => {
+    const syncTransaction = async (transactionId: string) => {
         dispatch(setSyncStatus('Syncing 1 transaction'));
         dispatch(setIsSyncing(true));
         const response = await fetch(
-            `/api/sync?transaction_id=${transaction.id}`,
+            `/api/sync?transaction_id=${transactionId}`,
             {
                 method: 'POST',
             }
@@ -43,13 +48,15 @@ const TransactionTable = () => {
         dispatch(addTransaction(data));
         dispatch(setSyncStatus(''));
         dispatch(setIsSyncing(false));
+        return data;
     };
 
     const syncAll = () => {
-        const transaction_ids = transactions.map((t: Transaction) => [
+        const transaction_ids = selectedTransactionIds.map((id) => [
             'transaction_ids',
-            t.id,
+            id,
         ]);
+        console.log(transaction_ids);
         const queryString = new URLSearchParams(transaction_ids).toString();
         const ws = new WebSocket(
             `ws://localhost:8000/api/syncmany?${queryString}`
@@ -72,83 +79,77 @@ const TransactionTable = () => {
         };
     };
 
+    const rows: GridRowsProp = transactions.map((transaction: Transaction) => {
+        return {
+            id: transaction.id,
+            type: transaction.type,
+            amount: formatAmount(transaction.amount),
+            fee: formatAmount(-transaction.fee),
+            currency: transaction.currency.toUpperCase(),
+            description: transaction.description,
+            created: new Date(transaction.created * 1000),
+            status: transaction.status,
+        };
+    });
+
+    const columns: GridColDef[] = [
+        { field: 'type', headerName: 'Type', width: 100 },
+        { field: 'amount', headerName: 'Amount', width: 150 },
+        { field: 'fee', headerName: 'Fee', width: 150 },
+        { field: 'currency', headerName: 'Currency', width: 100 },
+        { field: 'description', headerName: 'Description', width: 300 },
+        { field: 'created', headerName: 'Created', type: 'date', width: 150 },
+        { field: 'status', headerName: 'Status', width: 150 },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            type: 'actions',
+            width: 300,
+            getActions: (params) => [
+                <button
+                    className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
+                    onClick={() => syncTransaction(params.row.id)}
+                >
+                    Sync
+                </button>,
+                <button
+                    onClick={() => {
+                        dispatch(selectTransaction(params.row.id));
+                    }}
+                >
+                    View details
+                </button>,
+            ],
+            renderHeader: () => (
+                <div className="text-right">
+                    <button
+                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
+                        onClick={syncAll}
+                    >
+                        Sync {selectedTransactionIds.length} transactions
+                    </button>
+                </div>
+            ),
+        },
+    ];
+
     return (
         <div className="text-left mt-4 p-4 shadow-lg">
             {selectedTransaction !== null && (
                 <SyncDetails transaction={transactions[selectedTransaction]} />
             )}
-            <div className="text-right">
-                <button
-                    className="inline-block hover:bg-slate-100 text-gray-500 font-bold p-2 rounded-full text-sm"
-                    onClick={syncAll}
-                >
-                    Sync all
-                </button>
-            </div>
-            <table className="text-left table-auto w-full">
-                <thead>
-                    <tr className="border-b-2 border-green-300">
-                        <th>Type</th>
-                        <th className="text-right">Amount</th>
-                        <th className="text-right">Fee</th>
-                        <th />
-                        <th>Description</th>
-                        <th>Created</th>
-                        <th>Sync status</th>
-                        <th />
-                    </tr>
-                </thead>
-                <tbody className="text-gray-700">
-                    {transactions.map(
-                        (transaction: Transaction, index: number) => (
-                            <tr key={transaction.id}>
-                                <td className="font-semibold text-black">
-                                    {transaction.type}
-                                </td>
 
-                                <td className="text-right">
-                                    {formatAmount(transaction.amount)}
-                                </td>
-                                <td className="text-right">
-                                    ({formatAmount(transaction.fee)})
-                                </td>
-                                <td className="px-2">
-                                    {transaction.currency.toUpperCase()}
-                                </td>
-                                <td>{transaction.description}</td>
-                                <td>
-                                    {new Date(transaction.created * 1000)
-                                        .toDateString()
-                                        .slice(0, 10)}
-                                </td>
-                                <td>
-                                    {transaction.status}
-                                    {transaction.status !== 'success' && (
-                                        <button
-                                            className="inline-block bg-slate-300 hover:bg-slate-500 text-gray-800 font-bold p-2 rounded-full text-sm"
-                                            onClick={() =>
-                                                syncTransaction(transaction)
-                                            }
-                                        >
-                                            Sync
-                                        </button>
-                                    )}
-                                </td>
-                                <td>
-                                    <button
-                                        className="inline-block bg-slate-300 hover:bg-slate-500 text-gray-800 font-bold p-2 rounded-full text-sm"
-                                        onClick={() =>
-                                            dispatch(selectTransaction(index))
-                                        }
-                                    >
-                                        View details
-                                    </button>
-                                </td>
-                            </tr>
-                        )
-                    )}
-                </tbody>
-            </table>
+            <div className="w-full h-full">
+                <DataGrid
+                    onRowSelectionModelChange={(selection) => {
+                        setSelectedTransactionIds(selection as string[]);
+                    }}
+                    rows={rows}
+                    columns={columns}
+                    checkboxSelection
+                    pageSizeOptions={[10, 25]}
+                />
+            </div>
         </div>
     );
 };

@@ -30,8 +30,15 @@ export const transactionsSlice = createSlice({
                 state.transactions.push(action.payload);
             }
         },
-        selectTransaction: (state, action: PayloadAction<number | null>) => {
-            state.selectedTransaction = action.payload;
+        selectTransaction: (state, action: PayloadAction<null | string>) => {
+            if (action.payload === null) {
+                state.selectedTransaction = null;
+                return;
+            }
+            const index = state.transactions.findIndex(
+                (t) => t.id === action.payload
+            );
+            state.selectedTransaction = index;
         },
     },
 });
