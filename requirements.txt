@@ -11,11 +11,6 @@ click==8.1.6
 colorama==0.4.6
 dill==0.3.6
 distlib==0.3.7
-Django==4.1.2
-django-apscheduler==0.6.2
-django-cors-headers==3.14.0
-django-dotenv==1.4.2
-djangorestframework==3.14.0
 ecdsa==0.18.0
 enum-compat==0.0.3
 fastapi==0.101.1
