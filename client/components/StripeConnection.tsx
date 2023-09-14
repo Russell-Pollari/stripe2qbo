@@ -7,7 +7,7 @@ import {
 } from '../services/api';
 
 const connect = () => {
-    fetch('/stripe/oauth2')
+    fetch('/api/stripe/oauth2')
         .then((response) => response.json())
         .then((data: string) => {
             location.href = data;
