@@ -1,7 +1,7 @@
 from typing import Annotated, List
 
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 
 from stripe2qbo.api.dependencies import get_current_user, get_db
 from stripe2qbo.db.models import User, TransactionSync as TransactionSyncORM
@@ -40,4 +40,6 @@ async def get_transaction_by_id(
         .filter(TransactionSyncORM.id == transaction_id)
         .first()
     )
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found")
     return TransactionSync.model_validate(transaction, from_attributes=True)
