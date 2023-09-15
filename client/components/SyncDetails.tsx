@@ -1,18 +1,26 @@
 import * as React from 'react';
 import { Dialog } from '@headlessui/react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { Transaction } from '../types';
+import type { Transaction } from '../types';
+import type { RootState } from '../store/store';
 import { selectTransaction } from '../store/transactions';
 
-const SyncDetails = ({ transaction }: { transaction: Transaction | null }) => {
+const SyncDetails = () => {
     const dispatch = useDispatch();
-    const isOpen = transaction !== null;
+    const transactions = useSelector(
+        (state: RootState) => state.transactions.transactions
+    );
+    const selectedTransaction = useSelector(
+        (state: RootState) => state.transactions.selectedTransaction
+    );
+
+    const transaction: Transaction = transactions[selectedTransaction];
 
     return (
         <Dialog
             className="z-50 relative"
-            open={isOpen}
+            open={selectedTransaction !== null}
             onClose={() => dispatch(selectTransaction(null))}
         >
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
