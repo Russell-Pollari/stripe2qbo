@@ -1,19 +1,20 @@
 import * as React from 'react';
 import { Formik, Field, Form } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
-import { setIsSyncing, setSyncStatus } from '../store/sync';
-import { addTransaction } from '../store/transactions';
-
-import type { RootState } from '../store/store';
-import type { SyncOptions, Transaction } from '../types';
-import SubmitButton from './SubmitButton';
-import { useGetStripeInfoQuery } from '../services/api';
 import { Popover } from '@headlessui/react';
+
+import type { SyncOptions, Transaction } from '../types';
+import type { RootState } from '../store/store';
+import { addTransaction, setIsImporting } from '../store/transactions';
+import { useGetStripeInfoQuery } from '../services/api';
+import SubmitButton from './SubmitButton';
+import LoadingSpinner from './LoadingSpinner';
 
 const ImportTransactions = () => {
     const dispatch = useDispatch();
-    const isSyncing = useSelector((state: RootState) => state.sync.isSyncing);
-    const status = useSelector((state: RootState) => state.sync.status);
+    const isImporting = useSelector(
+        (state: RootState) => state.transactions.isImporting
+    );
     const { data: stripeInfo } = useGetStripeInfoQuery();
 
     const importTransactions = async (options: SyncOptions) => {
@@ -22,8 +23,7 @@ const ImportTransactions = () => {
             return;
         }
 
-        dispatch(setIsSyncing(true));
-        dispatch(setSyncStatus('Importing transactions...'));
+        dispatch(setIsImporting(true));
 
         const queryString = new URLSearchParams(options).toString();
         const response = await fetch('/api/stripe/transactions?' + queryString);
@@ -37,8 +37,7 @@ const ImportTransactions = () => {
             alert('Error importing transactions.');
         }
 
-        dispatch(setSyncStatus(''));
-        dispatch(setIsSyncing(false));
+        dispatch(setIsImporting(false));
     };
 
     return (
@@ -46,9 +45,15 @@ const ImportTransactions = () => {
             <Popover className="inline relative">
                 <Popover.Button
                     className="bg-green-300 hover:bg-green-500 text-slate-800 text-sm py-2 px-4 rounded"
-                    disabled={!!status}
+                    disabled={!!isImporting}
                 >
-                    {isSyncing ? `${status}...` : 'Import Stripe Transactions'}
+                    {isImporting ? (
+                        <span>
+                            <LoadingSpinner /> Importing
+                        </span>
+                    ) : (
+                        'Import Stripe Transactions'
+                    )}
                 </Popover.Button>
                 <Popover.Panel className="absolute z-10 bg-white p-4 left-0 shadow-lg text-left">
                     <Formik
@@ -85,7 +90,7 @@ const ImportTransactions = () => {
                             <div className="text-center">
                                 <Popover.Button
                                     as={SubmitButton}
-                                    isSubmitting={isSyncing}
+                                    isSubmitting={isImporting}
                                 >
                                     Import
                                 </Popover.Button>

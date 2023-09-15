@@ -1,7 +1,7 @@
 import * as React from 'react';
 
 const LoadingSpinner = () => (
-    <div role="status">
+    <div role="status" className="inline">
         <svg
             aria-hidden="true"
             className="w-8 h-8 mr-2 text-green-200 animate-spin fill-green-600"
