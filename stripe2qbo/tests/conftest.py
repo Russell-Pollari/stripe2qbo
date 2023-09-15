@@ -73,6 +73,7 @@ def test_user(test_token: Token) -> User:
     user = User(
         id=1,
         qbo_realm_id=test_token.realm_id,
+        stripe_user_id=os.getenv("TEST_STRIPE_USER_ID", ""),
     )
     return user
 
