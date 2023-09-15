@@ -5,11 +5,13 @@ import type { Transaction } from '../types';
 type transactionState = {
     transactions: Transaction[];
     selectedTransaction: number | null;
+    syncingTransactions: string[];
 };
 
 const initialState: transactionState = {
     transactions: [],
     selectedTransaction: null,
+    syncingTransactions: [],
 };
 
 export const transactionsSlice = createSlice({
@@ -40,7 +42,31 @@ export const transactionsSlice = createSlice({
             );
             state.selectedTransaction = index;
         },
+        setSyncingTransaction: (
+            state,
+            action: PayloadAction<string | string[]>
+        ) => {
+            if (Array.isArray(action.payload)) {
+                state.syncingTransactions = [
+                    ...state.syncingTransactions,
+                    ...action.payload,
+                ];
+                return;
+            }
+            state.syncingTransactions.push(action.payload);
+        },
+        removeSyncingTransaction: (state, action: PayloadAction<string>) => {
+            const index = state.syncingTransactions.findIndex(
+                (t) => t === action.payload
+            );
+            state.syncingTransactions.splice(index, 1);
+        },
     },
 });
 
-export const { addTransaction, selectTransaction } = transactionsSlice.actions;
+export const {
+    addTransaction,
+    selectTransaction,
+    setSyncingTransaction,
+    removeSyncingTransaction,
+} = transactionsSlice.actions;
