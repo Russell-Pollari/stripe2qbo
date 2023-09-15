@@ -10,7 +10,6 @@ import {
     setSyncingTransaction,
     removeSyncingTransaction,
 } from '../store/transactions';
-import { setIsSyncing, setSyncStatus } from '../store/sync';
 import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
 import LoadingSpinner from './LoadingSpinner';
@@ -30,9 +29,7 @@ const TransactionTable = () => {
     >([]);
 
     const syncTransaction = async (transactionId: string) => {
-        dispatch(setSyncStatus('Syncing 1 transaction'));
         dispatch(setSyncingTransaction(transactionId));
-        dispatch(setIsSyncing(true));
 
         const response = await fetch(
             `/api/sync?transaction_id=${transactionId}`,
@@ -43,8 +40,6 @@ const TransactionTable = () => {
         const data = await response.json();
 
         dispatch(addTransaction(data));
-        dispatch(setSyncStatus(''));
-        dispatch(setIsSyncing(false));
         dispatch(removeSyncingTransaction(transactionId));
         return data;
     };
@@ -59,27 +54,17 @@ const TransactionTable = () => {
             `ws://localhost:8000/api/syncmany?${queryString}`
         );
         ws.onopen = () => {
-            dispatch(setIsSyncing(true));
             dispatch(setSyncingTransaction(selectedTransactionIds));
         };
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            if (data.status) {
-                dispatch(setSyncStatus(data.status));
-            }
             if (data.transaction) {
                 dispatch(addTransaction(data.transaction));
                 dispatch(removeSyncingTransaction(data.transaction.id));
             }
         };
-        ws.onclose = () => {
-            dispatch(setSyncStatus(''));
-            dispatch(setIsSyncing(false));
-        };
         ws.onerror = (error) => {
             alert(error);
-            dispatch(setSyncStatus(''));
-            dispatch(setIsSyncing(false));
         };
     };
 
@@ -162,10 +147,22 @@ const TransactionTable = () => {
             renderHeader: () => (
                 <div className="text-right">
                     <button
+                        disabled={syncingTransactionIds.length > 0}
                         className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
                         onClick={syncAll}
                     >
-                        Sync {selectedTransactionIds.length} transactions
+                        {syncingTransactionIds.length > 0 ? (
+                            <span>
+                                <LoadingSpinner />
+                                Syncing {syncingTransactionIds.length}{' '}
+                                transactions..
+                            </span>
+                        ) : (
+                            <span>
+                                Sync {selectedTransactionIds.length}{' '}
+                                transactions
+                            </span>
+                        )}
                     </button>
                 </div>
             ),

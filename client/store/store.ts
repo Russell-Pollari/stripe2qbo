@@ -1,13 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
 
 import { api } from '../services/api';
-import { syncSlice } from './sync';
 import { transactionsSlice } from './transactions';
 
 export const store = configureStore({
     reducer: {
         [api.reducerPath]: api.reducer,
-        sync: syncSlice.reducer,
         transactions: transactionsSlice.reducer,
     },
     middleware: (getDefaultMiddleware) =>
