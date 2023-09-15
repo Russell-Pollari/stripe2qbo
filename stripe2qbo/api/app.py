@@ -12,7 +12,7 @@ from dotenv import load_dotenv
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.sync import TransactionSync
 from stripe2qbo.Stripe2QBO import Stripe2QBO
-from stripe2qbo.api.routers import qbo, stripe_router
+from stripe2qbo.api.routers import qbo, stripe_router, transaction_router
 from stripe2qbo.api.dependencies import (
     get_current_user_ws,
     get_db,
@@ -37,6 +37,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
 app.include_router(qbo.router, prefix="/api")
 app.include_router(stripe_router.router, prefix="/api")
+app.include_router(transaction_router.router, prefix="/api")
 
 
 @app.get("/api/userId")
