@@ -48,7 +48,6 @@ def test_user():
         amount=1000,
         description="Test Charge",
         stripe_id="123",
-        qbo_account_id="123",
         status="pending",
         transfer_id="123",
         invoice_id="123",

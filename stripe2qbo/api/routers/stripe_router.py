@@ -14,7 +14,7 @@ from stripe2qbo.stripe.auth import (
 )
 from stripe2qbo.stripe.models import Account
 from stripe2qbo.stripe.stripe_transactions import get_transactions
-from stripe2qbo.sync import TransactionSync
+from stripe2qbo.db.schemas import TransactionSync
 from stripe2qbo.api.dependencies import get_db, get_current_user, get_stripe_user_id
 from stripe2qbo.db.models import User
 

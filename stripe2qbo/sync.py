@@ -1,23 +1,6 @@
-from typing import Literal, Optional
-
-from pydantic import BaseModel
+from typing import Optional
 
 from stripe2qbo.qbo.QBO import QBO
-
-
-class TransactionSync(BaseModel):
-    id: str
-    created: int
-    type: str
-    amount: int
-    fee: int
-    currency: str
-    description: Optional[str] = None
-    status: Optional[Literal["pending", "success", "failed"]] = "pending"
-    transfer_id: Optional[str] = None
-    invoice_id: Optional[str] = None
-    payment_id: Optional[str] = None
-    expense_id: Optional[str] = None
 
 
 def check_for_existing(

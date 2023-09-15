@@ -10,7 +10,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from dotenv import load_dotenv
 
 from stripe2qbo.stripe.stripe_transactions import get_transaction
-from stripe2qbo.sync import TransactionSync
 from stripe2qbo.Stripe2QBO import Stripe2QBO
 from stripe2qbo.api.routers import qbo, stripe_router, transaction_router
 from stripe2qbo.api.dependencies import (
@@ -22,7 +21,7 @@ from stripe2qbo.api.dependencies import (
 )
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.db.models import SyncSettings, User
-from stripe2qbo.db.schemas import Settings
+from stripe2qbo.db.schemas import Settings, TransactionSync
 
 
 load_dotenv()
