@@ -90,11 +90,12 @@ async def sync_single_transaction(
     transaction_id: str,
     settings: Annotated[Settings, Depends(get_settings)],
     qbo_token: Annotated[Token, Depends(get_qbo_token)],
+    user: Annotated[User, Depends(get_current_user)],
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
 ) -> TransactionSync:
     transaction = get_transaction(transaction_id, account_id=stripe_user_id)
     syncer = Stripe2QBO(settings, qbo_token)
-    transaction_sync = syncer.sync(transaction)
+    transaction_sync = syncer.sync(transaction, user)
 
     return transaction_sync
 
@@ -132,7 +133,7 @@ async def sync_many(
         transaction = get_transaction(
             transaction_id, account_id=os.getenv("STRIPE_ACCOUNT_ID", "")
         )
-        transaction_sync = syncer.sync(transaction)
+        transaction_sync = syncer.sync(transaction, user)
 
         await websocket.send_json(
             {

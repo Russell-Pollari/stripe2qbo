@@ -1,12 +1,13 @@
+import os
 from typing import cast, Dict, Optional
 from datetime import datetime
 
-from stripe2qbo.db.schemas import Settings
+from stripe2qbo.db.models import User
+from stripe2qbo.db.schemas import Settings, TransactionSync
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.auth import Token
 import stripe2qbo.qbo.models as qbo_models
 import stripe2qbo.stripe.models as stripe_models
-from stripe2qbo.db.schemas import TransactionSync
 from stripe2qbo.sync import check_for_existing
 from stripe2qbo.transforms import (
     qbo_invoice_from_stripe_invoice,
@@ -141,8 +142,18 @@ class Stripe2QBO:
         transfer_id = self._qbo.create_transfer(transfer)
         return transfer_id
 
-    def sync(self, transaction: stripe_models.Transaction) -> TransactionSync:
+    def sync(
+        self, transaction: stripe_models.Transaction, user: User
+    ) -> TransactionSync:
         currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
+        stripe_user_id = os.getenv("STRIPE_ACCOUNT_ID", user.stripe_user_id)
+
+        sync_status = TransactionSync(
+            **transaction.model_dump(),
+            user_id=user.id,
+            stripe_id=cast(str, stripe_user_id),
+            status="failed",
+        )
         if currency != self._qbo.home_currency:
             # TODO: Actually implement this and test it..
             # Implies Stripe account has another bank account for another currency
@@ -150,16 +161,9 @@ class Stripe2QBO:
 
             # date_string = _transfrom_timestamp(transaction.created)
             # self._exchange_rate = self._qbo.get_exchange_rate(currency, date_string)
-            return TransactionSync(
-                **transaction.model_dump(),
-                status="failed",
-            )
+            return sync_status
         else:
             self._exchange_rate = transaction.exchange_rate or 1.0
-
-        sync_status = TransactionSync(
-            **transaction.model_dump(),
-        )
 
         if transaction.type not in ["charge", "payout", "stripe_fee", "payment"]:
             sync_status.status = "failed"
