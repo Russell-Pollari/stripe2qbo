@@ -6,12 +6,14 @@ type transactionState = {
     transactions: Transaction[];
     selectedTransaction: number | null;
     syncingTransactions: string[];
+    isImporting: boolean;
 };
 
 const initialState: transactionState = {
     transactions: [],
     selectedTransaction: null,
     syncingTransactions: [],
+    isImporting: false,
 };
 
 export const transactionsSlice = createSlice({
@@ -61,6 +63,9 @@ export const transactionsSlice = createSlice({
             );
             state.syncingTransactions.splice(index, 1);
         },
+        setIsImporting: (state, action: PayloadAction<boolean>) => {
+            state.isImporting = action.payload;
+        },
     },
 });
 
@@ -69,4 +74,5 @@ export const {
     selectTransaction,
     setSyncingTransaction,
     removeSyncingTransaction,
+    setIsImporting,
 } = transactionsSlice.actions;
