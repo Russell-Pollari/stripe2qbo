@@ -7,6 +7,7 @@ import stripe
 from dotenv import load_dotenv
 
 from stripe2qbo.qbo.QBO import QBO
+from stripe2qbo.db.models import User
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.auth import (
     Token,
@@ -65,6 +66,16 @@ def test_token() -> Token:
         json.dump(token.model_dump(), f)
 
     return token
+
+
+@pytest.fixture
+def test_user(test_token: Token) -> User:
+    user = User(
+        id=1,
+        qbo_realm_id=test_token.realm_id,
+        stripe_user_id=os.getenv("TEST_STRIPE_USER_ID", ""),
+    )
+    return user
 
 
 @pytest.fixture

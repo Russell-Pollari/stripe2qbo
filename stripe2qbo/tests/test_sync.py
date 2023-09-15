@@ -11,6 +11,7 @@ from stripe2qbo.qbo.auth import Token
 from stripe2qbo.stripe.stripe_transactions import build_transaction
 from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.qbo.qbo_request import qbo_request
+from stripe2qbo.db.models import User
 from stripe2qbo.Stripe2QBO import Stripe2QBO
 
 load_dotenv()
@@ -22,7 +23,7 @@ ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 @pytest.mark.skip(
     reason="Esure that the test Stripe account has a payout or available balance"
 )
-def test_sync_payout(test_token: Token, test_settings: Settings):
+def test_sync_payout(test_token: Token, test_user: User, test_settings: Settings):
     txn = stripe.BalanceTransaction.list(
         limit=1, type="payout", stripe_account=ACCOUNT_ID, expand=["data.source"]
     ).data[0]
@@ -31,7 +32,7 @@ def test_sync_payout(test_token: Token, test_settings: Settings):
     assert transaction.payout is not None
 
     syncer = Stripe2QBO(test_settings, test_token)
-    sync = syncer.sync(transaction)
+    sync = syncer.sync(transaction, test_user)
 
     assert sync.status == "success"
     assert sync.transfer_id is not None
@@ -79,6 +80,7 @@ def test_sync_invoice(
     test_token: Token,
     test_settings: Settings,
     test_invoice_transaction: Transaction,
+    test_user: User,
     test_qbo: QBO,
 ):
     transaction = test_invoice_transaction
@@ -89,7 +91,7 @@ def test_sync_invoice(
     invoice_currency = transaction.invoice.currency.upper()
 
     syncer = Stripe2QBO(test_settings, test_token)
-    sync = syncer.sync(transaction)
+    sync = syncer.sync(transaction, test_user)
 
     assert sync.status == "success"
     assert sync.id == transaction.id
