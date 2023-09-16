@@ -10,7 +10,6 @@ from fastapi import (
     Query,
     Request,
     BackgroundTasks,
-    WebSocket,
     WebSocketException,
 )
 from fastapi.responses import HTMLResponse
@@ -26,37 +25,15 @@ from stripe2qbo.api.dependencies import (
     get_stripe_user_id,
     get_qbo_token,
     get_current_user,
-    get_current_user_ws,
 )
+from stripe2qbo.api.routers.sync_webhook import manager, router as sync_router
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.db.models import SyncSettings, User
 from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
-from stripe2qbo.db.schemas import Settings, TransactionSync
-
+from stripe2qbo.db.schemas import Settings
 
 load_dotenv()
 
-
-class WebSocketManager:
-    def __init__(self):
-        self._clients: dict[int, WebSocket] = {}
-
-    def register(self, user_id: int, websocket: WebSocket):
-        self._clients[user_id] = websocket
-
-    def unregister(self, user_id: int):
-        connections = self._clients
-        del connections[user_id]
-        self._clients = connections
-
-    async def send_message(self, user_id: int, transaction: TransactionSync):
-        connection = self._clients.get(user_id)
-        if connection is None:
-            return
-        await connection.send_json(transaction.model_dump())
-
-
-manager = WebSocketManager()
 
 app = FastAPI()
 
@@ -64,10 +41,13 @@ if not os.path.exists("static"):
     os.mkdir("static")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.add_middleware(SessionMiddleware, secret_key=os.getenv("SECRET_KEY"))
+
 app.include_router(qbo.router, prefix="/api")
 app.include_router(stripe_router.router, prefix="/api")
 app.include_router(transaction_router.router, prefix="/api")
+app.include_router(sync_router, prefix="/api")
 
 
 @app.get("/api/userId")
@@ -135,7 +115,10 @@ async def sync_transactions(
             TransactionSyncORM.id == transaction_id
         ).update({"status": transaction_sync.status})
         db.commit()
-        await manager.send_message(user.id, transaction_sync)
+        try:
+            await manager.send_message(user.id, transaction_sync)
+        except WebSocketException:
+            continue
 
 
 @app.post("/api/sync")
@@ -180,19 +163,3 @@ async def catch_all(path: str) -> HTMLResponse:
         """,
         status_code=200,
     )
-
-
-@app.websocket("/ws")
-async def websocket_endpoint(
-    websocket: WebSocket,
-    user: Annotated[User, Depends(get_current_user_ws)],
-) -> None:
-    await websocket.accept()
-    manager.register(user.id, websocket)
-    while True:
-        try:
-            await websocket.receive_text()
-        except WebSocketException:
-            manager.unregister(user.id)
-            break
-        await asyncio.sleep(1)

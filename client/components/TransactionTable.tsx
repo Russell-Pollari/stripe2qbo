@@ -66,11 +66,26 @@ const TransactionTable = () => {
                 }
                 if (params.value === 'success') {
                     return (
-                        <span>
+                        <span className="text-green-500">
+                            <CheckIcon className="w-6 h-6 inline -m-px" />
                             Synced
-                            <CheckIcon className="w-6 h-6 text-green-500" />
                         </span>
                     );
+                }
+                if (params.value === 'pending') {
+                    <button
+                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
+                        onClick={() => syncTransactions([params.row.id])}
+                    >
+                        {params.row.status === 'syncing' ? (
+                            <span>
+                                <LoadingSpinner />
+                                Syncing
+                            </span>
+                        ) : (
+                            <span>Sync</span>
+                        )}
+                    </button>;
                 }
                 return params.value;
             },
@@ -82,19 +97,7 @@ const TransactionTable = () => {
             width: 300,
             getActions: (params) => [
                 <button
-                    className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
-                    onClick={() => syncTransactions([params.row.id])}
-                >
-                    {params.row.status === 'syncing' ? (
-                        <span>
-                            <LoadingSpinner />
-                            Syncing
-                        </span>
-                    ) : (
-                        <span>Sync</span>
-                    )}
-                </button>,
-                <button
+                    className="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-400 rounded-full shadow"
                     onClick={() => {
                         dispatch(selectTransaction(params.row.id));
                     }}
@@ -105,12 +108,12 @@ const TransactionTable = () => {
             renderHeader: () => (
                 <div className="text-right">
                     <button
-                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
+                        disabled={selectedTransactionIds.length === 0}
+                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold py-2 px-4 rounded-full text-sm"
                         onClick={() => syncTransactions(selectedTransactionIds)}
                     >
                         {transactions.some((t) => t.status === 'syncing') ? (
                             <span>
-                                <LoadingSpinner />
                                 Syncing{' '}
                                 {
                                     transactions.filter(

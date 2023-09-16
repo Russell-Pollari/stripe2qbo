@@ -79,7 +79,7 @@ export const api = createApi({
                 arg,
                 { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
             ) {
-                const ws = new WebSocket('ws://localhost:8000/ws');
+                const ws = new WebSocket('ws://localhost:8000/api/sync/ws');
                 try {
                     await cacheDataLoaded;
 
