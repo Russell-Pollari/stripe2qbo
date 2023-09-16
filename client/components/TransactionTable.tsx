@@ -1,72 +1,26 @@
 import * as React from 'react';
 import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { CheckIcon } from '@heroicons/react/24/solid';
 
+import { selectTransaction } from '../store/transactions';
 import {
-    addTransaction,
-    selectTransaction,
-    setSyncingTransaction,
-    removeSyncingTransaction,
-} from '../store/transactions';
-import type { RootState } from '../store/store';
+    useGetTransactionsQuery,
+    useSyncTransactionsMutation,
+} from '../services/api';
 import type { Transaction } from '../types';
 import LoadingSpinner from './LoadingSpinner';
 import numToAccountingFormat from '../numToAccountingString';
 
 const TransactionTable = () => {
     const dispatch = useDispatch();
+    const { data: transactions = [] } = useGetTransactionsQuery();
+    const [syncTransactions] = useSyncTransactionsMutation();
 
-    const transactions = useSelector(
-        (state: RootState) => state.transactions.transactions
-    );
-    const syncingTransactionIds = useSelector(
-        (state: RootState) => state.transactions.syncingTransactions
-    );
     const [selectedTransactionIds, setSelectedTransactionIds] = useState<
         string[]
     >([]);
-
-    const syncTransaction = async (transactionId: string) => {
-        dispatch(setSyncingTransaction(transactionId));
-
-        const response = await fetch(
-            `/api/sync?transaction_id=${transactionId}`,
-            {
-                method: 'POST',
-            }
-        );
-        const data = await response.json();
-
-        dispatch(addTransaction(data));
-        dispatch(removeSyncingTransaction(transactionId));
-        return data;
-    };
-
-    const syncAll = () => {
-        const transaction_ids = selectedTransactionIds.map((id) => [
-            'transaction_ids',
-            id,
-        ]);
-        const queryString = new URLSearchParams(transaction_ids).toString();
-        const ws = new WebSocket(
-            `ws://localhost:8000/api/syncmany?${queryString}`
-        );
-        ws.onopen = () => {
-            dispatch(setSyncingTransaction(selectedTransactionIds));
-        };
-        ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.transaction) {
-                dispatch(addTransaction(data.transaction));
-                dispatch(removeSyncingTransaction(data.transaction.id));
-            }
-        };
-        ws.onerror = (error) => {
-            alert(error);
-        };
-    };
 
     const rows: GridRowsProp = transactions.map((transaction: Transaction) => {
         return {
@@ -107,7 +61,7 @@ const TransactionTable = () => {
             headerName: 'Status',
             width: 150,
             renderCell: (params) => {
-                if (syncingTransactionIds.includes(params.row.id)) {
+                if (params.value === 'syncing') {
                     return <LoadingSpinner />;
                 }
                 if (params.value === 'success') {
@@ -128,13 +82,17 @@ const TransactionTable = () => {
             width: 300,
             getActions: (params) => [
                 <button
-                    disabled={syncingTransactionIds.includes(params.row.id)}
                     className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
-                    onClick={() => syncTransaction(params.row.id)}
+                    onClick={() => syncTransactions([params.row.id])}
                 >
-                    {syncingTransactionIds.includes(params.row.id)
-                        ? 'Syncing..'
-                        : 'Sync'}
+                    {params.row.status === 'syncing' ? (
+                        <span>
+                            <LoadingSpinner />
+                            Syncing
+                        </span>
+                    ) : (
+                        <span>Sync</span>
+                    )}
                 </button>,
                 <button
                     onClick={() => {
@@ -147,14 +105,18 @@ const TransactionTable = () => {
             renderHeader: () => (
                 <div className="text-right">
                     <button
-                        disabled={syncingTransactionIds.length > 0}
                         className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
-                        onClick={syncAll}
+                        onClick={() => syncTransactions(selectedTransactionIds)}
                     >
-                        {syncingTransactionIds.length > 0 ? (
+                        {transactions.some((t) => t.status === 'syncing') ? (
                             <span>
                                 <LoadingSpinner />
-                                Syncing {syncingTransactionIds.length}{' '}
+                                Syncing{' '}
+                                {
+                                    transactions.filter(
+                                        (t) => t.status === 'syncing'
+                                    ).length
+                                }{' '}
                                 transactions..
                             </span>
                         ) : (

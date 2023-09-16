@@ -3,10 +3,13 @@ import { Formik, Field, Form } from 'formik';
 import { useDispatch, useSelector } from 'react-redux';
 import { Popover } from '@headlessui/react';
 
-import type { SyncOptions, Transaction } from '../types';
+import type { SyncOptions } from '../types';
 import type { RootState } from '../store/store';
-import { addTransaction, setIsImporting } from '../store/transactions';
-import { useGetStripeInfoQuery } from '../services/api';
+import { setIsImporting } from '../store/transactions';
+import {
+    useGetStripeInfoQuery,
+    useImportTransactionsMutation,
+} from '../services/api';
 import SubmitButton from './SubmitButton';
 import LoadingSpinner from './LoadingSpinner';
 
@@ -16,26 +19,15 @@ const ImportTransactions = () => {
         (state: RootState) => state.transactions.isImporting
     );
     const { data: stripeInfo } = useGetStripeInfoQuery();
+    const [importTransactions] = useImportTransactionsMutation();
 
-    const importTransactions = async (options: SyncOptions) => {
+    const handleSubmit = async (options: SyncOptions) => {
         if (!stripeInfo) {
             alert('No Stripe account connected.');
             return;
         }
-
         dispatch(setIsImporting(true));
-
-        const queryString = new URLSearchParams(options).toString();
-        const response = await fetch('/api/stripe/transactions?' + queryString);
-
-        if (response.status === 200) {
-            const data: Transaction[] = await response.json();
-            data.forEach((transaction: Transaction) => {
-                dispatch(addTransaction(transaction));
-            });
-        } else {
-            alert('Error importing transactions.');
-        }
+        await importTransactions(options);
 
         dispatch(setIsImporting(false));
     };
@@ -59,7 +51,7 @@ const ImportTransactions = () => {
                     <Formik
                         initialValues={{ from_date: '2023-08-28', to_date: '' }}
                         onSubmit={async (values: SyncOptions) => {
-                            await importTransactions(values);
+                            await handleSubmit(values);
                         }}
                     >
                         <Form>

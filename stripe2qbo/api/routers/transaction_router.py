@@ -15,7 +15,7 @@ router = APIRouter(
 
 
 @router.get("/")
-async def get_all_transactions(
+def get_all_transactions(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> List[TransactionSync]:
@@ -29,7 +29,7 @@ async def get_all_transactions(
 
 
 @router.get("/{transaction_id}")
-async def get_transaction_by_id(
+def get_transaction_by_id(
     user: Annotated[User, Depends(get_current_user)],
     db: Annotated[Session, Depends(get_db)],
     transaction_id: str,

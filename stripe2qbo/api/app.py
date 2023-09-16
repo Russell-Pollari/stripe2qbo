@@ -1,9 +1,18 @@
-from typing import Optional, Annotated
+from typing import Optional, Annotated, List
+import asyncio
 import os
 
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
-from fastapi import Depends, FastAPI, WebSocket, Query, Request
+from fastapi import (
+    Depends,
+    FastAPI,
+    Query,
+    Request,
+    BackgroundTasks,
+    WebSocket,
+    WebSocketException,
+)
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
@@ -13,19 +22,41 @@ from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.Stripe2QBO import Stripe2QBO
 from stripe2qbo.api.routers import qbo, stripe_router, transaction_router
 from stripe2qbo.api.dependencies import (
-    get_current_user_ws,
     get_db,
     get_stripe_user_id,
     get_qbo_token,
     get_current_user,
+    get_current_user_ws,
 )
 from stripe2qbo.qbo.auth import Token
 from stripe2qbo.db.models import SyncSettings, User
+from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
 from stripe2qbo.db.schemas import Settings, TransactionSync
 
 
 load_dotenv()
 
+
+class WebSocketManager:
+    def __init__(self):
+        self._clients: dict[int, WebSocket] = {}
+
+    def register(self, user_id: int, websocket: WebSocket):
+        self._clients[user_id] = websocket
+
+    def unregister(self, user_id: int):
+        connections = self._clients
+        del connections[user_id]
+        self._clients = connections
+
+    async def send_message(self, user_id: int, transaction: TransactionSync):
+        connection = self._clients.get(user_id)
+        if connection is None:
+            return
+        await connection.send_json(transaction.model_dump())
+
+
+manager = WebSocketManager()
 
 app = FastAPI()
 
@@ -85,63 +116,50 @@ def save_settings(
     db.commit()
 
 
+def sync_transaction(transaction_id: str, syncer: Stripe2QBO, user: User):
+    if user.stripe_user_id is None:
+        raise Exception("Stripe user id is not set")
+    transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
+    transaction_sync = syncer.sync(transaction, user)
+    return transaction_sync
+
+
+async def sync_transactions(
+    transaction_ids: List[str], syncer: Stripe2QBO, user: User, db: Session
+):
+    for transaction_id in transaction_ids:
+        transaction_sync = await asyncio.to_thread(
+            sync_transaction, transaction_id, syncer, user
+        )
+        db.query(TransactionSyncORM).filter(
+            TransactionSyncORM.id == transaction_id
+        ).update({"status": transaction_sync.status})
+        db.commit()
+        await manager.send_message(user.id, transaction_sync)
+
+
 @app.post("/api/sync")
-async def sync_single_transaction(
-    transaction_id: str,
+async def sync(
+    transaction_ids: Annotated[List[str], Query()],
     settings: Annotated[Settings, Depends(get_settings)],
     qbo_token: Annotated[Token, Depends(get_qbo_token)],
     user: Annotated[User, Depends(get_current_user)],
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
-) -> TransactionSync:
-    transaction = get_transaction(transaction_id, account_id=stripe_user_id)
-    syncer = Stripe2QBO(settings, qbo_token)
-    transaction_sync = syncer.sync(transaction, user)
-
-    return transaction_sync
-
-
-@app.websocket("/api/syncmany")
-async def sync_many(
-    websocket: WebSocket,
-    transaction_ids: Annotated[list[str], Query()],
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(get_current_user_ws)],
-):
-    stripe_user_id = os.getenv("STRIPE_ACCOUNT_ID", user.stripe_user_id)
-
-    if stripe_user_id is None:
-        await websocket.send_json({"status": "Not authenticated"})
-        await websocket.close()
-        return
-
-    # Most dependencies are not defined for websocket scope
-    settings_orm = (
-        db.query(SyncSettings)
-        .where(SyncSettings.qbo_realm_id == user.qbo_realm_id)
-        .first()
-    )
-    settings = Settings.model_validate(settings_orm)
-    qbo_token = get_qbo_token(user, db)
+    background_tasks: BackgroundTasks,
+) -> str:
+    # TODO: Skip already existing transactions
+    for transaction_id in transaction_ids:
+        db.query(TransactionSyncORM).filter(
+            TransactionSyncORM.id == transaction_id
+        ).update({"status": "syncing"})
+    db.commit()
 
     syncer = Stripe2QBO(settings, qbo_token)
+    user.stripe_user_id = stripe_user_id
+    background_tasks.add_task(sync_transactions, transaction_ids, syncer, user, db)
 
-    await websocket.accept()
-    await websocket.send_json(
-        {"status": f"Syncing {len(transaction_ids)} transactions"}
-    )
-    for transaction_id in transaction_ids:
-        transaction = get_transaction(
-            transaction_id, account_id=os.getenv("STRIPE_ACCOUNT_ID", "")
-        )
-        transaction_sync = syncer.sync(transaction, user)
-
-        await websocket.send_json(
-            {
-                "transaction": transaction_sync.model_dump(),
-            }
-        )
-
-    await websocket.close()
+    return "Done"  # TODO: Sync summary
 
 
 @app.get("/{path:path}")
@@ -162,3 +180,19 @@ async def catch_all(path: str) -> HTMLResponse:
         """,
         status_code=200,
     )
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(
+    websocket: WebSocket,
+    user: Annotated[User, Depends(get_current_user_ws)],
+) -> None:
+    await websocket.accept()
+    manager.register(user.id, websocket)
+    while True:
+        try:
+            await websocket.receive_text()
+        except WebSocketException:
+            manager.unregister(user.id)
+            break
+        await asyncio.sleep(1)
