@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { CheckIcon } from '@heroicons/react/24/solid';
+import { useMediaQuery } from 'react-responsive';
 
 import { selectTransaction } from '../store/transactions';
 import {
@@ -108,7 +109,6 @@ const TransactionTable = () => {
             renderHeader: () => (
                 <div className="text-right">
                     <button
-                        disabled={selectedTransactionIds.length === 0}
                         className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold py-2 px-4 rounded-full text-sm"
                         onClick={() => syncTransactions(selectedTransactionIds)}
                     >
@@ -134,8 +134,13 @@ const TransactionTable = () => {
         },
     ];
 
+    const isBigScreen = useMediaQuery({ query: '(min-width: 1280px)' });
+    const isMediumScreen = useMediaQuery({ query: '(min-width: 900px)' });
+    const isSmallScreen = useMediaQuery({ query: '(min-width: 700px)' });
+    const isMobile = useMediaQuery({ query: '(min-width: 500px)' });
+
     return (
-        <div className="w-full h-full">
+        <div className="w-full h-3/4">
             <DataGrid
                 onRowSelectionModelChange={(selection) => {
                     setSelectedTransactionIds(selection as string[]);
@@ -144,6 +149,15 @@ const TransactionTable = () => {
                 columns={columns}
                 checkboxSelection
                 pageSizeOptions={[10, 25]}
+                autoPageSize
+                columnVisibilityModel={{
+                    fee: isBigScreen,
+                    currency: isBigScreen,
+                    type: isBigScreen,
+                    description: isMediumScreen,
+                    created: isSmallScreen,
+                    status: isMobile,
+                }}
             />
         </div>
     );

@@ -76,14 +76,14 @@ export const api = createApi({
             query: () => `transaction/`,
             providesTags: ['Transaction'],
             async onCacheEntryAdded(
-                arg,
+                _,
                 { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
             ) {
                 const ws = new WebSocket('ws://localhost:8000/api/sync/ws');
                 try {
                     await cacheDataLoaded;
 
-                    const listener = (event) => {
+                    const listener = (event: { data: string }) => {
                         const data = JSON.parse(event.data);
 
                         updateCachedData((draft) => {
@@ -94,8 +94,8 @@ export const api = createApi({
                         });
                     };
                     ws.addEventListener('message', listener);
-                } catch {
-                    console.log('error');
+                } catch (error) {
+                    console.error('Webhook Error:', error);
                 }
                 await cacheEntryRemoved;
                 ws.close();

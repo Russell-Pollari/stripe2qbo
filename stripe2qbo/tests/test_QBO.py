@@ -47,6 +47,7 @@ def test_create_expense(
     test_settings: Settings,
     test_charge_transaction: Transaction,
 ):
+    assert test_charge_transaction.charge is not None
     currency = test_charge_transaction.currency.upper()
 
     expense = expense_from_transaction(test_charge_transaction, test_settings)

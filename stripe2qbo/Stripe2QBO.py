@@ -169,35 +169,43 @@ class Stripe2QBO:
             sync_status.status = "failed"
             return sync_status
 
-        if transaction.type == "stripe_fee":
-            sync_status.status = "success"
-            sync_status.expense_id = self.sync_stripe_fee(transaction)
+        try:
+            if transaction.type == "stripe_fee":
+                sync_status.status = "success"
+                sync_status.expense_id = self.sync_stripe_fee(transaction)
+                return sync_status
+
+            if transaction.customer:
+                assert transaction.charge is not None
+                charge_currency = cast(
+                    qbo_models.QBOCurrency, transaction.charge.currency.upper()
+                )
+                qbo_customer = self._qbo.get_or_create_customer(
+                    transaction.customer.name or transaction.customer.id,
+                    charge_currency,
+                )
+            else:
+                qbo_customer = self._qbo.get_or_create_customer(
+                    "Stripe customer", currency
+                )
+
+            if transaction.invoice:
+                sync_status.invoice_id = self.sync_invoice(
+                    transaction.invoice, qbo_customer
+                )
+
+            if transaction.charge:
+                sync_status.payment_id = self.sync_charge(
+                    transaction.charge, qbo_customer, sync_status.invoice_id
+                )
+                sync_status.expense_id = self.sync_stripe_fee(transaction)
+
+            if transaction.payout:
+                sync_status.transfer_id = self.sync_payout(transaction.payout)
+        except Exception as e:
+            print(e)
+            sync_status.status = "failed"
             return sync_status
-
-        if transaction.customer:
-            assert transaction.charge is not None
-            charge_currency = cast(
-                qbo_models.QBOCurrency, transaction.charge.currency.upper()
-            )
-            qbo_customer = self._qbo.get_or_create_customer(
-                transaction.customer.name or transaction.customer.id, charge_currency
-            )
-        else:
-            qbo_customer = self._qbo.get_or_create_customer("Stripe customer", currency)
-
-        if transaction.invoice:
-            sync_status.invoice_id = self.sync_invoice(
-                transaction.invoice, qbo_customer
-            )
-
-        if transaction.charge:
-            sync_status.payment_id = self.sync_charge(
-                transaction.charge, qbo_customer, sync_status.invoice_id
-            )
-            sync_status.expense_id = self.sync_stripe_fee(transaction)
-
-        if transaction.payout:
-            sync_status.transfer_id = self.sync_payout(transaction.payout)
 
         sync_status.status = "success"
         return sync_status

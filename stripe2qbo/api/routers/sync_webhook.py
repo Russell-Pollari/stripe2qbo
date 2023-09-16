@@ -1,5 +1,4 @@
 from typing import Annotated, Dict
-import asyncio
 
 from fastapi import (
     APIRouter,
@@ -59,4 +58,3 @@ async def websocket_endpoint(
         except WebSocketDisconnect:
             manager.unregister(user.id)
             break
-        await asyncio.sleep(1)

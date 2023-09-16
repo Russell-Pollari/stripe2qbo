@@ -21,7 +21,7 @@ const App = () => {
 
     return (
         <div>
-            <div className="flex items-center justify-between bg-green-300 p-4">
+            <div className="flex items-center justify-between bg-green-300 py-2 px-6">
                 <h1 className="font-semibold text-xl">Stripe 2 QBO</h1>
                 {companyInfo && <AccountMenu companyInfo={companyInfo} />}
             </div>
@@ -37,7 +37,7 @@ const App = () => {
                 </div>
             )}
             {user_id && (
-                <div className="p-6">
+                <div className="py-2 px-6">
                     <Tabs />
                     <Outlet />
                 </div>

@@ -5,9 +5,10 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "concurrently \"npm run dev:styles\" \"npm run dev:client\"",
+        "dev": "concurrently \"npm run dev:styles\" \"npm run dev:client\" \"npm run dev:server\"",
         "dev:styles": "npx tailwindcss -i client/index.css  -o static/index.css --watch",
         "dev:client": "esbuild ./client/index.tsx --bundle --minify --sourcemap --target=es2015 --outfile=static/index.js --watch",
+        "dev:server": "python -m uvicorn stripe2qbo.api.app:app --reload",
         "build": "npm run build:styles && npm run build:client",
         "build:styles": "npx tailwindcss -i client/index.css  -o static/index.css",
         "build:client": "esbuild ./client/index.tsx --bundle --minify --sourcemap --target=es2015 --outfile=static/index.js"
@@ -25,6 +26,7 @@
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-redux": "^8.1.2",
+        "react-responsive": "^9.0.2",
         "react-router": "^6.15.0",
         "react-router-dom": "^6.15.0",
         "yup": "^1.2.0"
