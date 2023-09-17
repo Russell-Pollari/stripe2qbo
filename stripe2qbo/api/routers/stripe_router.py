@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from typing import Annotated, List, Optional
+from typing import Annotated, Optional
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
@@ -17,8 +17,7 @@ from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.db.schemas import TransactionSync
 from stripe2qbo.api.dependencies import get_db, get_current_user, get_stripe_user_id
 from stripe2qbo.db.models import User
-
-# from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
+from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
 
 load_dotenv()
 
@@ -68,14 +67,14 @@ async def get_stripe_info(
     return Account(**account.to_dict())
 
 
-@router.get("/transactions")
+@router.post("/transactions")
 async def get_stripe_transactions(
     user: Annotated[User, Depends(get_current_user)],
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
     db: Annotated[Session, Depends(get_db)],
     from_date: Optional[str] = None,
     to_date: Optional[str] = None,
-) -> List[TransactionSync]:
+) -> str:
     from_timestamp = (
         int(datetime.strptime(from_date, "%Y-%m-%d").timestamp()) if from_date else None
     )
@@ -94,26 +93,25 @@ async def get_stripe_transactions(
         )
         transactions.extend(txns)
 
-        # for txn in txns:
-        #     t = TransactionSync(**txn.model_dump())
-        #     is_imported = (
-        #         db.query(TransactionSyncORM)
-        #         .where(TransactionSyncORM.id == t.id)
-        #         .first()
-        #         is not None
-        #     )
-        #     if not is_imported:
-        #         db.add(
-        #             TransactionSyncORM(
-        #                 stripe_id=stripe_user_id,
-        #                 user_id=user.id,
-        #                 **t.model_dump(),
-        #             )
-        #         )
+        for txn in txns:
+            t = TransactionSync(
+                stripe_id=stripe_user_id,
+                user_id=user.id,
+                status="pending",
+                **txn.model_dump()
+            )
+            is_imported = (
+                db.query(TransactionSyncORM)
+                .where(TransactionSyncORM.id == t.id)
+                .first()
+                is not None
+            )
+            if not is_imported:
+                db.add(TransactionSyncORM(**t.model_dump()))
 
-        # db.commit()
+        db.commit()
         if len(txns) < 100:
             break
         starting_after = txns[-1].id
 
-    return [TransactionSync(**transaction.model_dump()) for transaction in transactions]
+    return "Done"  # TODO: import summary

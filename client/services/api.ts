@@ -6,6 +6,8 @@ import {
     QBOVendor,
     Settings,
     StripeInfo,
+    Transaction,
+    SyncOptions, // TODO: Rename to ImportOptions
 } from '../types';
 
 export const api = createApi({
@@ -13,7 +15,7 @@ export const api = createApi({
     baseQuery: fetchBaseQuery({
         baseUrl: '/api/',
     }),
-    tagTypes: ['Settings', 'Stripe', 'User'],
+    tagTypes: ['Settings', 'Stripe', 'User', 'Transaction'],
     endpoints: (builder) => ({
         // AUTH
         getCurrentUser: builder.query<number, void>({
@@ -68,6 +70,63 @@ export const api = createApi({
             }),
             invalidatesTags: ['Settings'],
         }),
+
+        // transactions
+        getTransactions: builder.query<Transaction[], void>({
+            query: () => `transaction/`,
+            providesTags: ['Transaction'],
+            async onCacheEntryAdded(
+                _,
+                { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
+            ) {
+                const HOST = process.env.HOST; // ts-ignore
+                const ws = new WebSocket(`ws://${HOST}/api/sync/ws`);
+                try {
+                    await cacheDataLoaded;
+
+                    const listener = (event: { data: string }) => {
+                        const data = JSON.parse(event.data);
+
+                        updateCachedData((draft) => {
+                            const index = draft.findIndex(
+                                (t) => t.id === data.id
+                            );
+                            draft[index].status = data.status;
+                        });
+                    };
+                    ws.addEventListener('message', listener);
+                } catch (error) {
+                    console.error('Webhook Error:', error);
+                }
+                await cacheEntryRemoved;
+                ws.close();
+            },
+        }),
+        importTransactions: builder.mutation<string, SyncOptions>({
+            query: (options) => {
+                const queryString = new URLSearchParams(options).toString();
+
+                return {
+                    url: `stripe/transactions?${queryString}`,
+                    method: 'POST',
+                };
+            },
+            invalidatesTags: ['Transaction'],
+        }),
+        syncTransactions: builder.mutation<string, string[]>({
+            query: (transaction_ids) => {
+                const ids = transaction_ids.map((id) => [
+                    'transaction_ids',
+                    id,
+                ]);
+                const queryString = new URLSearchParams(ids).toString();
+                return {
+                    url: `sync?${queryString}`,
+                    method: 'POST',
+                };
+            },
+            invalidatesTags: ['Transaction'],
+        }),
     }),
 });
 
@@ -85,4 +144,8 @@ export const {
 
     useGetSettingsQuery,
     useUpdateSettingsMutation,
+
+    useGetTransactionsQuery,
+    useImportTransactionsMutation,
+    useSyncTransactionsMutation,
 } = api;

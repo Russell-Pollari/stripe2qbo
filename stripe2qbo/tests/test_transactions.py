@@ -10,8 +10,6 @@ from stripe2qbo.db.database import SessionLocal
 
 db = SessionLocal()
 
-pytest_plugins = ("pytest_asyncio",)
-
 
 @pytest.fixture
 def test_transaction(test_user: User, test_token: Token):
@@ -42,18 +40,16 @@ def test_transaction(test_user: User, test_token: Token):
     db.commit()
 
 
-@pytest.mark.asyncio
 async def test_get_all_transactions(test_user: User, test_transaction: None):
-    test_value = await get_all_transactions(test_user, db)
+    test_value = get_all_transactions(test_user, db)
 
     assert len(test_value) == 1
     assert test_value[0].user_id == test_user.id
     assert test_value[0].description == "Test Charge"
 
 
-@pytest.mark.asyncio
 async def test_get_transaction_by_id(test_user: User, test_transaction: None):
-    test_value = await get_transaction_by_id(test_user, db, "12281")
+    test_value = get_transaction_by_id(test_user, db, "12281")
 
     assert test_value.user_id == test_user.id
     assert test_value.description == "Test Charge"
