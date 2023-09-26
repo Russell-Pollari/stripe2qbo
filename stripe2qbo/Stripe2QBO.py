@@ -24,7 +24,6 @@ def _transfrom_timestamp(timestamp: int) -> str:
 class Stripe2QBO:
     _settings: Settings
     _qbo: QBO
-    _transaction: stripe_models.Transaction
     _tax_codes: Dict[str, qbo_models.TaxCode | None] = {}
     _exchange_rate: float = 1.0
     _currency: qbo_models.QBOCurrency
