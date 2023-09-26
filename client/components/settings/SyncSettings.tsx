@@ -11,25 +11,32 @@ import {
 } from '../../services/api';
 import type { Settings } from '../../types';
 import { AccountSelect, VendorSelect, TaxCodeSelect } from './Inputs';
+import LoadingSpinner from '../LoadingSpinner';
 import SubmitButton from '../SubmitButton';
 import getDefaultSettings from './getDefaultSettings';
 import schema from './settingsFormSchema';
 
 const SyncSettings = () => {
     const { data: companyInfo } = useGetCompanyInfoQuery('');
-    const { data: accounts } = useGetAccountsQuery('', {
-        skip: !companyInfo,
-    });
-    const { data: vendors } = useGetVendorsQuery('', {
-        skip: !companyInfo,
-    });
-    const { data: taxCodes } = useGetTaxCodesQuery('', {
-        skip: !companyInfo,
-    });
+    const { data: accounts, isLoading: isLoadingAccounts } =
+        useGetAccountsQuery('', {
+            skip: !companyInfo,
+        });
+    const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery(
+        '',
+        {
+            skip: !companyInfo,
+        }
+    );
+    const { data: taxCodes, isLoading: isLoadingTaxCodes } =
+        useGetTaxCodesQuery('', {
+            skip: !companyInfo,
+        });
 
-    const { data: settings } = useGetSettingsQuery('', {
-        skip: !companyInfo,
-    });
+    const { data: settings, isLoading: isLoadingSettings } =
+        useGetSettingsQuery('', {
+            skip: !companyInfo,
+        });
 
     const [updateSettings] = useUpdateSettingsMutation();
 
@@ -37,11 +44,20 @@ const SyncSettings = () => {
         ? settings
         : getDefaultSettings({ accounts, vendors, taxCodes });
 
+    const isLoading =
+        !companyInfo ||
+        isLoadingAccounts ||
+        isLoadingVendors ||
+        isLoadingTaxCodes ||
+        isLoadingSettings;
+
     return (
         <div className="shadow-lg p-4">
             <h3 className="font-semibold mb-4">Sync Settings</h3>
-            {!companyInfo ? (
-                <div className="text-center">Missing QBO connection</div>
+            {isLoading ? (
+                <div className="flex justify-center">
+                    <LoadingSpinner />
+                </div>
             ) : (
                 <Formik
                     validationSchema={schema}
