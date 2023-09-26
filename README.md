@@ -26,9 +26,9 @@ Working on generalizing/customizing this so that it is valuable beyond my use ca
 
 `$ touch .env`
 
-Add the following to `.env` with your own values:
+Add the following variables to `.env` with your own values:
 
-```
+```bash
 SECRET_KEY=<add your own secret key>
 
 # QBO OAuth
@@ -45,35 +45,25 @@ STRIPE_CLIENT_ID=<Your Stripe client id, found in Connect settings>
 STRIPE_REDIRECT_URL=http://localhost:8000/stripe/oauth2/callback
 ```
 
-If you don't want to use Stripe Connect, you can set your Stripe account ID explicitly as an env variable
+If you don't want to use Stripe Connect, you can set your Stripe account ID explicitly as an env variable. This will override the Connect flow.
 
-```
+```bash
 STRIPE_ACCOUNT_ID=<Your Stripe account id, found in Account settings>
-
 ```
 
 > Make sure to update your QBO and Stripe Connect settings with the correct redirect URLs.
 
-## Database
-
-By default, a local SQLite database will be created with path=`./stripe2qbo.db`. You can use a postgres db by setting the
-POSTGRES_URI env variable.
-
 Initialize the database:
 
 `$ alembic upgrade head`
+
+> By default, a local SQLite database will be created in the root directory. You can use a postgres db instead by setting the POSTGRES_URI env variable.
 
 ## Development
 
 Ensure `pre-commit` is installed
 
 `$ pip install pre-commit`
-
-Run FastAPI server in dev mode
-
-`$ python -m uvicorn stripe2qbo.api.app:app --reload`
-
-Run React client in dev mode
 
 `$ npm run dev`
 
@@ -83,7 +73,7 @@ To create migrations
 
 `$ alembic revision --autogenerate -m "migration name"`
 
-### Testing
+## Testing
 
 `$ pytest`
 
@@ -93,7 +83,7 @@ Requires `TEST_STRIPE_API_KEY` and `TEST_STRIPE_ACCOUNT_ID` env vars to be set.
 
 ---
 
-## Sync Settings
+# Sync Settings
 
 `Stripe Clearing Account` (**Required**)
 
@@ -131,8 +121,4 @@ The default tax code to use for all invoice line items with non-zero tax. (e.g. 
 
 The default tax code to use for all invoice line items with zero tax. (e.g. TAX or Exempt)
 
-> 'TAX' and 'NON' are psuedo tax codes specific to US QBO accounts. If you're using a different QBO region, you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
-
-```
-
-```
+> 'TAX' and 'NON' are psuedo tax codes specific to US-based QBO accounts. If you're using a different QBO region (e.g. Canada), you'll need to change these. See [here](https://developer.intuit.com/app/developer/qbo/docs/develop/tutorials/transaction-tax-detail-entity-fields) for more info on setting up sales tax.
