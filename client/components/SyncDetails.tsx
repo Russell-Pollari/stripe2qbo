@@ -5,22 +5,27 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { Transaction } from '../types';
 import type { RootState } from '../store/store';
 import { selectTransaction } from '../store/transactions';
+import { useGetTransactionsQuery } from '../services/api';
 
 const SyncDetails = () => {
     const dispatch = useDispatch();
-    const transactions = useSelector(
-        (state: RootState) => state.transactions.transactions
-    );
-    const selectedTransaction = useSelector(
-        (state: RootState) => state.transactions.selectedTransaction
+    const selectedTransactionId = useSelector(
+        (state: RootState) => state.transactions.selectedTransactionId
     );
 
-    const transaction: Transaction = transactions[selectedTransaction];
+    const { transaction } = useGetTransactionsQuery(undefined, {
+        selectFromResult: ({ data }) => ({
+            transaction: data?.find(
+                (transaction: Transaction) =>
+                    transaction.id === selectedTransactionId
+            ),
+        }),
+    });
 
     return (
         <Dialog
             className="z-50 relative"
-            open={selectedTransaction !== null}
+            open={selectedTransactionId !== null}
             onClose={() => dispatch(selectTransaction(null))}
         >
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
