@@ -10,8 +10,8 @@ const TransactionsPage = () => {
             <div className="mb-2 txt-left">
                 <ImportTransactions />
             </div>
-            <SyncDetails />
             <TransactionTable />
+            <SyncDetails />
         </div>
     );
 };

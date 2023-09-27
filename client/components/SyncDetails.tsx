@@ -1,11 +1,58 @@
 import * as React from 'react';
-import { Dialog } from '@headlessui/react';
+import {
+    XMarkIcon,
+    ArrowTopRightOnSquareIcon,
+    ChevronRightIcon,
+} from '@heroicons/react/24/solid';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { Transaction } from '../types';
 import type { RootState } from '../store/store';
 import { selectTransaction } from '../store/transactions';
+import numToAccountingString from '../numToAccountingString';
 import { useGetTransactionsQuery } from '../services/api';
+import SyncStatus from './SyncStatus';
+
+const SyncItem = ({ label, href }: { label: string; href: string }) => {
+    return (
+        <p className="text-gray-500 mb-4">
+            <ChevronRightIcon className="w-4 h-4 inline m-px" />
+            Created{' '}
+            <a
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 hover:text-blue-700"
+            >
+                {label}{' '}
+                <ArrowTopRightOnSquareIcon className="w-4 h-4 inline m-px" />
+            </a>
+        </p>
+    );
+};
+
+const StripeTransactionDetais = ({
+    transaction,
+}: {
+    transaction: Transaction;
+}) => {
+    return (
+        <div className="mb-4">
+            <p>{transaction.description}</p>
+            <p className="text-xs text-gray-500 mb-4">{transaction.id}</p>
+
+            <p className="my-2 text-gray-700">
+                {transaction.currency.toUpperCase()}{' '}
+                {numToAccountingString(transaction.amount)}{' '}
+                {!!transaction.fee && (
+                    <span className="text-sm font-normal text-gray-600">
+                        ({numToAccountingString(transaction.fee)} Stripe fee)
+                    </span>
+                )}
+            </p>
+        </div>
+    );
+};
 
 const SyncDetails = () => {
     const dispatch = useDispatch();
@@ -22,81 +69,70 @@ const SyncDetails = () => {
         }),
     });
 
+    if (!selectedTransactionId) return null;
+
     return (
-        <Dialog
-            className="z-50 relative"
-            open={selectedTransactionId !== null}
-            onClose={() => dispatch(selectTransaction(null))}
-        >
-            <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
-            <div className="fixed inset-0 flex w-screen items-center justify-center p-4">
-                <Dialog.Panel className="relative w-full max-w-2xl mx-auto rounded shadow-lg bg-white p-4">
-                    {transaction && (
-                        <>
-                            <Dialog.Title>{transaction.id}</Dialog.Title>
-                            <h2 className="text-lg font-semibold">
-                                Sync Details
-                            </h2>
-                            {transaction.invoice_id && (
-                                <p>
-                                    <strong>Invoice:</strong>{' '}
-                                    <a
-                                        href={`https://app.qbo.intuit.com/app/invoice?txnId=${transaction.invoice_id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {transaction.invoice_id}
-                                    </a>
-                                </p>
-                            )}
-                            {transaction.expense_id && (
-                                <p>
-                                    <strong>Expense:</strong>{' '}
-                                    <a
-                                        href={`https://app.qbo.intuit.com/app/check?txnId=${transaction.expense_id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {transaction.expense_id}
-                                    </a>
-                                </p>
-                            )}
-                            {transaction.payment_id && (
-                                <p>
-                                    <strong>Payment:</strong>{' '}
-                                    <a
-                                        href={`https://app.qbo.intuit.com/app/recvpayment?txnId=${transaction.payment_id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {transaction.payment_id}
-                                    </a>
-                                </p>
-                            )}
-                            {transaction.transfer_id && (
-                                <p>
-                                    <strong>Transfer:</strong>{' '}
-                                    <a
-                                        href={`https://app.qbo.intuit.com/app/transfer?txnId=${transaction.transfer_id}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {transaction.transfer_id}
-                                    </a>
-                                </p>
-                            )}
-                            <button
-                                onClick={() =>
-                                    dispatch(selectTransaction(null))
-                                }
-                            >
-                                Close
-                            </button>
-                        </>
-                    )}
-                </Dialog.Panel>
+        <div className="fixed z-50 bg-white top-16 right-0 h-screen shadow-xl border-l border-solid border-gray-700 w-80">
+            <div className="px-4 py-2 flex justify-between border-b border-solid border-gray-300 bg-gray-100">
+                <div className="mb-2">
+                    <span className="text-xl">
+                        {transaction.type.slice(0, 1).toUpperCase()}
+                        {transaction.type.slice(1)}
+                    </span>
+
+                    <span className="text-sm text-gray-600 ml-2">
+                        {new Date(transaction.created * 1000)
+                            .toISOString()
+                            .slice(0, 10)}
+                    </span>
+                </div>
+                <button
+                    className="rounded-full w-6 h-6 m-2 text-gray-500 hover:text-gray-800"
+                    onClick={() => dispatch(selectTransaction(null))}
+                >
+                    <XMarkIcon className="w-6" />
+                </button>
             </div>
-        </Dialog>
+            {transaction && (
+                <div className="p-4 pr-6">
+                    <StripeTransactionDetais transaction={transaction} />
+
+                    <div className="mt-4 border-t border-solid py-2 border-gray-300">
+                        <SyncStatus
+                            status={transaction.status}
+                            id={transaction.id}
+                        />
+                    </div>
+
+                    <div className="mt-2">
+                        {transaction.invoice_id && (
+                            <SyncItem
+                                label="Invoice"
+                                href={`https://app.qbo.intuit.com/app/invoice?txnId=${transaction.invoice_id}`}
+                            />
+                        )}
+                        {transaction.payment_id && (
+                            <SyncItem
+                                label="Payment"
+                                href={`https://app.qbo.intuit.com/app/recvpayment?txnId=${transaction.payment_id}`}
+                            />
+                        )}
+                        {transaction.expense_id && (
+                            <SyncItem
+                                label="Expense"
+                                href={`https://app.qbo.intuit.com/app/check?txnId=${transaction.expense_id}`}
+                            />
+                        )}
+                        {transaction.transfer_id && (
+                            <SyncItem
+                                label="Transfer"
+                                href={`https://app.qbo.intuit.com/app/transfer?txnId=${transaction.transfer_id}`}
+                            />
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
     );
 };
 
