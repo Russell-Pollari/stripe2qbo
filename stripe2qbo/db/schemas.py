@@ -33,7 +33,7 @@ class TransactionSync(BaseModel):
     amount: int
     fee: int
     currency: str
-    description: str
+    description: str = ""
     stripe_id: str
     status: Literal["pending", "success", "syncing", "failed"] = "pending"
     # QBO ids

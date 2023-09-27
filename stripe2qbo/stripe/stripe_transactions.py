@@ -20,7 +20,9 @@ stripe.api_key = os.getenv("STRIPE_API_KEY")
 
 
 def build_transaction(txn: stripe.BalanceTransaction, account_id: str) -> Transaction:
-    transaction = Transaction(**txn.to_dict())
+    description = txn.description or ""
+    del txn.description
+    transaction = Transaction(**txn.to_dict(), description=description)
 
     if transaction.type in ["charge", "payment"]:
         transaction.charge = Charge(**txn.source)

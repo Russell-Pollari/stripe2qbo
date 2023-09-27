@@ -64,7 +64,7 @@ class Payout(BaseModel):
 class Transaction(BaseModel):
     id: str
     created: int  # timestamp
-    description: Optional[str] = None
+    description: str = ""
     type: str
     amount: float  # cents
     fee: float
