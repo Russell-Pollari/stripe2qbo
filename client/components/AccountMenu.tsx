@@ -21,7 +21,11 @@ const AccountMenu = ({ companyInfo }) => {
                     <Menu.Item>
                         {({ active }) => (
                             <button
-                                onClick={logout}
+                                onClick={async () =>
+                                    logout().then(() => {
+                                        location.reload();
+                                    })
+                                }
                                 className={`${
                                     active
                                         ? 'bg-gray-500 text-white'
