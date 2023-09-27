@@ -85,13 +85,13 @@ export const api = createApi({
                     await cacheDataLoaded;
 
                     const listener = (event: { data: string }) => {
-                        const data = JSON.parse(event.data);
+                        const data: Transaction = JSON.parse(event.data);
 
                         updateCachedData((draft) => {
                             const index = draft.findIndex(
                                 (t: Transaction) => t.id === data.id
                             );
-                            draft[index].status = data.status;
+                            draft[index] = data;
                         });
                     };
                     ws.addEventListener('message', listener);
