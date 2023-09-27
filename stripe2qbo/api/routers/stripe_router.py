@@ -51,9 +51,9 @@ async def disconnect_stripe(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> None:
-    if os.getenv("STRIPE_API_KEY") is not None:
+    if os.getenv("STRIPE_ACCOUNT_ID") is not None:
         raise HTTPException(
-            status_code=400, detail="Not allowed while STRIPE_API_KEY is set"
+            status_code=400, detail="Not allowed while STRIPE_ACCOUNT_ID is set"
         )
     user.stripe_user_id = None
     db.commit()
