@@ -75,16 +75,14 @@ def get_transaction(transaction_id: str, account_id: str) -> Transaction:
 
 
 def get_transactions(
+    account_id: str,
     from_timestamp: Optional[int] = None,
     to_timestamp: Optional[int] = None,
     transaction_type: Optional[str] = None,
     currency: Optional[str] = None,
     limit: Optional[int] = 100,
     starting_after: Optional[str] = None,
-    account_id: Optional[str] = None,
 ) -> List[Transaction]:
-    assert account_id is not None
-
     # TODO: paginatition when N > 100
     txns = stripe.BalanceTransaction.list(
         limit=limit,

@@ -86,10 +86,10 @@ async def get_stripe_transactions(
     starting_after: str | None = None
     while True:
         txns = get_transactions(
+            stripe_user_id,
             from_timestamp=from_timestamp,
             to_timestamp=to_timestamp,
             starting_after=starting_after,
-            account_id=stripe_user_id,
         )
         transactions.extend(txns)
 
