@@ -79,7 +79,7 @@ export const api = createApi({
                 _,
                 { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
             ) {
-                const HOST = process.env.HOST; // ts-ignore
+                const HOST = process.env.HOST;
                 const ws = new WebSocket(`ws://${HOST}/api/sync/ws`);
                 try {
                     await cacheDataLoaded;
@@ -89,7 +89,7 @@ export const api = createApi({
 
                         updateCachedData((draft) => {
                             const index = draft.findIndex(
-                                (t) => t.id === data.id
+                                (t: Transaction) => t.id === data.id
                             );
                             draft[index].status = data.status;
                         });
