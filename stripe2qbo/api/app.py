@@ -113,7 +113,15 @@ async def sync_transactions(
         )
         db.query(TransactionSyncORM).filter(
             TransactionSyncORM.id == transaction_id
-        ).update({"status": transaction_sync.status})
+        ).update(
+            {
+                "status": transaction_sync.status,
+                "transfer_id": transaction_sync.transfer_id,
+                "invoice_id": transaction_sync.invoice_id,
+                "payment_id": transaction_sync.payment_id,
+                "expense_id": transaction_sync.expense_id,
+            }
+        )
         db.commit()
         try:
             await manager.send_message(user.id, transaction_sync)
