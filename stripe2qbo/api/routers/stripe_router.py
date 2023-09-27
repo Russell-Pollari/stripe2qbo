@@ -51,9 +51,9 @@ async def disconnect_stripe(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user)],
 ) -> None:
-    if os.getenv("STRIPE_API_KEY") is not None:
+    if os.getenv("STRIPE_ACCOUNT_ID") is not None:
         raise HTTPException(
-            status_code=400, detail="Not allowed while STRIPE_API_KEY is set"
+            status_code=400, detail="Not allowed while STRIPE_ACCOUNT_ID is set"
         )
     user.stripe_user_id = None
     db.commit()
@@ -86,10 +86,10 @@ async def get_stripe_transactions(
     starting_after: str | None = None
     while True:
         txns = get_transactions(
+            stripe_user_id,
             from_timestamp=from_timestamp,
             to_timestamp=to_timestamp,
             starting_after=starting_after,
-            account_id=stripe_user_id,
         )
         transactions.extend(txns)
 
