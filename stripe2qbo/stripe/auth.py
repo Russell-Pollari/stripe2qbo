@@ -18,6 +18,7 @@ def get_auth_url() -> str:
         + "&response_type=code&"
         + f"&client_id={os.getenv('STRIPE_CLIENT_ID')}"
         + "&scope=read_write"
+        + f"&redirect_uri={os.getenv('STRIPE_REDIRECT_URI')}"
     )
     return url
 
