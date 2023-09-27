@@ -18,10 +18,14 @@ const TransactionTable = () => {
     const dispatch = useDispatch();
     const { data: transactions = [] } = useGetTransactionsQuery();
     const [syncTransactions] = useSyncTransactionsMutation();
-
     const [selectedTransactionIds, setSelectedTransactionIds] = useState<
         string[]
     >([]);
+
+    const isBigScreen = useMediaQuery({ query: '(min-width: 1280px)' });
+    const isMediumScreen = useMediaQuery({ query: '(min-width: 900px)' });
+    const isSmallScreen = useMediaQuery({ query: '(min-width: 700px)' });
+    const isMobile = useMediaQuery({ query: '(min-width: 500px)' });
 
     const rows: GridRowsProp = transactions.map((transaction: Transaction) => {
         return {
@@ -133,11 +137,6 @@ const TransactionTable = () => {
             ),
         },
     ];
-
-    const isBigScreen = useMediaQuery({ query: '(min-width: 1280px)' });
-    const isMediumScreen = useMediaQuery({ query: '(min-width: 900px)' });
-    const isSmallScreen = useMediaQuery({ query: '(min-width: 700px)' });
-    const isMobile = useMediaQuery({ query: '(min-width: 500px)' });
 
     return (
         <div className="w-full h-3/4">
