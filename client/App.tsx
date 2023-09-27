@@ -20,8 +20,8 @@ const App = () => {
     });
 
     return (
-        <div>
-            <div className="flex items-center justify-between bg-green-300 py-2 px-6">
+        <div className="bg-gray-50 text-gray-900">
+            <div className="flex items-center justify-between bg-green-300 py-2 px-6 h-16">
                 <h1 className="font-semibold text-xl">Stripe 2 QBO</h1>
                 {companyInfo && <AccountMenu companyInfo={companyInfo} />}
             </div>

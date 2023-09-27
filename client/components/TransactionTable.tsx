@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
-import { CheckIcon } from '@heroicons/react/24/solid';
 import { useMediaQuery } from 'react-responsive';
 
 import { selectTransaction } from '../store/transactions';
@@ -11,8 +10,8 @@ import {
     useSyncTransactionsMutation,
 } from '../services/api';
 import type { Transaction } from '../types';
-import LoadingSpinner from './LoadingSpinner';
 import numToAccountingFormat from '../numToAccountingString';
+import SyncStatus from './SyncStatus';
 
 const TransactionTable = () => {
     const dispatch = useDispatch();
@@ -65,35 +64,9 @@ const TransactionTable = () => {
             field: 'status',
             headerName: 'Status',
             width: 150,
-            renderCell: (params) => {
-                if (params.value === 'syncing') {
-                    return <LoadingSpinner />;
-                }
-                if (params.value === 'success') {
-                    return (
-                        <span className="text-green-500">
-                            <CheckIcon className="w-6 h-6 inline -m-px" />
-                            Synced
-                        </span>
-                    );
-                }
-                if (params.value === 'pending') {
-                    <button
-                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold p-2 rounded-full text-sm"
-                        onClick={() => syncTransactions([params.row.id])}
-                    >
-                        {params.row.status === 'syncing' ? (
-                            <span>
-                                <LoadingSpinner />
-                                Syncing
-                            </span>
-                        ) : (
-                            <span>Sync</span>
-                        )}
-                    </button>;
-                }
-                return params.value;
-            },
+            renderCell: (params) => (
+                <SyncStatus status={params.value} id={params.row.id} />
+            ),
         },
         {
             field: 'actions',
