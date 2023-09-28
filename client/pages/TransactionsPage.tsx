@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import ImportTransactions from '../components/ImportTransactions';
 import SyncDetails from '../components/SyncDetails';
 import TransactionTable from '../components/TransactionTable';
-import { RootState } from '../store/store';
+import SyncTransactions from '../components/SyncTransactions';
+import type { RootState } from '../store/store';
 
 const TransactionsPage = () => {
     const expandedTransactionId = useSelector(
@@ -15,8 +16,9 @@ const TransactionsPage = () => {
 
     return (
         <div>
-            <div className="mb-2 txt-left">
+            <div className="mb-2 flex">
                 <ImportTransactions />
+                <SyncTransactions />
             </div>
             <div
                 style={{

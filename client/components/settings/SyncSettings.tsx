@@ -56,7 +56,7 @@ const SyncSettings = () => {
             <h3 className="font-semibold mb-4">Sync Settings</h3>
             {isLoading ? (
                 <div className="flex justify-center">
-                    <LoadingSpinner />
+                    <LoadingSpinner className="inline-block h-8 w-8" />
                 </div>
             ) : (
                 <Formik

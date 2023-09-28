@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import AccountMenu from './components/AccountMenu';
 import { useGetCurrentUserQuery, useGetCompanyInfoQuery } from './services/api';
 import Tabs from './components/Tabs';
+import LoadingSpinner from './components/LoadingSpinner';
 
 const login = () => {
     fetch('/api/qbo/oauth2')
@@ -25,7 +26,11 @@ const App = () => {
                 <h1 className="font-semibold text-xl">Stripe 2 QBO</h1>
                 {companyInfo && <AccountMenu companyInfo={companyInfo} />}
             </div>
-            {isLoading && <div>Loading...</div>}
+            {isLoading && (
+                <div className="grid h-1/2 place-items-center">
+                    <LoadingSpinner className="inline-block w-8 h-8" />
+                </div>
+            )}
             {!user_id && !isLoading && (
                 <div className="grid h-1/2 place-items-center">
                     <button

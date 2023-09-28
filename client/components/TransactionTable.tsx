@@ -9,17 +9,13 @@ import {
     setExpandedTransactionId,
     selectTransactionIds,
 } from '../store/transactions';
-import {
-    useGetTransactionsQuery,
-    useSyncTransactionsMutation,
-} from '../services/api';
+import { useGetTransactionsQuery } from '../services/api';
 import numToAccountingFormat from '../numToAccountingString';
 import SyncStatus from './SyncStatus';
 
 const TransactionTable = () => {
     const dispatch = useDispatch();
     const { data: transactions = [], isLoading } = useGetTransactionsQuery();
-    const [syncTransactions] = useSyncTransactionsMutation();
     const selectedTransactionIds = useSelector(
         (state: RootState) => state.transactions.selectedTransactionIds
     );
@@ -69,31 +65,6 @@ const TransactionTable = () => {
             width: 200,
             renderCell: (params) => (
                 <SyncStatus status={params.value} id={params.row.id} />
-            ),
-            renderHeader: () => (
-                <div className="text-right">
-                    <button
-                        className="inline-block bg-slate-300 hover:bg-slate-600 text-gray-500 font-bold py-2 px-4 rounded-full text-sm"
-                        onClick={() => syncTransactions(selectedTransactionIds)}
-                    >
-                        {transactions.some((t) => t.status === 'syncing') ? (
-                            <span>
-                                Syncing{' '}
-                                {
-                                    transactions.filter(
-                                        (t) => t.status === 'syncing'
-                                    ).length
-                                }{' '}
-                                transactions..
-                            </span>
-                        ) : (
-                            <span>
-                                Sync {selectedTransactionIds.length}{' '}
-                                transactions
-                            </span>
-                        )}
-                    </button>
-                </div>
             ),
         },
         {

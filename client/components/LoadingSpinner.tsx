@@ -1,10 +1,14 @@
 import * as React from 'react';
 
-const LoadingSpinner = () => (
-    <div role="status" className="inline-block w-8">
+const LoadingSpinner = ({
+    className = 'inline-block w-4 h-4 mr-2',
+}: {
+    className?: string;
+}) => (
+    <div role="status" className={className}>
         <svg
             aria-hidden="true"
-            className="w-8 h-8 mr-2 text-green-200 animate-spin fill-green-600"
+            className="w-full h-full text-green-200 animate-spin fill-green-600"
             viewBox="0 0 100 101"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
