@@ -54,7 +54,7 @@ const StripeTransactionDetais = ({
     );
 };
 
-const SyncDetails = () => {
+const SyncDetails = ({ drawerWidth = 320 }: { drawerWidth: number }) => {
     const dispatch = useDispatch();
     const selectedTransactionId = useSelector(
         (state: RootState) => state.transactions.selectedTransactionId
@@ -72,7 +72,10 @@ const SyncDetails = () => {
     if (!selectedTransactionId) return null;
 
     return (
-        <div className="fixed z-50 bg-white top-16 right-0 h-screen shadow-xl border-l border-solid border-gray-700 w-80">
+        <div
+            style={{ width: `${drawerWidth}px` }}
+            className="fixed z-40 top-16 right-0 h-screen shadow-xl border-l border-solid border-gray-500 bg-gray-50"
+        >
             <div className="px-4 py-2 flex justify-between border-b border-solid border-gray-300 bg-gray-100">
                 <div className="mb-2">
                     <span className="text-xl">
@@ -93,50 +96,48 @@ const SyncDetails = () => {
                     <XMarkIcon className="w-6" />
                 </button>
             </div>
-            {transaction && (
-                <div className="p-4 pr-6">
-                    <StripeTransactionDetais transaction={transaction} />
+            <div className="p-4 pr-6">
+                <StripeTransactionDetais transaction={transaction} />
 
-                    <div className="mt-4 border-t border-solid py-2 border-gray-300">
-                        <SyncStatus
-                            status={transaction.status}
-                            id={transaction.id}
-                        />
-                    </div>
-
-                    <div className="mt-2">
-                        {!!transaction.failure_reason && (
-                            <p className="text-red-400">
-                                {transaction.failure_reason}
-                            </p>
-                        )}
-                        {transaction.invoice_id && (
-                            <SyncItem
-                                label="Invoice"
-                                href={`https://app.qbo.intuit.com/app/invoice?txnId=${transaction.invoice_id}`}
-                            />
-                        )}
-                        {transaction.payment_id && (
-                            <SyncItem
-                                label="Payment"
-                                href={`https://app.qbo.intuit.com/app/recvpayment?txnId=${transaction.payment_id}`}
-                            />
-                        )}
-                        {transaction.expense_id && (
-                            <SyncItem
-                                label="Expense"
-                                href={`https://app.qbo.intuit.com/app/check?txnId=${transaction.expense_id}`}
-                            />
-                        )}
-                        {transaction.transfer_id && (
-                            <SyncItem
-                                label="Transfer"
-                                href={`https://app.qbo.intuit.com/app/transfer?txnId=${transaction.transfer_id}`}
-                            />
-                        )}
-                    </div>
+                <div className="mt-4">
+                    <SyncStatus
+                        status={transaction.status}
+                        id={transaction.id}
+                    />
                 </div>
-            )}
+
+                <div className="mt-2">
+                    {!!transaction.failure_reason && (
+                        <p className="text-red-400">
+                            {transaction.failure_reason}
+                        </p>
+                    )}
+                    {transaction.invoice_id && (
+                        <SyncItem
+                            label="Invoice"
+                            href={`https://app.qbo.intuit.com/app/invoice?txnId=${transaction.invoice_id}`}
+                        />
+                    )}
+                    {transaction.payment_id && (
+                        <SyncItem
+                            label="Payment"
+                            href={`https://app.qbo.intuit.com/app/recvpayment?txnId=${transaction.payment_id}`}
+                        />
+                    )}
+                    {transaction.expense_id && (
+                        <SyncItem
+                            label="Expense"
+                            href={`https://app.qbo.intuit.com/app/check?txnId=${transaction.expense_id}`}
+                        />
+                    )}
+                    {transaction.transfer_id && (
+                        <SyncItem
+                            label="Transfer"
+                            href={`https://app.qbo.intuit.com/app/transfer?txnId=${transaction.transfer_id}`}
+                        />
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

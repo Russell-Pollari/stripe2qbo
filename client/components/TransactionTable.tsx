@@ -15,7 +15,7 @@ import SyncStatus from './SyncStatus';
 
 const TransactionTable = () => {
     const dispatch = useDispatch();
-    const { data: transactions = [] } = useGetTransactionsQuery();
+    const { data: transactions = [], isLoading } = useGetTransactionsQuery();
     const [syncTransactions] = useSyncTransactionsMutation();
     const [selectedTransactionIds, setSelectedTransactionIds] = useState<
         string[]
@@ -52,37 +52,21 @@ const TransactionTable = () => {
         {
             field: 'fee',
             headerName: 'Fee',
-            width: 150,
+            width: 100,
             valueFormatter: (params) => {
                 return numToAccountingFormat(params.value as number);
             },
         },
-        { field: 'currency', headerName: 'Currency', width: 100 },
-        { field: 'description', headerName: 'Description', width: 300 },
+        { field: 'currency', headerName: 'Currency', width: 50 },
+        { field: 'description', headerName: 'Description', width: 200 },
         { field: 'created', headerName: 'Created', type: 'date', width: 150 },
         {
             field: 'status',
             headerName: 'Status',
-            width: 150,
+            width: 200,
             renderCell: (params) => (
                 <SyncStatus status={params.value} id={params.row.id} />
             ),
-        },
-        {
-            field: 'actions',
-            headerName: 'Actions',
-            type: 'actions',
-            width: 300,
-            getActions: (params) => [
-                <button
-                    className="bg-white hover:bg-gray-100 text-gray-700 font-semibold py-2 px-4 border border-gray-400 rounded-full shadow"
-                    onClick={() => {
-                        dispatch(selectTransaction(params.row.id));
-                    }}
-                >
-                    View details
-                </button>,
-            ],
             renderHeader: () => (
                 <div className="text-right">
                     <button
@@ -109,6 +93,22 @@ const TransactionTable = () => {
                 </div>
             ),
         },
+        {
+            field: 'actions',
+            headerName: '',
+            type: 'actions',
+            width: 150,
+            getActions: (params) => [
+                <button
+                    className="text-sm text-gray-500 hover:text-gray-700"
+                    onClick={() => {
+                        dispatch(selectTransaction(params.row.id));
+                    }}
+                >
+                    Details
+                </button>,
+            ],
+        },
     ];
 
     return (
@@ -118,9 +118,11 @@ const TransactionTable = () => {
                     setSelectedTransactionIds(selection as string[]);
                 }}
                 rows={rows}
+                loading={isLoading}
                 columns={columns}
                 checkboxSelection
-                pageSizeOptions={[10, 25]}
+                disableColumnSelector
+                hideFooterSelectedRowCount
                 autoPageSize
                 columnVisibilityModel={{
                     fee: isBigScreen,
