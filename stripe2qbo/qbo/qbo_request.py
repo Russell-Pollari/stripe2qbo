@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 
 import requests
 
+from stripe2qbo.exceptions import QBOException
+
 load_dotenv()
 
 
@@ -34,6 +36,6 @@ def qbo_request(
 
     # TODO: get intuit_tid from response headers and log it
     if "Fault" in response.json():
-        raise Exception(f"Error making request: {response.json()}")
+        raise QBOException(response.json()["Fault"]["Error"][0]["Detail"])
 
     return response
