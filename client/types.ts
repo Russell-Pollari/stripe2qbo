@@ -60,6 +60,7 @@ export type Transaction = {
     description: string;
     amount: number;
     status: string;
+    failure_reason: string | null;
     fee: number;
     currency: string;
     invoice_id: string | null;
