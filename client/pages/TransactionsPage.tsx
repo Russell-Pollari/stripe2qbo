@@ -7,8 +7,8 @@ import TransactionTable from '../components/TransactionTable';
 import { RootState } from '../store/store';
 
 const TransactionsPage = () => {
-    const selectedTransactionId = useSelector(
-        (state: RootState) => state.transactions.selectedTransactionId
+    const expandedTransactionId = useSelector(
+        (state: RootState) => state.transactions.expandedTransactionId
     );
 
     const drawerWidth = 320;
@@ -21,13 +21,13 @@ const TransactionsPage = () => {
             <div
                 style={{
                     width: `calc(100% - ${
-                        selectedTransactionId ? `${drawerWidth}px)` : '0px'
+                        expandedTransactionId ? `${drawerWidth}px)` : '0px'
                     }`,
                 }}
             >
                 <TransactionTable />
             </div>
-            {selectedTransactionId && <SyncDetails drawerWidth={drawerWidth} />}
+            <SyncDetails drawerWidth={drawerWidth} />
         </div>
     );
 };

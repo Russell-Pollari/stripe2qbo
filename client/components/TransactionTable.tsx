@@ -5,7 +5,10 @@ import { useMediaQuery } from 'react-responsive';
 
 import type { RootState } from '../store/store';
 import type { Transaction } from '../types';
-import { selectTransaction, selectTransactions } from '../store/transactions';
+import {
+    setExpandedTransactionId,
+    selectTransactionIds,
+} from '../store/transactions';
 import {
     useGetTransactionsQuery,
     useSyncTransactionsMutation,
@@ -102,7 +105,7 @@ const TransactionTable = () => {
                 <button
                     className="text-sm text-gray-500 hover:text-gray-700"
                     onClick={() => {
-                        dispatch(selectTransaction(params.row.id));
+                        dispatch(setExpandedTransactionId(params.row.id));
                     }}
                 >
                     Details
@@ -118,7 +121,7 @@ const TransactionTable = () => {
                     '& .MuiDataGrid-columnHeaderTitle': { fontWeight: '600' },
                 }}
                 onRowSelectionModelChange={(selection) => {
-                    dispatch(selectTransactions(selection as string[]));
+                    dispatch(selectTransactionIds(selection as string[]));
                 }}
                 rowSelectionModel={selectedTransactionIds}
                 rows={rows}

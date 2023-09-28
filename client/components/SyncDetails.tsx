@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { Transaction } from '../types';
 import type { RootState } from '../store/store';
-import { selectTransaction } from '../store/transactions';
+import { setExpandedTransactionId } from '../store/transactions';
 import numToAccountingString from '../numToAccountingString';
 import { useGetTransactionsQuery } from '../services/api';
 import SyncStatus from './SyncStatus';
@@ -56,20 +56,20 @@ const StripeTransactionDetais = ({
 
 const SyncDetails = ({ drawerWidth = 320 }: { drawerWidth: number }) => {
     const dispatch = useDispatch();
-    const selectedTransactionId = useSelector(
-        (state: RootState) => state.transactions.selectedTransactionId
+    const expandedTransactionId = useSelector(
+        (state: RootState) => state.transactions.expandedTransactionId
     );
 
     const { transaction } = useGetTransactionsQuery(undefined, {
         selectFromResult: ({ data }) => ({
             transaction: data?.find(
                 (transaction: Transaction) =>
-                    transaction.id === selectedTransactionId
+                    transaction.id === expandedTransactionId
             ),
         }),
     });
 
-    if (!selectedTransactionId) return null;
+    if (!expandedTransactionId) return null;
 
     return (
         <div
@@ -91,7 +91,7 @@ const SyncDetails = ({ drawerWidth = 320 }: { drawerWidth: number }) => {
                 </div>
                 <button
                     className="rounded-full w-6 h-6 m-2 text-gray-500 hover:text-gray-800"
-                    onClick={() => dispatch(selectTransaction(null))}
+                    onClick={() => dispatch(setExpandedTransactionId(null))}
                 >
                     <XMarkIcon className="w-6" />
                 </button>
