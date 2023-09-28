@@ -1,15 +1,15 @@
 import * as React from 'react';
-import { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
 import { useMediaQuery } from 'react-responsive';
 
-import { selectTransaction } from '../store/transactions';
+import type { RootState } from '../store/store';
+import type { Transaction } from '../types';
+import { selectTransaction, selectTransactions } from '../store/transactions';
 import {
     useGetTransactionsQuery,
     useSyncTransactionsMutation,
 } from '../services/api';
-import type { Transaction } from '../types';
 import numToAccountingFormat from '../numToAccountingString';
 import SyncStatus from './SyncStatus';
 
@@ -17,9 +17,9 @@ const TransactionTable = () => {
     const dispatch = useDispatch();
     const { data: transactions = [], isLoading } = useGetTransactionsQuery();
     const [syncTransactions] = useSyncTransactionsMutation();
-    const [selectedTransactionIds, setSelectedTransactionIds] = useState<
-        string[]
-    >([]);
+    const selectedTransactionIds = useSelector(
+        (state: RootState) => state.transactions.selectedTransactionIds
+    );
 
     const isBigScreen = useMediaQuery({ query: '(min-width: 1280px)' });
     const isMediumScreen = useMediaQuery({ query: '(min-width: 900px)' });
@@ -118,8 +118,9 @@ const TransactionTable = () => {
                     '& .MuiDataGrid-columnHeaderTitle': { fontWeight: '600' },
                 }}
                 onRowSelectionModelChange={(selection) => {
-                    setSelectedTransactionIds(selection as string[]);
+                    dispatch(selectTransactions(selection as string[]));
                 }}
+                rowSelectionModel={selectedTransactionIds}
                 rows={rows}
                 loading={isLoading}
                 columns={columns}
