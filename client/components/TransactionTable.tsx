@@ -57,7 +57,7 @@ const TransactionTable = () => {
                 return numToAccountingFormat(params.value as number);
             },
         },
-        { field: 'currency', headerName: 'Currency', width: 50 },
+        { field: 'currency', headerName: '', width: 50 },
         { field: 'description', headerName: 'Description', width: 200 },
         { field: 'created', headerName: 'Created', type: 'date', width: 150 },
         {
@@ -112,8 +112,11 @@ const TransactionTable = () => {
     ];
 
     return (
-        <div className="w-full h-3/4">
+        <div className="w-max h-3/4">
             <DataGrid
+                sx={{
+                    '& .MuiDataGrid-columnHeaderTitle': { fontWeight: '600' },
+                }}
                 onRowSelectionModelChange={(selection) => {
                     setSelectedTransactionIds(selection as string[]);
                 }}
