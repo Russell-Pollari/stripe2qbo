@@ -36,6 +36,7 @@ class TransactionSync(BaseModel):
     description: str = ""
     stripe_id: str
     status: Literal["pending", "success", "syncing", "failed"] = "pending"
+    failure_reason: Optional[str] = None
     # QBO ids
     transfer_id: Optional[str] = None
     invoice_id: Optional[str] = None

@@ -105,6 +105,11 @@ const SyncDetails = () => {
                     </div>
 
                     <div className="mt-2">
+                        {!!transaction.failure_reason && (
+                            <p className="text-red-400">
+                                {transaction.failure_reason}
+                            </p>
+                        )}
                         {transaction.invoice_id && (
                             <SyncItem
                                 label="Invoice"

@@ -120,6 +120,7 @@ async def sync_transactions(
                 "invoice_id": transaction_sync.invoice_id,
                 "payment_id": transaction_sync.payment_id,
                 "expense_id": transaction_sync.expense_id,
+                "failure_reason": transaction_sync.failure_reason or None,
             }
         )
         db.commit()

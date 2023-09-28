@@ -4,6 +4,7 @@ from datetime import datetime
 
 from stripe2qbo.db.models import User
 from stripe2qbo.db.schemas import Settings, TransactionSync
+from stripe2qbo.exceptions import QBOException
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.auth import Token
 import stripe2qbo.qbo.models as qbo_models
@@ -160,12 +161,20 @@ class Stripe2QBO:
 
             # date_string = _transfrom_timestamp(transaction.created)
             # self._exchange_rate = self._qbo.get_exchange_rate(currency, date_string)
+            sync_status.status = "failed"
+            sync_status.failure_reason = (
+                f"Transaction currency ({currency})"
+                + f" does not match QBO home currency: {self._qbo.home_currency}"
+            )
             return sync_status
         else:
             self._exchange_rate = transaction.exchange_rate or 1.0
 
         if transaction.type not in ["charge", "payout", "stripe_fee", "payment"]:
             sync_status.status = "failed"
+            sync_status.failure_reason = (
+                f"Unsupported transaction type: {transaction.type}"
+            )
             return sync_status
 
         try:
@@ -201,9 +210,13 @@ class Stripe2QBO:
 
             if transaction.payout:
                 sync_status.transfer_id = self.sync_payout(transaction.payout)
-        except Exception as e:
-            print(e)
+        except QBOException as e:
             sync_status.status = "failed"
+            sync_status.failure_reason = str(e)
+            return sync_status
+        except Exception:
+            sync_status.status = "failed"
+            sync_status.failure_reason = "Server error"
             return sync_status
 
         sync_status.status = "success"

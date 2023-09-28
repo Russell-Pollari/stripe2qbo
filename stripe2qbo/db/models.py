@@ -60,6 +60,8 @@ class TransactionSync(Base):
     status: Mapped[
         Literal["pending", "success", "failed", "syncing"] | None
     ] = mapped_column(nullable=False)
+    failure_reason: Mapped[str | None] = mapped_column(nullable=True)
+
     # QBO ids
     transfer_id: Mapped[str | None] = mapped_column(nullable=True)
     invoice_id: Mapped[str | None] = mapped_column(nullable=True)
