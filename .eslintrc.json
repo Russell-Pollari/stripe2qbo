@@ -1,11 +1,18 @@
 {
     "extends": [
         "eslint:recommended",
-        "plugin:@typescript-eslint/recommended",
+        "plugin:@typescript-eslint/strict-type-checked",
         "prettier"
     ],
     "root": true,
     "parser": "@typescript-eslint/parser",
     "plugins": ["@typescript-eslint"],
-    "ignorePatterns": ["node_modules/", "static/"]
+    "ignorePatterns": ["node_modules/", "static/", "tailwind.config.js"],
+    "parserOptions": {
+        "project": "tsconfig.json",
+        "tsconfigRootDir": "./"
+    },
+    "rules": {
+        "@typescript-eslint/no-invalid-void-type": 0
+    }
 }

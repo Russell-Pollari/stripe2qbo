@@ -1,6 +1,12 @@
 import * as React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { DataGrid, GridRowsProp, GridColDef } from '@mui/x-data-grid';
+import { DataGrid } from '@mui/x-data-grid';
+import type {
+    GridRowsProp,
+    GridColDef,
+    GridRenderCellParams,
+    GridRowParams,
+} from '@mui/x-data-grid';
 import { useMediaQuery } from 'react-responsive';
 
 import type { RootState } from '../store/store';
@@ -62,9 +68,9 @@ const TransactionTable = () => {
             field: 'status',
             headerName: 'Status',
             width: 150,
-            renderCell: (params) => (
-                <SyncStatus status={params.value} id={params.row.id} />
-            ),
+            renderCell: (
+                params: GridRenderCellParams<{ id: string }, string>
+            ) => <SyncStatus status={params.value} id={params.row.id} />,
         },
     ];
 
@@ -83,7 +89,7 @@ const TransactionTable = () => {
                     dispatch(selectTransactionIds(selection as string[]));
                 }}
                 rowSelectionModel={selectedTransactionIds}
-                onRowClick={(params, event) => {
+                onRowClick={(params: GridRowParams<{ id: string }>, event) => {
                     event.defaultMuiPrevented = true;
                     dispatch(setExpandedTransactionId(params.row.id));
                 }}
