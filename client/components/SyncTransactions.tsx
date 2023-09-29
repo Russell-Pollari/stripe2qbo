@@ -19,6 +19,7 @@ const SyncTransactions = () => {
 
     return (
         <PrimaryButton
+            disabled={transactions.some((t) => t.status === 'syncing')}
             onClick={() => {
                 syncTransactions(selectedTransactionIds)
                     .unwrap()

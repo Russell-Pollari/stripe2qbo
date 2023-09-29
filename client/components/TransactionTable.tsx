@@ -83,7 +83,7 @@ const TransactionTable = () => {
     ];
 
     return (
-        <div className="w-max h-3/4">
+        <div className="w-max h-full">
             <DataGrid
                 sx={{
                     '& .MuiDataGrid-columnHeader': {

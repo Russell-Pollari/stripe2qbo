@@ -41,7 +41,7 @@ const ImportTransactions = () => {
             >
                 {isImporting ? (
                     <span>
-                        <LoadingSpinner /> Importing
+                        <LoadingSpinner /> Importing transactions...
                     </span>
                 ) : (
                     <span>
@@ -58,7 +58,7 @@ const ImportTransactions = () => {
                     }}
                 >
                     <Form>
-                        <div className="flex justify-between mb-2">
+                        <div className="flex justify-between items-center my-2">
                             <label
                                 className="font-semibold mx-2"
                                 htmlFor="from_date"
@@ -70,6 +70,8 @@ const ImportTransactions = () => {
                                 name="from_date"
                                 type="date"
                             />
+                        </div>
+                        <div className="flex justify-between items-center my-2">
                             <label
                                 className="font-semibold mx-2"
                                 htmlFor="to_date"
@@ -83,7 +85,7 @@ const ImportTransactions = () => {
                                 as={SubmitButton}
                                 isSubmitting={isImporting}
                             >
-                                Import
+                                {isImporting ? 'Importing..' : 'Import'}
                             </Popover.Button>
                         </div>
                     </Form>
