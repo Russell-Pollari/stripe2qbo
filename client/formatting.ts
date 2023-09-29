@@ -1,4 +1,4 @@
-const numToAccountingFormat = (amount: number) => {
+export const numToAccountingFormat = (amount: number) => {
     if (amount === 0) {
         return '-';
     }
@@ -15,4 +15,10 @@ const numToAccountingFormat = (amount: number) => {
     return `$${amount_string}`;
 };
 
-export default numToAccountingFormat;
+export const snakeCaseToSentence = (str: string) => {
+    const words = str.split('_');
+    const capitalized = words.map(
+        (word) => word[0].toUpperCase() + word.slice(1)
+    );
+    return capitalized.join(' ');
+};

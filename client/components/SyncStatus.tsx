@@ -5,7 +5,7 @@ import { useSyncTransactionsMutation } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
 import PrimaryButton from './PrimaryButton';
 
-const SyncStatus = ({ status, id }: { status: string; id: string }) => {
+const SyncStatus = ({ status = '', id }: { status?: string; id: string }) => {
     const [syncTransactions] = useSyncTransactionsMutation();
 
     if (status === 'syncing') {
