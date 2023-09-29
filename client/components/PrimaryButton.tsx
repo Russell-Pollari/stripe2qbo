@@ -1,21 +1,26 @@
 import * as React from 'react';
 
-const SubmitButton = ({
-    isSubmitting,
+const PrimaryButton = ({
     children,
+    onClick = () => {},
+    disabled,
+    type = 'button',
 }: {
-    isSubmitting: boolean;
     children: React.ReactNode;
+    onClick?: () => void;
+    disabled?: boolean;
+    type?: 'button' | 'submit';
 }) => {
     return (
         <button
-            type="submit"
+            disabled={disabled}
             className="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg text-sm"
-            disabled={isSubmitting}
+            onClick={onClick}
+            type={type}
         >
             {children}
         </button>
     );
 };
 
-export default SubmitButton;
+export default PrimaryButton;
