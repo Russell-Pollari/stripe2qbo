@@ -6,6 +6,7 @@ import type {
     GridColDef,
     GridRenderCellParams,
     GridRowParams,
+    GridValueFormatterParams,
 } from '@mui/x-data-grid';
 import { useMediaQuery } from 'react-responsive';
 
@@ -16,7 +17,7 @@ import {
     selectTransactionIds,
 } from '../store/transactions';
 import { useGetTransactionsQuery } from '../services/api';
-import numToAccountingFormat from '../numToAccountingString';
+import { numToAccountingFormat, snakeCaseToSentence } from '../formatting';
 import SyncStatus from './SyncStatus';
 
 const TransactionTable = () => {
@@ -44,21 +45,28 @@ const TransactionTable = () => {
     });
 
     const columns: GridColDef[] = [
-        { field: 'type', headerName: 'Type', width: 100 },
+        {
+            field: 'type',
+            headerName: 'Type',
+            width: 100,
+            valueFormatter: (params: GridValueFormatterParams<string>) => {
+                return snakeCaseToSentence(params.value);
+            },
+        },
         {
             field: 'amount',
             headerName: 'Amount',
             width: 150,
-            valueFormatter: (params) => {
-                return numToAccountingFormat(params.value as number);
+            valueFormatter: (params: GridValueFormatterParams<number>) => {
+                return numToAccountingFormat(params.value);
             },
         },
         {
             field: 'fee',
             headerName: 'Fee',
             width: 100,
-            valueFormatter: (params) => {
-                return numToAccountingFormat(params.value as number);
+            valueFormatter: (params: GridValueFormatterParams<number>) => {
+                return numToAccountingFormat(params.value);
             },
         },
         { field: 'currency', headerName: '', width: 50 },

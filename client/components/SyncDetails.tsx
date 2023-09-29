@@ -9,7 +9,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { Transaction } from '../types';
 import type { RootState } from '../store/store';
 import { setExpandedTransactionId } from '../store/transactions';
-import numToAccountingString from '../numToAccountingString';
+import { numToAccountingFormat, snakeCaseToSentence } from '../formatting';
 import { useGetTransactionsQuery } from '../services/api';
 import SyncStatus from './SyncStatus';
 
@@ -43,10 +43,10 @@ const StripeTransactionDetais = ({
 
             <p className="my-2 text-gray-700">
                 {transaction.currency.toUpperCase()}{' '}
-                {numToAccountingString(transaction.amount)}{' '}
+                {numToAccountingFormat(transaction.amount)}{' '}
                 {!!transaction.fee && (
                     <span className="text-sm font-normal text-gray-600">
-                        ({numToAccountingString(transaction.fee)} Stripe fee)
+                        ({numToAccountingFormat(transaction.fee)} Stripe fee)
                     </span>
                 )}
             </p>
@@ -69,7 +69,7 @@ const SyncDetails = ({ drawerWidth = 320 }: { drawerWidth: number }) => {
         }),
     });
 
-    if (!expandedTransactionId) return null;
+    if (!transaction) return null;
 
     return (
         <div
@@ -79,8 +79,7 @@ const SyncDetails = ({ drawerWidth = 320 }: { drawerWidth: number }) => {
             <div className="px-4 py-2 flex justify-between border-b border-solid border-gray-300 bg-gray-100">
                 <div className="mb-2">
                     <span className="text-xl">
-                        {transaction.type.slice(0, 1).toUpperCase()}
-                        {transaction.type.slice(1)}
+                        {snakeCaseToSentence(transaction.type)}
                     </span>
 
                     <span className="text-sm text-gray-600 ml-2">
