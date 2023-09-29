@@ -9,8 +9,8 @@ from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.auth import Token
 import stripe2qbo.qbo.models as qbo_models
 import stripe2qbo.stripe.models as stripe_models
-from stripe2qbo.sync import check_for_existing
-from stripe2qbo.transforms import (
+from stripe2qbo.qbo.check_for_existing import check_for_existing
+from stripe2qbo.sync_helpers import (
     qbo_invoice_from_stripe_invoice,
     transfer_from_payout,
     expense_from_transaction,
