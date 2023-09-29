@@ -67,34 +67,27 @@ const TransactionTable = () => {
                 <SyncStatus status={params.value} id={params.row.id} />
             ),
         },
-        {
-            field: 'actions',
-            headerName: '',
-            type: 'actions',
-            width: 150,
-            getActions: (params) => [
-                <button
-                    className="text-sm text-gray-500 hover:text-gray-700"
-                    onClick={() => {
-                        dispatch(setExpandedTransactionId(params.row.id));
-                    }}
-                >
-                    Details
-                </button>,
-            ],
-        },
     ];
 
     return (
         <div className="w-max h-3/4">
             <DataGrid
                 sx={{
-                    '& .MuiDataGrid-columnHeaderTitle': { fontWeight: '600' },
+                    '& .MuiDataGrid-columnHeader': {
+                        backgroundColor: 'rgb(243 244 246)',
+                    },
+                    '& .MuiDataGrid-columnHeaderTitle': {
+                        fontWeight: '600',
+                    },
                 }}
                 onRowSelectionModelChange={(selection) => {
                     dispatch(selectTransactionIds(selection as string[]));
                 }}
                 rowSelectionModel={selectedTransactionIds}
+                onRowClick={(params, event) => {
+                    event.defaultMuiPrevented = true;
+                    dispatch(setExpandedTransactionId(params.row.id));
+                }}
                 rows={rows}
                 loading={isLoading}
                 columns={columns}

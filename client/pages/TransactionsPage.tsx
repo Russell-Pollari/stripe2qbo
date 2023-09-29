@@ -16,10 +16,6 @@ const TransactionsPage = () => {
 
     return (
         <div>
-            <div className="mb-2 flex">
-                <ImportTransactions />
-                <SyncTransactions />
-            </div>
             <div
                 style={{
                     width: `calc(100% - ${
@@ -27,7 +23,13 @@ const TransactionsPage = () => {
                     }`,
                 }}
             >
-                <TransactionTable />
+                <div className="my-4 flex justify-center">
+                    <ImportTransactions />
+                    <SyncTransactions />
+                </div>
+                <div className="flex justify-center h-full">
+                    <TransactionTable />
+                </div>
             </div>
             <SyncDetails drawerWidth={drawerWidth} />
         </div>
