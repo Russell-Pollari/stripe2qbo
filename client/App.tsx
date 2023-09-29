@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import { useMediaQuery } from 'react-responsive';
 
 import AccountMenu from './components/AccountMenu';
 import { useGetCurrentUserQuery, useGetCompanyInfoQuery } from './services/api';
@@ -20,10 +22,18 @@ const App = () => {
         skip: !user_id,
     });
 
+    const isBigScreen = useMediaQuery({ minWidth: 1040 });
+
+    const [staticMenu, setStaticMenu] = useState<boolean>(isBigScreen);
+
+    useEffect(() => {
+        setStaticMenu(isBigScreen);
+    }, [isBigScreen]);
+
     return (
-        <div className="bg-gray-50 text-gray-900">
-            <div className="flex justify-start items-center bg-green-300 py-2 px-6 h-16 border-b border-solid border-gray-500">
-                <NavMenu />
+        <div className="bg-gray-50 text-gray-900 oveflow-hidden">
+            <div className="fixed z-40 w-full flex justify-start items-center bg-green-300 py-2 px-4 h-16 border-b border-solid border-gray-500">
+                <NavMenu staticMode={staticMenu} />
                 <h1 className="font-semibold">
                     <Link to="/">Stripe2QBO</Link>
                 </h1>
@@ -52,7 +62,8 @@ const App = () => {
             )}
 
             {user_id && (
-                <div className="py-2 px-6">
+                <div className="py-2 px-6 flex h-full w-full top-16 absolute overflow-y-auto">
+                    {staticMenu && <div className="w-56 mr-8" />}
                     <Outlet />
                 </div>
             )}

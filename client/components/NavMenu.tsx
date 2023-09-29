@@ -33,13 +33,16 @@ const Item = ({
 
 const iconClassName = 'w-6 h-6 inline mr-2 -mt-px';
 
-const NavMenu = () => {
+const NavMenu = ({ staticMode }: { staticMode: boolean }) => {
     return (
         <Menu>
-            <Menu.Button className="text-gray-700 hover:text-gray-900">
-                <Bars3Icon className="w-6 h-6 mr-2" />
-            </Menu.Button>
+            {!staticMode && (
+                <Menu.Button className="text-gray-700 hover:text-gray-900">
+                    <Bars3Icon className="w-6 h-6 mr-2" />
+                </Menu.Button>
+            )}
             <Menu.Items
+                static={staticMode}
                 as="div"
                 className="fixed left-0 top-16 z-50 h-screen w-56 py-4 bg-gray-50 border-r border-solid border-gray-500"
             >

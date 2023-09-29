@@ -23,7 +23,6 @@ const TransactionTable = () => {
     const isBigScreen = useMediaQuery({ query: '(min-width: 1280px)' });
     const isMediumScreen = useMediaQuery({ query: '(min-width: 900px)' });
     const isSmallScreen = useMediaQuery({ query: '(min-width: 700px)' });
-    const isMobile = useMediaQuery({ query: '(min-width: 500px)' });
 
     const rows: GridRowsProp = transactions.map((transaction: Transaction) => {
         return {
@@ -62,7 +61,7 @@ const TransactionTable = () => {
         {
             field: 'status',
             headerName: 'Status',
-            width: 200,
+            width: 150,
             renderCell: (params) => (
                 <SyncStatus status={params.value} id={params.row.id} />
             ),
@@ -96,12 +95,10 @@ const TransactionTable = () => {
                 hideFooterSelectedRowCount
                 autoPageSize
                 columnVisibilityModel={{
-                    fee: isBigScreen,
-                    currency: isBigScreen,
-                    type: isBigScreen,
-                    description: isMediumScreen,
+                    description: isBigScreen,
+                    fee: isMediumScreen,
                     created: isSmallScreen,
-                    status: isMobile,
+                    amount: isSmallScreen,
                 }}
             />
         </div>
