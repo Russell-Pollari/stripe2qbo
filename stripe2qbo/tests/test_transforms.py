@@ -10,7 +10,7 @@ from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import TaxCode
 from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.stripe.stripe_transactions import build_transaction, get_transaction
-from stripe2qbo.transforms import (
+from stripe2qbo.sync_helpers import (
     payment_from_charge,
     qbo_invoice_from_stripe_invoice,
     transfer_from_payout,

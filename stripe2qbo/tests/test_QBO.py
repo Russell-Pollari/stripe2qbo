@@ -10,7 +10,7 @@ from stripe2qbo.qbo.auth import Token
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.qbo.models import ProductItemRef, QBOCurrency, TaxCode
 from stripe2qbo.stripe.models import Transaction
-from stripe2qbo.transforms import (
+from stripe2qbo.sync_helpers import (
     expense_from_transaction,
     qbo_invoice_from_stripe_invoice,
 )
