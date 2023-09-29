@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { Menu } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/24/solid';
+import {
+    ChevronDownIcon,
+    ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/solid';
 
 import type { QBOCompanyInfo } from '../types';
 import { useLogoutMutation } from '../services/api';
@@ -32,11 +35,10 @@ const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
                                         });
                                 }}
                                 className={`${
-                                    active
-                                        ? 'bg-gray-500 text-white'
-                                        : 'text-gray-900'
-                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                    active ? 'bg-green-100' : 'text-gray-700'
+                                } flex w-full items-center rounded-md px-2 py-2 text-sm`}
                             >
+                                <ArrowRightOnRectangleIcon className="w-6 h-6 inline mr-2 -mt-px" />
                                 Logout
                             </button>
                         )}
