@@ -14,7 +14,7 @@ const TransactionsPage = () => {
                 <ImportTransactions />
                 <SyncTransactions />
             </div>
-            <div className="flex h-full">
+            <div className="flex h-3/4">
                 <TransactionTable />
                 <SyncDetails drawerWidth={drawerWidth} />
             </div>

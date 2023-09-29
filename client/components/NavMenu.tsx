@@ -19,7 +19,7 @@ const Item = ({
                     to={to}
                     className={({ isActive }) => `
                         ${isActive ? 'text-green-600' : 'text-gray-700'}
-                        ${hover ? 'bg-gray-100' : ''}
+                        ${hover ? 'bg-green-100' : ''}
                         block px-4 py-2
                     `}
                 >

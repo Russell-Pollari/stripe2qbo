@@ -14,7 +14,14 @@ const PrimaryButton = ({
     return (
         <button
             disabled={disabled}
-            className="bg-green-500 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-full shadow-lg text-sm"
+            className={`
+                ${
+                    disabled
+                        ? 'bg-green-100 cursor-not-allowed text-gray-500'
+                        : 'bg-green-500 hover:bg-green-700 shadow-lg text-white'
+                }
+                font-semibold py-2 px-4 rounded-full text-sm
+            `}
             onClick={onClick}
             type={type}
         >

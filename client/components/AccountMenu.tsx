@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { Menu } from '@headlessui/react';
-import { ChevronDownIcon } from '@heroicons/react/24/solid';
+import {
+    ChevronDownIcon,
+    ArrowRightOnRectangleIcon,
+} from '@heroicons/react/24/solid';
 
 import type { QBOCompanyInfo } from '../types';
 import { useLogoutMutation } from '../services/api';
@@ -17,7 +20,7 @@ const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
                     aria-hidden="true"
                 />
             </Menu.Button>
-            <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+            <Menu.Items className="absolute right-0 mt-2 w-56 z-50 origin-top-right divide-y divide-gray-100 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                 <div className="px-1 py-1">
                     <Menu.Item>
                         {({ active }) => (
@@ -32,11 +35,10 @@ const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
                                         });
                                 }}
                                 className={`${
-                                    active
-                                        ? 'bg-gray-500 text-white'
-                                        : 'text-gray-900'
-                                } group flex w-full items-center rounded-md px-2 py-2 text-sm`}
+                                    active ? 'bg-green-100' : 'text-gray-700'
+                                } flex w-full items-center rounded-md px-2 py-2 text-sm`}
                             >
+                                <ArrowRightOnRectangleIcon className="w-6 h-6 inline mr-2 -mt-px" />
                                 Logout
                             </button>
                         )}
