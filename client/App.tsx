@@ -13,6 +13,9 @@ const login = () => {
         .then((response) => response.json())
         .then((data: string) => {
             location.href = data;
+        })
+        .catch((error) => {
+            console.error(error);
         });
 };
 

@@ -25,7 +25,15 @@ const SyncStatus = ({ status, id }: { status: string; id: string }) => {
     }
     if (status === 'pending') {
         return (
-            <PrimaryButton onClick={() => syncTransactions([id])}>
+            <PrimaryButton
+                onClick={() => {
+                    syncTransactions([id])
+                        .unwrap()
+                        .catch((error) => {
+                            console.error(error);
+                        });
+                }}
+            >
                 Sync
             </PrimaryButton>
         );

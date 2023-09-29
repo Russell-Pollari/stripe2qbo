@@ -2,9 +2,10 @@ import * as React from 'react';
 import { Menu } from '@headlessui/react';
 import { ChevronDownIcon } from '@heroicons/react/24/solid';
 
+import type { QBOCompanyInfo } from '../types';
 import { useLogoutMutation } from '../services/api';
 
-const AccountMenu = ({ companyInfo }) => {
+const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
     const [logout] = useLogoutMutation();
 
     return (
@@ -21,11 +22,15 @@ const AccountMenu = ({ companyInfo }) => {
                     <Menu.Item>
                         {({ active }) => (
                             <button
-                                onClick={async () =>
-                                    logout().then(() => {
-                                        location.reload();
-                                    })
-                                }
+                                onClick={() => {
+                                    logout()
+                                        .then(() => {
+                                            location.reload();
+                                        })
+                                        .catch((error) => {
+                                            console.error(error);
+                                        });
+                                }}
                                 className={`${
                                     active
                                         ? 'bg-gray-500 text-white'

@@ -18,7 +18,15 @@ const SyncTransactions = () => {
     const { data: transactions = [] } = useGetTransactionsQuery();
 
     return (
-        <PrimaryButton onClick={() => syncTransactions(selectedTransactionIds)}>
+        <PrimaryButton
+            onClick={() => {
+                syncTransactions(selectedTransactionIds)
+                    .unwrap()
+                    .catch((error) => {
+                        console.error(error);
+                    });
+            }}
+        >
             {transactions.some((t) => t.status === 'syncing') ? (
                 <span>
                     <LoadingSpinner />

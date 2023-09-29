@@ -11,6 +11,9 @@ const connect = () => {
         .then((response) => response.json())
         .then((data: string) => {
             location.href = data;
+        })
+        .catch((error) => {
+            console.error(error);
         });
 };
 
@@ -25,7 +28,9 @@ const StripeConnection = () => {
             disconnect={() => {
                 disconnect()
                     .unwrap()
-                    .catch((e) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .catch((e: any) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         alert(e?.data?.detail);
                     });
             }}

@@ -1,0 +1,9 @@
+{
+    "include": ["client/**/*.ts", "client/**/*.tsx"],
+    "exclude": ["node_modules/", "static/", "tailwind.config.js"],
+    "compilerOptions": {
+        "jsx": "react",
+        "strict": true,
+        "strictNullChecks": true
+    }
+}

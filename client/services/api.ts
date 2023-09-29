@@ -85,7 +85,10 @@ export const api = createApi({
                     await cacheDataLoaded;
 
                     const listener = (event: { data: string }) => {
-                        const data: Transaction = JSON.parse(event.data);
+                        // TODO: Validate that the data is a valid Transaction object
+                        const data: Transaction = JSON.parse(
+                            event.data
+                        ) as Transaction;
 
                         updateCachedData((draft) => {
                             const index = draft.findIndex(
