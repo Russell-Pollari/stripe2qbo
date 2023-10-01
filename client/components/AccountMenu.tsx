@@ -6,10 +6,12 @@ import {
 } from '@heroicons/react/24/solid';
 
 import type { QBOCompanyInfo } from '../types';
-import { useLogoutMutation } from '../services/api';
 
 const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
-    const [logout] = useLogoutMutation();
+    const logout = () => {
+        localStorage.removeItem('token');
+        location.reload();
+    };
 
     return (
         <Menu as="div" className="relative text-left z-50">
@@ -25,15 +27,7 @@ const AccountMenu = ({ companyInfo }: { companyInfo: QBOCompanyInfo }) => {
                     <Menu.Item>
                         {({ active }) => (
                             <button
-                                onClick={() => {
-                                    logout()
-                                        .then(() => {
-                                            location.reload();
-                                        })
-                                        .catch((error) => {
-                                            console.error(error);
-                                        });
-                                }}
+                                onClick={logout}
                                 className={`${
                                     active ? 'bg-green-100' : 'text-gray-700'
                                 } flex w-full items-center rounded-md px-2 py-2 text-sm`}
