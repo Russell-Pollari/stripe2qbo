@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.get("/")
+@router.get("")
 def get_settings(
     token: Annotated[Token, Depends(get_qbo_token)],
     db: Annotated[Session, Depends(get_db)],
@@ -29,7 +29,7 @@ def get_settings(
     return Settings.model_validate(sync_settings)
 
 
-@router.post("/")
+@router.post("")
 def save_settings(
     settings: Settings,
     token: Annotated[Token, Depends(get_qbo_token)],
