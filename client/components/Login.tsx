@@ -1,18 +1,12 @@
 import * as React from 'react';
-import PrimaryButton from './PrimaryButton';
+import { Formik, Form, Field } from 'formik';
+import SubmitButton from './SubmitButton';
 
-const login = () => {
-    fetch('/api/qbo/oauth2')
-        .then((response) => response.json())
-        .then((data: string) => {
-            location.href = data;
-        })
-        .catch((error) => {
-            console.error(error);
-        });
-};
+import { useLoginMutation } from '../services/api';
 
 const Login = () => {
+    const [login] = useLoginMutation();
+
     return (
         <div className="absolute flex h-full w-full justify-center top-16">
             <div className="p-8 my-16 rounded-lg bg-green-100 border border-solid border-green-300 shadow-lg h-max text-center relative">
@@ -37,9 +31,35 @@ const Login = () => {
                     into QuickBooks Online.
                 </p>
                 <div>
-                    <PrimaryButton onClick={login}>
-                        Login with QuickBooks Online
-                    </PrimaryButton>
+                    <Formik
+                        initialValues={{ email: '', password: '' }}
+                        onSubmit={async (values, { setSubmitting }) => {
+                            await login(values);
+                            setSubmitting(false);
+                        }}
+                    >
+                        {({ isSubmitting }) => (
+                            <Form>
+                                <div>
+                                    <Field
+                                        type="email"
+                                        name="email"
+                                        placeholder="email"
+                                    />
+                                </div>
+                                <div className="my-4">
+                                    <Field
+                                        type="password"
+                                        name="password"
+                                        placeholder="password"
+                                    />
+                                </div>
+                                <SubmitButton isSubmitting={isSubmitting}>
+                                    Login
+                                </SubmitButton>
+                            </Form>
+                        )}
+                    </Formik>
                 </div>
             </div>
         </div>

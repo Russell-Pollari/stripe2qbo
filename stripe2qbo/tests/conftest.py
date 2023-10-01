@@ -5,6 +5,7 @@ from datetime import datetime
 import pytest
 import stripe
 from dotenv import load_dotenv
+from stripe2qbo.api.auth import get_password_hash
 
 from stripe2qbo.qbo.QBO import QBO
 from stripe2qbo.db.models import User
@@ -70,8 +71,11 @@ def test_token() -> Token:
 
 @pytest.fixture
 def test_user(test_token: Token) -> User:
+    pswd = get_password_hash("test")
     user = User(
-        id=1,
+        id=100,
+        email="testuser@test.com",
+        hashed_password=pswd,
         qbo_realm_id=test_token.realm_id,
         stripe_user_id=os.getenv("TEST_STRIPE_USER_ID", ""),
     )

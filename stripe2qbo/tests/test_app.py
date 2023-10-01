@@ -17,11 +17,6 @@ def test_user_id_unauthorized():
     assert response.text is not None
 
 
-def test_logout():
-    response = client.post("/api/logout")
-    assert response.status_code == 200
-
-
 def test_get_settings_unauthorized():
     response = client.get("/api/settings")
     assert response.status_code == 401

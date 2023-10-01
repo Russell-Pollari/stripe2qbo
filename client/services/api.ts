@@ -1,5 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import {
+import type {
     QBOCompanyInfo,
     QBOAccount,
     QBOTaxCode,
@@ -10,24 +10,66 @@ import {
     SyncOptions, // TODO: Rename to ImportOptions
 } from '../types';
 
+interface AuthToken {
+    access_token: string;
+    type: string;
+}
+
+const getToken = (): string | null => {
+    const tokenCookie = document.cookie;
+    const token = tokenCookie
+        .split('; ')
+        .find((row) => {
+            return row.startsWith('token=');
+        })
+        ?.split('=')[1];
+    if (token) {
+        return token;
+    }
+    return null;
+};
+
 export const api = createApi({
     reducerPath: 'api',
     baseQuery: fetchBaseQuery({
         baseUrl: '/api/',
+        prepareHeaders: (headers) => {
+            const token = getToken();
+            if (token) {
+                headers.set('Authorization', `Bearer ${token}`);
+            }
+            return headers;
+        },
     }),
     tagTypes: ['Settings', 'Stripe', 'User', 'Transaction'],
     endpoints: (builder) => ({
         // AUTH
+        login: builder.mutation<void, { email: string; password: string }>({
+            query: (body) => {
+                return {
+                    url: 'token',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams([
+                        ['username', body.email],
+                        ['password', body.password],
+                    ]),
+                    responseHandler: async (response: Response) => {
+                        const token =
+                            (await response.json()) as AuthToken | null;
+                        if (token) {
+                            document.cookie = `token=${token.access_token}; path=/; secure; samesite=strict;`;
+                        }
+                    },
+                };
+            },
+            invalidatesTags: ['User'],
+        }),
         getCurrentUser: builder.query<number, void>({
             query: () => 'userId',
             providesTags: ['User'],
-        }),
-        logout: builder.mutation<void, void>({
-            query: () => ({
-                url: 'logout',
-                method: 'POST',
-            }),
-            invalidatesTags: ['User'],
         }),
 
         // STRIPE
@@ -81,6 +123,16 @@ export const api = createApi({
             ) {
                 const HOST = process.env.HOST;
                 const ws = new WebSocket(`ws://${HOST}/api/sync/ws`);
+
+                // Since we cannot send Headers with a WebSocket, we send the token as the first message
+                const token = getToken();
+                if (!token) {
+                    throw new Error('No token found');
+                }
+                ws.onopen = () => {
+                    ws.send(token);
+                };
+
                 try {
                     await cacheDataLoaded;
 
@@ -134,8 +186,8 @@ export const api = createApi({
 });
 
 export const {
+    useLoginMutation,
     useGetCurrentUserQuery,
-    useLogoutMutation,
 
     useGetStripeInfoQuery,
     useDisconnectStripeMutation,
