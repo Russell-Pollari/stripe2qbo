@@ -53,8 +53,8 @@ def authenticate_user(email: str, password: str, db: Session) -> Optional[User]:
 
 def create_access_token(email: str) -> str:
     to_encode: Dict[str, Any] = {"sub": email}
-    expires = datetime.utcnow() + timedelta(minutes=15)
-    to_encode.update(expires=expires)
+    expires = datetime.utcnow() + timedelta(minutes=60)
+    to_encode.update(expires=expires.timestamp())
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
@@ -65,13 +65,21 @@ def get_current_user_from_token(
 ) -> User:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        email = payload.get("sub")
-        if email is None:
-            raise HTTPException(status_code=401, detail="Not authenticated")
     except JWTError:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
+    email = payload.get("sub")
+    if email is None:
+        raise HTTPException(status_code=401, detail="Invalid token")
+
+    expires = payload.get("expires")
+    if expires is not None:
+        expires_at = datetime.fromtimestamp(expires)
+        if datetime.utcnow() > expires_at:
+            raise HTTPException(status_code=401, detail="Token expired")
+
     user = db.query(User).filter(User.email == email).first()
     if user is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Invalid user")
+
     return user
