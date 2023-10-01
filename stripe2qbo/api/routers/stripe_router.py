@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 import stripe
 from dotenv import load_dotenv
+from stripe2qbo.api.auth import get_current_user_from_token
 
 from stripe2qbo.stripe.auth import (
     generate_auth_token,
@@ -15,7 +16,7 @@ from stripe2qbo.stripe.auth import (
 from stripe2qbo.stripe.models import Account
 from stripe2qbo.stripe.stripe_transactions import get_transactions
 from stripe2qbo.db.schemas import TransactionSync
-from stripe2qbo.api.dependencies import get_db, get_current_user, get_stripe_user_id
+from stripe2qbo.api.dependencies import get_db, get_stripe_user_id
 from stripe2qbo.db.models import User
 from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
 
@@ -38,7 +39,7 @@ async def stripe_oauth_url() -> str:
 async def stripe_oauth_callback(
     code: str,
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
 ):
     token = generate_auth_token(code)
     user.stripe_user_id = token.stripe_user_id
@@ -49,7 +50,7 @@ async def stripe_oauth_callback(
 @router.post("/disconnect")
 async def disconnect_stripe(
     db: Annotated[Session, Depends(get_db)],
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
 ) -> None:
     if os.getenv("STRIPE_ACCOUNT_ID") is not None:
         raise HTTPException(
@@ -69,7 +70,7 @@ async def get_stripe_info(
 
 @router.post("/transactions")
 async def get_stripe_transactions(
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
     db: Annotated[Session, Depends(get_db)],
     from_date: Optional[str] = None,

@@ -1,10 +1,11 @@
 import os
-from typing import Annotated, Dict, Any
+from typing import Annotated
 from datetime import datetime
 
-from fastapi import Depends, HTTPException, Request, WebSocket
+from fastapi import Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from stripe2qbo.api.auth import get_current_user_from_token
 from stripe2qbo.db.database import SessionLocal
 from stripe2qbo.db.models import User, QBOToken
 from stripe2qbo.qbo.auth import Token, refresh_auth_token
@@ -18,31 +19,8 @@ def get_db():
         db.close()
 
 
-def _get_current_user(
-    session: Dict[str, Any],
-    db: Session,
-) -> User:
-    user_id = session.get("user_id")
-
-    user = db.query(User).filter(User.id == user_id).first()
-    if user is None:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    return user
-
-
-def get_current_user(request: Request, db: Annotated[Session, Depends(get_db)]) -> User:
-    return _get_current_user(request.session, db)
-
-
-def get_current_user_ws(
-    websocket: WebSocket, db: Annotated[Session, Depends(get_db)]
-) -> User:
-    return _get_current_user(websocket.session, db)
-
-
 def get_qbo_token(
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Token:
     token = db.query(QBOToken).filter(QBOToken.user_id == user.id).first()
@@ -66,7 +44,9 @@ def get_qbo_token(
     return Token.model_validate(token, from_attributes=True)
 
 
-def get_stripe_user_id(user: Annotated[User, Depends(get_current_user)]) -> str:
+def get_stripe_user_id(
+    user: Annotated[User, Depends(get_current_user_from_token)]
+) -> str:
     stripe_user_id = os.getenv("STRIPE_ACCOUNT_ID", user.stripe_user_id)
     if stripe_user_id is None:
         raise HTTPException(status_code=401, detail="Not authenticated")

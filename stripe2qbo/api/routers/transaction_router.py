@@ -2,8 +2,9 @@ from typing import Annotated, List
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
+from stripe2qbo.api.auth import get_current_user_from_token
 
-from stripe2qbo.api.dependencies import get_current_user, get_db
+from stripe2qbo.api.dependencies import get_db
 from stripe2qbo.db.models import User, TransactionSync as TransactionSyncORM
 
 from stripe2qbo.db.schemas import TransactionSync
@@ -16,7 +17,7 @@ router = APIRouter(
 
 @router.get("/")
 def get_all_transactions(
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
     db: Annotated[Session, Depends(get_db)],
 ) -> List[TransactionSync]:
     transactions = (
@@ -30,7 +31,7 @@ def get_all_transactions(
 
 @router.get("/{transaction_id}")
 def get_transaction_by_id(
-    user: Annotated[User, Depends(get_current_user)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
     db: Annotated[Session, Depends(get_db)],
     transaction_id: str,
 ) -> TransactionSync:
