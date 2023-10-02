@@ -53,7 +53,6 @@ const SyncSettings = () => {
 
     return (
         <div className="shadow-lg p-4">
-            <h3 className="font-semibold mb-4">Sync Settings</h3>
             {isLoading ? (
                 <div className="flex justify-center">
                     <LoadingSpinner className="inline-block h-8 w-8" />
