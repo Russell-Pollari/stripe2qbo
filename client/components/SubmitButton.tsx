@@ -1,5 +1,7 @@
 import * as React from 'react';
 
+import LoadingSpinner from './LoadingSpinner';
+
 const SubmitButton = ({
     isSubmitting,
     children,
@@ -20,6 +22,9 @@ const SubmitButton = ({
             `}
             disabled={isSubmitting}
         >
+            {isSubmitting && (
+                <LoadingSpinner className="inline-block w-4 h-4 mr-2" />
+            )}
             {children}
         </button>
     );

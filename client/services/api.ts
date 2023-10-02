@@ -8,6 +8,7 @@ import type {
     StripeInfo,
     Transaction,
     SyncOptions, // TODO: Rename to ImportOptions
+    User,
 } from '../types';
 
 interface AuthToken {
@@ -67,7 +68,30 @@ export const api = createApi({
             },
             invalidatesTags: ['User'],
         }),
-        getCurrentUser: builder.query<number, void>({
+        signup: builder.mutation<void, { email: string; password: string }>({
+            query: (body) => {
+                return {
+                    url: 'signup',
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams([
+                        ['username', body.email],
+                        ['password', body.password],
+                    ]),
+                    responseHandler: async (response: Response) => {
+                        const token =
+                            (await response.json()) as AuthToken | null;
+                        if (token) {
+                            document.cookie = `token=${token.access_token}; path=/; secure; samesite=strict;`;
+                        }
+                    },
+                };
+            },
+            invalidatesTags: ['User'],
+        }),
+        getCurrentUser: builder.query<User, void>({
             query: () => 'userId',
             providesTags: ['User'],
         }),
@@ -86,7 +110,18 @@ export const api = createApi({
         }),
 
         // QBO
-        getCompanyInfo: builder.query<QBOCompanyInfo, string>({
+        setQBOToken: builder.mutation<void, { code: string; realmId: string }>({
+            query: (body) => ({
+                url:
+                    'qbo/oauth2/callback?code=' +
+                    body.code +
+                    '&realmId=' +
+                    body.realmId,
+                method: 'POST',
+            }),
+            invalidatesTags: ['User'],
+        }),
+        getCompanyInfo: builder.query<QBOCompanyInfo, void>({
             query: () => 'qbo/info',
         }),
         getAccounts: builder.query<QBOAccount[], string>({
@@ -187,11 +222,13 @@ export const api = createApi({
 
 export const {
     useLoginMutation,
+    useSignupMutation,
     useGetCurrentUserQuery,
 
     useGetStripeInfoQuery,
     useDisconnectStripeMutation,
 
+    useSetQBOTokenMutation,
     useGetAccountsQuery,
     useGetTaxCodesQuery,
     useGetVendorsQuery,

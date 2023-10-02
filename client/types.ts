@@ -1,3 +1,10 @@
+export type User = {
+    id: string;
+    email: string;
+    qbo_realm_id: string | null;
+    stripe_user_id: string | null;
+};
+
 export type QBOCompanyInfo = {
     CompanyName: string;
     Country: string;

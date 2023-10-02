@@ -7,6 +7,13 @@ def _snake_to_camel(s: str) -> str:
     return words[0] + "".join(word.capitalize() for word in words[1:])
 
 
+class User(BaseModel):
+    id: int
+    email: str
+    qbo_realm_id: Optional[str]
+    stripe_user_id: Optional[str]
+
+
 class Settings(BaseModel):
     stripe_clearing_account_id: str
     stripe_payout_account_id: str
