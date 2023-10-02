@@ -27,7 +27,7 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(nullable=False)
-    qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=False)
+    qbo_realm_id: Mapped[str] = mapped_column(unique=True, nullable=True)
     stripe_user_id: Mapped[str | None] = mapped_column(nullable=True)
     qbo_token: Mapped["QBOToken"] = relationship("QBOToken", uselist=False)
     transactions: Mapped["TransactionSync"] = relationship(

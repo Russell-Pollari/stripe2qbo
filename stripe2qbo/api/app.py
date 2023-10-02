@@ -20,7 +20,8 @@ from stripe2qbo.api.routers import (
     settings,
     sync,
 )
-from stripe2qbo.db.models import User
+from stripe2qbo.db.models import User as UserORM
+from stripe2qbo.db.schemas import User
 from stripe2qbo.api.auth import (
     authenticate_user,
     create_access_token,
@@ -62,9 +63,9 @@ async def signup(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ):
-    if db.query(User).filter(User.email == form_data.username).first():
+    if db.query(UserORM).filter(UserORM.email == form_data.username).first():
         raise HTTPException(status_code=400, detail="User already exists")
-    user = User(
+    user = UserORM(
         email=form_data.username,
         hashed_password=get_password_hash(form_data.password),
     )
@@ -76,8 +77,10 @@ async def signup(
 
 
 @app.get("/api/userId")
-async def user_id(user: Annotated[User, Depends(get_current_user_from_token)]) -> int:
-    return user.id
+async def user_id(
+    user: Annotated[UserORM, Depends(get_current_user_from_token)]
+) -> User:
+    return User.model_validate(user, from_attributes=True)
 
 
 @app.get("/{path:path}")

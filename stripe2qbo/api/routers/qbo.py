@@ -1,9 +1,7 @@
 from typing import Annotated
 
 from sqlalchemy.orm import Session
-from starlette.requests import Request
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
 
 from stripe2qbo.qbo.models import CompanyInfo
 from stripe2qbo.qbo.qbo_request import qbo_request
@@ -14,6 +12,7 @@ from stripe2qbo.qbo.auth import (
 )
 from stripe2qbo.api.dependencies import get_db, get_qbo_token
 from stripe2qbo.db.models import User, QBOToken
+from stripe2qbo.api.auth import get_current_user_from_token
 
 router = APIRouter(
     prefix="/qbo",
@@ -26,18 +25,23 @@ def qbo_uth_url() -> str:
     return get_auth_url()
 
 
-@router.get("/oauth2/callback")
+@router.post("/oauth2/callback")
 def qbo_oauth_callback(
-    code: str, realmId: str, request: Request, db: Annotated[Session, Depends(get_db)]
+    code: str,
+    realmId: str,
+    user: Annotated[User, Depends(get_current_user_from_token)],
+    db: Annotated[Session, Depends(get_db)],
 ):
     token = generate_auth_token(code, realmId)
 
-    user = db.query(User).filter(User.qbo_realm_id == realmId).first()
-    if user is None:
-        user = User(qbo_realm_id=realmId)
-        db.add(user)
-        db.commit()
-        db.refresh(user)
+    user_for_realm_id = (
+        db.query(User).filter(User.qbo_realm_id == token.realm_id).first()
+    )
+    if user_for_realm_id is not None and user_for_realm_id.id != user.id:
+        raise HTTPException(
+            status_code=400,
+            detail="This QBO account is already linked to another user",
+        )
 
     qbo_token = db.query(QBOToken).filter(QBOToken.user_id == user.id).first()
     if qbo_token is None:
@@ -51,9 +55,7 @@ def qbo_oauth_callback(
         qbo_token.refresh_token_expires_at = token.refresh_token_expires_at
         db.commit()
 
-    request.session["user_id"] = user.id
-    # TODO jwt token
-    return RedirectResponse("/")
+    return "ok"
 
 
 @router.get("/info")

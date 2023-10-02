@@ -5,7 +5,7 @@ import { useMediaQuery } from 'react-responsive';
 
 import { useGetCurrentUserQuery } from './services/api';
 import LoadingSpinner from './components/LoadingSpinner';
-import Login from './components/Login';
+import { LoginContainer } from './components/Login';
 import Header from './components/Header';
 
 const App = () => {
@@ -28,7 +28,7 @@ const App = () => {
                 </div>
             )}
 
-            {!isLoggedIn && !isLoading && <Login />}
+            {!isLoggedIn && !isLoading && <LoginContainer />}
 
             {isLoggedIn && (
                 <div className="px-6 flex w-full h-full pt-16">

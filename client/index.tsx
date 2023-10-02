@@ -6,7 +6,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import { store } from './store/store';
 import App from './App';
 import SettingsPage from './pages/SettingsPage';
+import SignupPage from './pages/SignupPage';
 import TransactionsPage from './pages/TransactionsPage';
+import QBOCallback from './pages/QBOCallback';
 
 const router = createBrowserRouter([
     {
@@ -22,6 +24,14 @@ const router = createBrowserRouter([
                 element: <SettingsPage />,
             },
         ],
+    },
+    {
+        path: '/signup',
+        element: <SignupPage />,
+    },
+    {
+        path: '/qbo/oauth2/callback',
+        element: <QBOCallback />,
     },
 ]);
 
