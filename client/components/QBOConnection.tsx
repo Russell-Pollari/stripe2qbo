@@ -1,7 +1,10 @@
 import * as React from 'react';
 
 import ConnectionCard from './ConnectionCard';
-import { useGetCompanyInfoQuery } from '../services/api';
+import {
+    useGetCompanyInfoQuery,
+    useDisconnectQBOMutation,
+} from '../services/api';
 
 const connect = () => {
     fetch('/api/qbo/oauth2')
@@ -16,20 +19,21 @@ const connect = () => {
 
 const QBOConnection = () => {
     const { data: qboInfo, isLoading, error } = useGetCompanyInfoQuery();
-    // const [disconnect] = useDisconnectStripeMutation();
+    const [disconnect] = useDisconnectQBOMutation();
+
     return (
         <ConnectionCard
             isConnected={!!qboInfo}
             title="QBO account"
             isLoading={isLoading}
             disconnect={() => {
-                // disconnect()
-                //     .unwrap()
-                //     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                //     .catch((e: any) => {
-                //         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-                //         alert(e?.data?.detail);
-                //     });
+                disconnect()
+                    .unwrap()
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    .catch((e: any) => {
+                        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+                        alert(e?.data?.detail);
+                    });
             }}
         >
             {qboInfo && !error ? (

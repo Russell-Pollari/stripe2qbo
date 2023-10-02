@@ -42,7 +42,7 @@ export const api = createApi({
             return headers;
         },
     }),
-    tagTypes: ['Settings', 'Stripe', 'User', 'Transaction'],
+    tagTypes: ['Settings', 'Stripe', 'User', 'Transaction', 'QBO'],
     endpoints: (builder) => ({
         // AUTH
         login: builder.mutation<void, { email: string; password: string }>({
@@ -97,6 +97,13 @@ export const api = createApi({
         }),
 
         // STRIPE
+        setStripeToken: builder.mutation<void, string>({
+            query: (code) => ({
+                url: 'stripe/oauth2/callback?code=' + code,
+                method: 'POST',
+            }),
+            invalidatesTags: ['User', 'Stripe'],
+        }),
         getStripeInfo: builder.query<StripeInfo, void>({
             query: () => 'stripe/info',
             providesTags: ['Stripe'],
@@ -119,19 +126,30 @@ export const api = createApi({
                     body.realmId,
                 method: 'POST',
             }),
+            invalidatesTags: ['User', 'QBO'],
+        }),
+        disconnectQBO: builder.mutation<void, void>({
+            query: () => ({
+                url: 'qbo/disconnect',
+                method: 'POST',
+            }),
             invalidatesTags: ['User'],
         }),
         getCompanyInfo: builder.query<QBOCompanyInfo, void>({
             query: () => 'qbo/info',
+            providesTags: ['QBO'],
         }),
         getAccounts: builder.query<QBOAccount[], string>({
             query: () => 'qbo/accounts',
+            providesTags: ['QBO'],
         }),
         getVendors: builder.query<QBOVendor[], string>({
             query: () => 'qbo/vendors',
+            providesTags: ['QBO'],
         }),
         getTaxCodes: builder.query<QBOTaxCode[], string>({
             query: () => 'qbo/taxcodes',
+            providesTags: ['QBO'],
         }),
 
         // settings
@@ -225,10 +243,12 @@ export const {
     useSignupMutation,
     useGetCurrentUserQuery,
 
+    useSetStripeTokenMutation,
     useGetStripeInfoQuery,
     useDisconnectStripeMutation,
 
     useSetQBOTokenMutation,
+    useDisconnectQBOMutation,
     useGetAccountsQuery,
     useGetTaxCodesQuery,
     useGetVendorsQuery,

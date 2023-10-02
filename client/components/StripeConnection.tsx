@@ -28,8 +28,7 @@ const StripeConnection = () => {
             disconnect={() => {
                 disconnect()
                     .unwrap()
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .catch((e: any) => {
+                    .catch((e) => {
                         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
                         alert(e?.data?.detail);
                     });
