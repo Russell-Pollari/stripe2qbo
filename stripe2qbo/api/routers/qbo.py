@@ -58,6 +58,15 @@ def qbo_oauth_callback(
     return "ok"
 
 
+@router.post("/disconnect")
+def disconnect_qbo(
+    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
+) -> None:
+    db.query(QBOToken).filter(QBOToken.user_id == user.id).delete()
+    db.commit()
+
+
 @router.get("/info")
 async def get_qbo_info(token: Annotated[Token, Depends(get_qbo_token)]) -> CompanyInfo:
     try:

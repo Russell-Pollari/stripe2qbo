@@ -4,7 +4,6 @@ from typing import Annotated, Optional
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import RedirectResponse
 import stripe
 from dotenv import load_dotenv
 from stripe2qbo.api.auth import get_current_user_from_token
@@ -35,16 +34,18 @@ async def stripe_oauth_url() -> str:
     return get_auth_url()
 
 
-@router.get("/oauth2/callback")
+@router.post("/oauth2/callback")
 async def stripe_oauth_callback(
     code: str,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_from_token)],
 ):
     token = generate_auth_token(code)
-    user.stripe_user_id = token.stripe_user_id
+    db.query(User).filter(User.id == user.id).update(
+        {"stripe_user_id": token.stripe_user_id}
+    )
     db.commit()
-    return RedirectResponse(url="/")
+    return "ok"
 
 
 @router.post("/disconnect")
@@ -56,7 +57,7 @@ async def disconnect_stripe(
         raise HTTPException(
             status_code=400, detail="Not allowed while STRIPE_ACCOUNT_ID is set"
         )
-    user.stripe_user_id = None
+    db.query(User).filter(User.id == user.id).update({"stripe_user_id": None})
     db.commit()
 
 

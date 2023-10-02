@@ -9,6 +9,7 @@ import SettingsPage from './pages/SettingsPage';
 import SignupPage from './pages/SignupPage';
 import TransactionsPage from './pages/TransactionsPage';
 import QBOCallback from './pages/QBOCallback';
+import StripeCallback from './pages/StripeCallback';
 
 const router = createBrowserRouter([
     {
@@ -23,15 +24,19 @@ const router = createBrowserRouter([
                 path: '/settings',
                 element: <SettingsPage />,
             },
+            {
+                path: '/qbo/oauth2/callback',
+                element: <QBOCallback />,
+            },
+            {
+                path: '/stripe/oauth2/callback',
+                element: <StripeCallback />,
+            },
         ],
     },
     {
         path: '/signup',
         element: <SignupPage />,
-    },
-    {
-        path: '/qbo/oauth2/callback',
-        element: <QBOCallback />,
     },
 ]);
 
