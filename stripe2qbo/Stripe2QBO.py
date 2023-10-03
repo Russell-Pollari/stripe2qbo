@@ -51,7 +51,6 @@ class Stripe2QBO:
         invoice_id = check_for_existing(
             "Invoice",
             qbo_customer_id=qbo_customer.Id,
-            date_string=_transfrom_timestamp(stripe_invoice.created),
             private_note=stripe_invoice.id,
             qbo=self._qbo,
         )
