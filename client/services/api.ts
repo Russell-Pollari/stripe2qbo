@@ -175,7 +175,7 @@ export const api = createApi({
                 { updateCachedData, cacheDataLoaded, cacheEntryRemoved }
             ) {
                 const HOST = process.env.HOST;
-                const ws = new WebSocket(`ws://${HOST}/api/sync/ws`);
+                const ws = new WebSocket(`wss://${HOST}/api/sync/ws`);
 
                 // Since we cannot send Headers with a WebSocket, we send the token as the first message
                 const token = getToken();
