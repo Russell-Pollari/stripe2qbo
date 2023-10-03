@@ -89,11 +89,9 @@ class Stripe2QBO:
         qbo_invoice_id: Optional[str] = None,
     ) -> str:
         """Create a QBO Payment for a Stripe Charge"""
-        date_string = _transfrom_timestamp(stripe_charge.created)
         payment_id = check_for_existing(
             "Payment",
             qbo_customer_id=qbo_customer.Id,
-            date_string=date_string,
             private_note=stripe_charge.id,
             qbo=self._qbo,
         )
