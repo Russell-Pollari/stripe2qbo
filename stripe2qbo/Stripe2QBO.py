@@ -110,11 +110,9 @@ class Stripe2QBO:
 
     def sync_stripe_fee(self, transaction: stripe_models.Transaction) -> str:
         """Create a QBO Expense for a Stripe Transaction"""
-        date_string = _transfrom_timestamp(transaction.created)
         expense_id = check_for_existing(
             "Purchase",
             private_note=transaction.id,
-            date_string=date_string,
             qbo=self._qbo,
         )
         if expense_id:
