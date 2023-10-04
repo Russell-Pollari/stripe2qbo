@@ -51,7 +51,6 @@ class Stripe2QBO:
         invoice_id = check_for_existing(
             "Invoice",
             qbo_customer_id=qbo_customer.Id,
-            date_string=_transfrom_timestamp(stripe_invoice.created),
             private_note=stripe_invoice.id,
             qbo=self._qbo,
         )
@@ -90,11 +89,9 @@ class Stripe2QBO:
         qbo_invoice_id: Optional[str] = None,
     ) -> str:
         """Create a QBO Payment for a Stripe Charge"""
-        date_string = _transfrom_timestamp(stripe_charge.created)
         payment_id = check_for_existing(
             "Payment",
             qbo_customer_id=qbo_customer.Id,
-            date_string=date_string,
             private_note=stripe_charge.id,
             qbo=self._qbo,
         )
@@ -113,11 +110,9 @@ class Stripe2QBO:
 
     def sync_stripe_fee(self, transaction: stripe_models.Transaction) -> str:
         """Create a QBO Expense for a Stripe Transaction"""
-        date_string = _transfrom_timestamp(transaction.created)
         expense_id = check_for_existing(
             "Purchase",
             private_note=transaction.id,
-            date_string=date_string,
             qbo=self._qbo,
         )
         if expense_id:
