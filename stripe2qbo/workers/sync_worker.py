@@ -20,6 +20,7 @@ app = Celery(
     broker=BROKER_URL,
     backend="db+" + DATABASE_URI,
     broker_connection_retry_on_startup=True,
+    worker_concurrency=2,
 )
 
 
