@@ -66,10 +66,12 @@ def sync_transaction_worker(transaction_id: str, user_id: int):
         hashlib.sha256,
     ).hexdigest()
 
+    HOST = os.getenv("HOST", "localhost:8000")
+    PROTOCOL = "https" if os.getenv("SSL") else "http"
     try:
         request(
             "POST",
-            f"http://localhost:8000/api/sync/notify?user_id={user_id}",
+            f"{PROTOCOL}://{HOST}/api/sync/notify?user_id={user_id}",
             headers={"X-Signature": sig},
             data=transaction_sync.model_dump_json(),
         )
