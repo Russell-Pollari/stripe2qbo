@@ -2,7 +2,7 @@ import os
 import hmac
 import hashlib
 
-from celery import Celery
+from celery import Celery  # type:ignore
 from requests import request
 
 from stripe2qbo.db.database import SessionLocal
