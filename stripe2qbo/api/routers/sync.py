@@ -1,28 +1,26 @@
 from typing import Annotated, Dict, List
+import hashlib
+import hmac
+import os
 
 from fastapi import (
     APIRouter,
     Depends,
+    HTTPException,
+    Header,
     WebSocket,
     WebSocketDisconnect,
     WebSocketException,
     Query,
-    BackgroundTasks,
 )
 from sqlalchemy.orm import Session
 from stripe2qbo.api.auth import get_current_user_from_token
 
-from stripe2qbo.workers import sync_transaction_worker
+from stripe2qbo.workers.sync_worker import sync_transaction_worker
 from stripe2qbo.db.models import User
 from stripe2qbo.db.schemas import TransactionSync
-from stripe2qbo.stripe.stripe_transactions import get_transaction
-from stripe2qbo.Stripe2QBO import Stripe2QBO
-from stripe2qbo.api.dependencies import (
-    get_db,
-    get_qbo_token,
-)
+from stripe2qbo.api.dependencies import get_db
 from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
-from stripe2qbo.api.routers.settings import get_settings
 
 router = APIRouter(
     tags=["sync"],
@@ -79,58 +77,45 @@ async def websocket_endpoint(
             break
 
 
-def sync_transaction(transaction_id: str, syncer: Stripe2QBO, user: User):
-    if user.stripe_user_id is None:
-        raise Exception("Stripe user id is not set")
-    transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
-    transaction_sync = syncer.sync(transaction, user)
-    return transaction_sync
+@router.post("/notify")
+async def notify(
+    user_id: int,
+    transaction: TransactionSync,
+    X_Signature: Annotated[str | None, Header()] = None,
+):
+    """Notify the client of a transaction sync status change.
+    This is called by the worker and should not callable by an end user"""
+    if X_Signature is None:
+        raise HTTPException(status_code=401, detail="Missing signature")
 
+    sig = hmac.new(
+        os.environ["SECRET_KEY"].encode(),
+        transaction.model_dump_json().encode(),
+        hashlib.sha256,
+    ).hexdigest()
 
-async def sync_transactions(transaction_ids: List[str], user: User, db: Session):
-    qbo_token = get_qbo_token(user, db)
-    settings = get_settings(qbo_token, db)
-    if settings is None:
-        raise Exception("Settings not found")
+    if sig != X_Signature:
+        raise HTTPException(status_code=401, detail="Invalid signature")
 
-    # syncer = Stripe2QBO(settings, qbo_token)
-
-    for transaction_id in transaction_ids:
-        sync_transaction_worker.delay(transaction_id, user.id)
-        # transaction_sync = await asyncio.to_thread(
-        #     sync_transaction, transaction_id, syncer, user
-        # )
-        # db.query(TransactionSyncORM).filter(
-        #     TransactionSyncORM.id == transaction_id
-        # ).update(
-        #     {
-        #         "status": transaction_sync.status,
-        #         "transfer_id": transaction_sync.transfer_id,
-        #         "invoice_id": transaction_sync.invoice_id,
-        #         "payment_id": transaction_sync.payment_id,
-        #         "expense_id": transaction_sync.expense_id,
-        #         "failure_reason": transaction_sync.failure_reason or None,
-        #     }
-        # )
-        # db.commit()
-        # try:
-        #     await manager.send_message(user.id, transaction_sync)
-        # except WebSocketException:
-        #     continue
+    await manager.send_message(user_id, transaction)
 
 
 @router.post("")
-async def sync(
+def sync(
     transaction_ids: Annotated[List[str], Query()],
     user: Annotated[User, Depends(get_current_user_from_token)],
     db: Annotated[Session, Depends(get_db)],
-    background_tasks: BackgroundTasks,
 ) -> str:
+    try:
+        sync_transaction_worker.starmap(
+            map(lambda x: (x, user.id), transaction_ids)
+        ).delay()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
     db.query(TransactionSyncORM).filter(
         TransactionSyncORM.id.in_(transaction_ids)
     ).update({"status": "syncing"})
     db.commit()
-
-    background_tasks.add_task(sync_transactions, transaction_ids, user, db)
 
     return "ok"

@@ -1,4 +1,9 @@
+import os
+import hmac
+import hashlib
+
 from celery import Celery
+from requests import request
 
 from stripe2qbo.db.database import SessionLocal
 from stripe2qbo.db.models import User, TransactionSync
@@ -7,17 +12,20 @@ from stripe2qbo.Stripe2QBO import Stripe2QBO
 from stripe2qbo.api.dependencies import get_qbo_token
 from stripe2qbo.api.routers.settings import get_settings
 
+DATABASE_URI = os.getenv("POSTGRES_URI", "sqlite:///stripe2qbo.db")
+BROKER_URL = os.getenv("BROKER_URI", "amqp://localhost")
+
 app = Celery(
-    "stripe2qbo",
-    broker="amqp://localhost",
-    backend="db+sqlite:///stripe2qbo.db",
+    "syncbooks",
+    broker=BROKER_URL,
+    backend="db+" + DATABASE_URI,
+    broker_connection_retry_on_startup=True,
 )
 
 
 @app.task
-def sync_transaction_worker(transaction_id: str, user_id: str):
+def sync_transaction_worker(transaction_id: str, user_id: int):
     db = SessionLocal()
-    print("Syncing transaction", transaction_id)
     if db is None:
         raise Exception("DB is not set")
 
@@ -27,6 +35,9 @@ def sync_transaction_worker(transaction_id: str, user_id: str):
 
     qbo_token = get_qbo_token(user, db)
     settings = get_settings(qbo_token, db)
+
+    if settings is None:
+        raise Exception("Settings is not set")
 
     if user.stripe_user_id is None:
         raise Exception("Stripe user id is not set")
@@ -47,5 +58,21 @@ def sync_transaction_worker(transaction_id: str, user_id: str):
     )
     db.commit()
     db.close()
+
+    sig = hmac.new(
+        os.environ["SECRET_KEY"].encode(),
+        transaction_sync.model_dump_json().encode(),
+        hashlib.sha256,
+    ).hexdigest()
+
+    try:
+        request(
+            "POST",
+            f"http://localhost:8000/api/sync/notify?user_id={user_id}",
+            headers={"X-Signature": sig},
+            data=transaction_sync.model_dump_json(),
+        )
+    except Exception as e:
+        print("Failed to notify", e)
 
     return transaction_sync
