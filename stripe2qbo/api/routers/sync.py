@@ -126,10 +126,9 @@ async def sync(
     db: Annotated[Session, Depends(get_db)],
     background_tasks: BackgroundTasks,
 ) -> str:
-    for transaction_id in transaction_ids:
-        db.query(TransactionSyncORM).filter(
-            TransactionSyncORM.id == transaction_id
-        ).update({"status": "syncing"})
+    db.query(TransactionSyncORM).filter(
+        TransactionSyncORM.id.in_(transaction_ids)
+    ).update({"status": "syncing"})
     db.commit()
 
     syncer = Stripe2QBO(settings, qbo_token)
