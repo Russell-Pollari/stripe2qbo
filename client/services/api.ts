@@ -233,6 +233,31 @@ export const api = createApi({
                     method: 'POST',
                 };
             },
+            async onQueryStarted(
+                transaction_ids,
+                { dispatch, queryFulfilled }
+            ) {
+                // Optimistically update the status of the transactions to 'syncing'
+                const patchResult = dispatch(
+                    api.util.updateQueryData(
+                        'getTransactions',
+                        undefined,
+                        (draft: Transaction[]) => {
+                            draft.forEach((t) => {
+                                if (transaction_ids.includes(t.id)) {
+                                    Object.assign(t, { status: 'syncing' });
+                                }
+                            });
+                        }
+                    )
+                );
+                try {
+                    await queryFulfilled;
+                } catch (error) {
+                    console.error(error);
+                    patchResult.undo();
+                }
+            },
             invalidatesTags: ['Transaction'],
         }),
     }),
