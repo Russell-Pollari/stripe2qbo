@@ -13,7 +13,7 @@ from stripe2qbo.api.dependencies import get_qbo_token
 from stripe2qbo.api.routers.settings import get_settings
 
 DATABASE_URI = os.getenv("POSTGRES_URI", "sqlite:///stripe2qbo.db")
-BROKER_URL = os.getenv("BROKER_URI", "amqp://localhost")
+BROKER_URL = os.getenv("BROKER_URL", "amqp://localhost")
 
 app = Celery(
     "syncbooks",
