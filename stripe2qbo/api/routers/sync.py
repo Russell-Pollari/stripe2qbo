@@ -1,4 +1,3 @@
-import asyncio
 from typing import Annotated, Dict, List
 
 from fastapi import (
@@ -13,18 +12,16 @@ from fastapi import (
 from sqlalchemy.orm import Session
 from stripe2qbo.api.auth import get_current_user_from_token
 
+from stripe2qbo.workers import sync_transaction_worker
 from stripe2qbo.db.models import User
 from stripe2qbo.db.schemas import TransactionSync
-from stripe2qbo.qbo.auth import Token
 from stripe2qbo.stripe.stripe_transactions import get_transaction
 from stripe2qbo.Stripe2QBO import Stripe2QBO
 from stripe2qbo.api.dependencies import (
     get_db,
     get_qbo_token,
-    get_stripe_user_id,
 )
 from stripe2qbo.db.models import TransactionSync as TransactionSyncORM
-from stripe2qbo.db.schemas import Settings
 from stripe2qbo.api.routers.settings import get_settings
 
 router = APIRouter(
@@ -69,8 +66,8 @@ async def websocket_endpoint(
     # the client sends the auth token with the first message
     token = await websocket.receive_text()
     user = get_current_user_from_token(token, db)
-
     manager.register(user.id, websocket)
+
     while True:
         try:
             await websocket.receive_text()
@@ -90,39 +87,42 @@ def sync_transaction(transaction_id: str, syncer: Stripe2QBO, user: User):
     return transaction_sync
 
 
-async def sync_transactions(
-    transaction_ids: List[str], syncer: Stripe2QBO, user: User, db: Session
-):
+async def sync_transactions(transaction_ids: List[str], user: User, db: Session):
+    qbo_token = get_qbo_token(user, db)
+    settings = get_settings(qbo_token, db)
+    if settings is None:
+        raise Exception("Settings not found")
+
+    # syncer = Stripe2QBO(settings, qbo_token)
+
     for transaction_id in transaction_ids:
-        transaction_sync = await asyncio.to_thread(
-            sync_transaction, transaction_id, syncer, user
-        )
-        db.query(TransactionSyncORM).filter(
-            TransactionSyncORM.id == transaction_id
-        ).update(
-            {
-                "status": transaction_sync.status,
-                "transfer_id": transaction_sync.transfer_id,
-                "invoice_id": transaction_sync.invoice_id,
-                "payment_id": transaction_sync.payment_id,
-                "expense_id": transaction_sync.expense_id,
-                "failure_reason": transaction_sync.failure_reason or None,
-            }
-        )
-        db.commit()
-        try:
-            await manager.send_message(user.id, transaction_sync)
-        except WebSocketException:
-            continue
+        sync_transaction_worker.delay(transaction_id, user.id)
+        # transaction_sync = await asyncio.to_thread(
+        #     sync_transaction, transaction_id, syncer, user
+        # )
+        # db.query(TransactionSyncORM).filter(
+        #     TransactionSyncORM.id == transaction_id
+        # ).update(
+        #     {
+        #         "status": transaction_sync.status,
+        #         "transfer_id": transaction_sync.transfer_id,
+        #         "invoice_id": transaction_sync.invoice_id,
+        #         "payment_id": transaction_sync.payment_id,
+        #         "expense_id": transaction_sync.expense_id,
+        #         "failure_reason": transaction_sync.failure_reason or None,
+        #     }
+        # )
+        # db.commit()
+        # try:
+        #     await manager.send_message(user.id, transaction_sync)
+        # except WebSocketException:
+        #     continue
 
 
 @router.post("")
 async def sync(
     transaction_ids: Annotated[List[str], Query()],
-    settings: Annotated[Settings, Depends(get_settings)],
-    qbo_token: Annotated[Token, Depends(get_qbo_token)],
     user: Annotated[User, Depends(get_current_user_from_token)],
-    stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
     db: Annotated[Session, Depends(get_db)],
     background_tasks: BackgroundTasks,
 ) -> str:
@@ -131,8 +131,6 @@ async def sync(
     ).update({"status": "syncing"})
     db.commit()
 
-    syncer = Stripe2QBO(settings, qbo_token)
-    user.stripe_user_id = stripe_user_id
-    background_tasks.add_task(sync_transactions, transaction_ids, syncer, user, db)
+    background_tasks.add_task(sync_transactions, transaction_ids, user, db)
 
     return "ok"
