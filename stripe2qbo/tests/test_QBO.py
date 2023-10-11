@@ -21,8 +21,8 @@ stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
 ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 
 
-def test_qbo_request(test_qbo: QBO, test_token: Token):
-    response = test_qbo._request(
+async def test_qbo_request(test_qbo: QBO, test_token: Token):
+    response = await test_qbo._request(
         path=f"/companyinfo/{test_token.realm_id}",
     )
 
@@ -31,18 +31,20 @@ def test_qbo_request(test_qbo: QBO, test_token: Token):
     assert response.json()["CompanyInfo"]["Country"] is not None
 
 
-def test_create_account(test_qbo: QBO):
-    account_id = test_qbo.get_or_create_account("Test Expense Account", "Expense")
+async def test_create_account(test_qbo: QBO):
+    account_id = await test_qbo.get_or_create_account("Test Expense Account", "Expense")
 
-    response = test_qbo._request(path=f"/account/{account_id}")
+    response = await test_qbo._request(path=f"/account/{account_id}")
+
     assert response.status_code == 200
+
     assert response.json()["Account"]["Id"] == account_id
     assert response.json()["Account"]["Name"] == "Test Expense Account"
     assert response.json()["Account"]["AccountType"] == "Expense"
     assert response.json()["Account"]["CurrencyRef"]["value"] == test_qbo.home_currency
 
 
-def test_create_expense(
+async def test_create_expense(
     test_qbo: QBO,
     test_settings: Settings,
     test_charge_transaction: Transaction,
@@ -51,9 +53,9 @@ def test_create_expense(
     currency = test_charge_transaction.currency.upper()
 
     expense = expense_from_transaction(test_charge_transaction, test_settings)
-    expense_id = test_qbo.create_expense(expense)
+    expense_id = await test_qbo.create_expense(expense)
 
-    response = test_qbo._request(path=f"/purchase/{expense_id}")
+    response = await test_qbo._request(path=f"/purchase/{expense_id}")
     assert response.status_code == 200
     purchase = response.json()["Purchase"]
 
@@ -69,7 +71,7 @@ def test_create_expense(
     assert purchase["AccountRef"]["value"] == test_settings.stripe_clearing_account_id
 
 
-def test_create_invoice(
+async def test_create_invoice(
     test_qbo: QBO, test_invoice_transaction: Transaction, test_settings: Settings
 ):
     assert test_invoice_transaction.invoice is not None
@@ -78,18 +80,18 @@ def test_create_invoice(
     assert test_invoice_transaction.customer.name is not None
 
     currency = cast(QBOCurrency, test_invoice_transaction.invoice.currency.upper())
-    customer = test_qbo.get_or_create_customer(
+    customer = await test_qbo.get_or_create_customer(
         test_invoice_transaction.customer.name, currency
     )
 
     tax_codes: Dict[str, TaxCode | None] = {}
     tax_codes[test_settings.default_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.default_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.default_tax_code_id)
         if test_settings.default_tax_code_id != "TAX"
         else None
     )
     tax_codes[test_settings.exempt_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
         if test_settings.exempt_tax_code_id != "NON"
         else None
     )
@@ -101,17 +103,19 @@ def test_create_invoice(
     for line in invoice_body.Line:
         product = line.SalesItemLineDetail.ItemRef
         if product.value is None and product.name is not None:
-            income_account_id = test_qbo.get_or_create_account(product.name, "Income")
+            income_account_id = await test_qbo.get_or_create_account(
+                product.name, "Income"
+            )
             line.SalesItemLineDetail.ItemRef = cast(
                 ProductItemRef,
-                test_qbo.get_or_create_item(product.name, income_account_id),
+                await test_qbo.get_or_create_item(product.name, income_account_id),
             )
 
-    invoice_id = test_qbo.create_invoice(invoice_body)
+    invoice_id = await test_qbo.create_invoice(invoice_body)
 
     assert invoice_id is not None
 
-    response = test_qbo._request(path=f"/invoice/{invoice_id}")
+    response = await test_qbo._request(path=f"/invoice/{invoice_id}")
 
     assert response.status_code == 200
 

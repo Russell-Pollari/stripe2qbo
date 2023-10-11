@@ -12,7 +12,7 @@ from stripe2qbo.stripe.stripe_transactions import build_transaction
 from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.qbo.qbo_request import qbo_request
 from stripe2qbo.db.models import User
-from stripe2qbo.Stripe2QBO import Stripe2QBO
+from stripe2qbo.Stripe2QBO import create_stripe2qbo
 
 load_dotenv()
 
@@ -23,7 +23,7 @@ ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 @pytest.mark.skip(
     reason="Esure that the test Stripe account has a payout or available balance"
 )
-def test_sync_payout(test_token: Token, test_user: User, test_settings: Settings):
+async def test_sync_payout(test_token: Token, test_user: User, test_settings: Settings):
     txn = stripe.BalanceTransaction.list(
         limit=1, type="payout", stripe_account=ACCOUNT_ID, expand=["data.source"]
     ).data[0]
@@ -31,14 +31,14 @@ def test_sync_payout(test_token: Token, test_user: User, test_settings: Settings
     transaction = build_transaction(txn, ACCOUNT_ID)
     assert transaction.payout is not None
 
-    syncer = Stripe2QBO(test_settings, test_token)
-    sync = syncer.sync(transaction, test_user)
+    syncer = await create_stripe2qbo(test_settings, test_token)
+    sync = await syncer.sync(transaction, test_user)
 
     assert sync.status == "success"
     assert sync.transfer_id is not None
     assert sync.id == transaction.id
 
-    response = qbo_request(
+    response = await qbo_request(
         path=f"/transfer/{sync.transfer_id}",
         access_token=test_token.access_token,
         realm_id=test_token.realm_id,
@@ -76,7 +76,7 @@ def test_sync_payout(test_token: Token, test_user: User, test_settings: Settings
         )
 
 
-def test_sync_invoice(
+async def test_sync_invoice(
     test_token: Token,
     test_settings: Settings,
     test_invoice_transaction: Transaction,
@@ -90,8 +90,8 @@ def test_sync_invoice(
     assert transaction.customer is not None
     invoice_currency = transaction.invoice.currency.upper()
 
-    syncer = Stripe2QBO(test_settings, test_token)
-    sync = syncer.sync(transaction, test_user)
+    syncer = await create_stripe2qbo(test_settings, test_token)
+    sync = await syncer.sync(transaction, test_user)
 
     assert sync.status == "success"
     assert sync.id == transaction.id
@@ -99,7 +99,7 @@ def test_sync_invoice(
     assert sync.payment_id is not None
     assert sync.expense_id is not None
 
-    response = qbo_request(
+    response = await qbo_request(
         path=f"/invoice/{sync.invoice_id}",
         access_token=test_token.access_token,
         realm_id=test_token.realm_id,
@@ -132,12 +132,12 @@ def test_sync_invoice(
     assert invoice["Line"][1]["Amount"] == 10
     assert invoice["Line"][1]["SalesItemLineDetail"]["ItemRef"]["name"] == "Product A"
 
-    test_qbo.set_token(test_token)
+    await test_qbo.set_token(test_token)
 
     if test_qbo.using_sales_tax:
         assert invoice["TxnTaxDetail"]["TotalTax"] == 0
 
-    response = qbo_request(
+    response = await qbo_request(
         path=f"/payment/{sync.payment_id}",
         access_token=test_token.access_token,
         realm_id=test_token.realm_id,
@@ -167,7 +167,7 @@ def test_sync_invoice(
     assert payment["Line"][0]["Amount"] == transaction.charge.amount / 100
     assert payment["Line"][0]["LinkedTxn"][0]["TxnId"] == sync.invoice_id
 
-    response = qbo_request(
+    response = await qbo_request(
         path=f"/purchase/{sync.expense_id}",
         access_token=test_token.access_token,
         realm_id=test_token.realm_id,

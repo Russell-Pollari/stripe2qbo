@@ -30,12 +30,12 @@ router = APIRouter(
 
 
 @router.get("/oauth2")
-async def stripe_oauth_url() -> str:
+def stripe_oauth_url() -> str:
     return get_auth_url()
 
 
 @router.post("/oauth2/callback")
-async def stripe_oauth_callback(
+def stripe_oauth_callback(
     code: str,
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_from_token)],
@@ -49,7 +49,7 @@ async def stripe_oauth_callback(
 
 
 @router.post("/disconnect")
-async def disconnect_stripe(
+def disconnect_stripe(
     db: Annotated[Session, Depends(get_db)],
     user: Annotated[User, Depends(get_current_user_from_token)],
 ) -> None:
@@ -62,7 +62,7 @@ async def disconnect_stripe(
 
 
 @router.get("/info")
-async def get_stripe_info(
+def get_stripe_info(
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
 ) -> Account:
     account = stripe.Account.retrieve(stripe_user_id)
@@ -70,7 +70,7 @@ async def get_stripe_info(
 
 
 @router.post("/transactions")
-async def get_stripe_transactions(
+def get_stripe_transactions(
     user: Annotated[User, Depends(get_current_user_from_token)],
     stripe_user_id: Annotated[str, Depends(get_stripe_user_id)],
     db: Annotated[Session, Depends(get_db)],

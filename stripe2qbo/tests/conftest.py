@@ -7,7 +7,7 @@ import stripe
 from dotenv import load_dotenv
 from stripe2qbo.api.auth import get_password_hash
 
-from stripe2qbo.qbo.QBO import QBO
+from stripe2qbo.qbo.QBO import QBO, create_qbo
 from stripe2qbo.db.models import User
 from stripe2qbo.db.schemas import Settings
 from stripe2qbo.qbo.auth import (
@@ -83,9 +83,8 @@ def test_user(test_token: Token) -> User:
 
 
 @pytest.fixture
-def test_qbo(test_token: Token) -> QBO:
-    qbo = QBO()
-    qbo.set_token(test_token)
+async def test_qbo(test_token: Token) -> QBO:
+    qbo = await create_qbo(test_token)
     assert qbo.access_token is not None
     assert qbo.realm_id is not None
     assert qbo.home_currency is not None
@@ -93,20 +92,20 @@ def test_qbo(test_token: Token) -> QBO:
 
 
 @pytest.fixture
-def test_settings(test_qbo: QBO) -> Settings:
-    stripe_clearing_account_id = test_qbo.get_or_create_account(
+async def test_settings(test_qbo: QBO) -> Settings:
+    stripe_clearing_account_id = await test_qbo.get_or_create_account(
         "Stripe", "Bank", account_sub_type="Checking"
     )
-    stripe_payout_account_id = test_qbo.get_or_create_account(
+    stripe_payout_account_id = await test_qbo.get_or_create_account(
         "Stripe Payouts", "Bank", account_sub_type="Checking"
     )
-    sync_stripe_fee_account_id = test_qbo.get_or_create_account(
+    sync_stripe_fee_account_id = await test_qbo.get_or_create_account(
         "Stripe Fees", "Expense", account_sub_type="OtherBusinessExpenses"
     )
-    default_income_account_id = test_qbo.get_or_create_account(
+    default_income_account_id = await test_qbo.get_or_create_account(
         "Stripe Income", "Income", account_sub_type="SalesOfProductIncome"
     )
-    stripe_vendor_id = test_qbo.get_or_create_vendor("Stripe")
+    stripe_vendor_id = await test_qbo.get_or_create_vendor("Stripe")
 
     # TODO: default tax settings - depending on QBO locale and preferences
     return Settings(

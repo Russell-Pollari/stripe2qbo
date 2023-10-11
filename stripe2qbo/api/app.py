@@ -2,11 +2,7 @@ from typing import Annotated
 import os
 
 from sqlalchemy.orm import Session
-from fastapi import (
-    Depends,
-    FastAPI,
-    HTTPException,
-)
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
@@ -32,8 +28,8 @@ from stripe2qbo.api.auth import (
 
 load_dotenv()
 
-
 app = FastAPI()
+
 
 if not os.path.exists("static"):
     os.mkdir("static")
@@ -47,7 +43,7 @@ app.include_router(settings.router, prefix="/api")
 
 
 @app.post("/api/token")
-async def token(
+def token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ) -> AuthToken:
@@ -59,7 +55,7 @@ async def token(
 
 
 @app.post("/api/signup")
-async def signup(
+def signup(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
 ):
@@ -77,14 +73,12 @@ async def signup(
 
 
 @app.get("/api/userId")
-async def user_id(
-    user: Annotated[UserORM, Depends(get_current_user_from_token)]
-) -> User:
+def user_id(user: Annotated[UserORM, Depends(get_current_user_from_token)]) -> User:
     return User.model_validate(user, from_attributes=True)
 
 
 @app.get("/{path:path}")
-async def catch_all(path: str) -> HTMLResponse:
+def catch_all(path: str) -> HTMLResponse:
     return HTMLResponse(
         content="""
             <html>

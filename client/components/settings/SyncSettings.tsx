@@ -17,7 +17,7 @@ import getDefaultSettings from './getDefaultSettings';
 import schema from './settingsFormSchema';
 
 const SyncSettings = () => {
-    const { data: companyInfo } = useGetCompanyInfoQuery('');
+    const { data: companyInfo } = useGetCompanyInfoQuery();
     const { data: accounts, isLoading: isLoadingAccounts } =
         useGetAccountsQuery('', {
             skip: !companyInfo,
