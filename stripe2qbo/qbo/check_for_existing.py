@@ -3,7 +3,7 @@ from typing import Optional
 from stripe2qbo.qbo.QBO import QBO
 
 
-def check_for_existing(
+async def check_for_existing(
     object_type: str,
     qbo_customer_id: Optional[str] = None,
     date_string: Optional[str] = None,
@@ -25,7 +25,7 @@ def check_for_existing(
     if len(filters) > 0:
         filter_string = "where " + " and ".join(filters)
 
-    response = qbo._query(f"select * from {object_type} {filter_string}")
+    response = await qbo._query(f"select * from {object_type} {filter_string}")
     qbo_items = response.json()["QueryResponse"].get(object_type, [])
 
     # Cannot query by PrivateNote, so we filter the returned items

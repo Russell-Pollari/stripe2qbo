@@ -8,7 +8,7 @@ from requests import request
 from stripe2qbo.db.database import SessionLocal
 from stripe2qbo.db.models import User, TransactionSync
 from stripe2qbo.stripe.stripe_transactions import get_transaction
-from stripe2qbo.Stripe2QBO import Stripe2QBO
+from stripe2qbo.Stripe2QBO import create_stripe2qbo
 from stripe2qbo.api.dependencies import get_qbo_token
 from stripe2qbo.api.routers.settings import get_settings
 
@@ -25,7 +25,7 @@ app = Celery(
 
 
 @app.task
-def sync_transaction_worker(transaction_id: str, user_id: int):
+async def sync_transaction_worker(transaction_id: str, user_id: int):
     db = SessionLocal()
     if db is None:
         raise Exception("DB is not set")
@@ -43,9 +43,9 @@ def sync_transaction_worker(transaction_id: str, user_id: int):
     if user.stripe_user_id is None:
         raise Exception("Stripe user id is not set")
 
-    syncer = Stripe2QBO(settings, qbo_token)
+    syncer = await create_stripe2qbo(settings, qbo_token)
     transaction = get_transaction(transaction_id, account_id=user.stripe_user_id)
-    transaction_sync = syncer.sync(transaction, user)
+    transaction_sync = await syncer.sync(transaction, user)
 
     db.query(TransactionSync).filter(TransactionSync.id == transaction_id).update(
         {

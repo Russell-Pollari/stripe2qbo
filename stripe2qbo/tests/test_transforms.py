@@ -85,7 +85,7 @@ def test_expense_from_transaction(
     )
 
 
-def test_invoice_transform(test_customer, test_settings: Settings, test_qbo: QBO):
+async def test_invoice_transform(test_customer, test_settings: Settings, test_qbo: QBO):
     stripe.InvoiceItem.create(
         customer=test_customer.id,
         amount=1000,
@@ -119,12 +119,12 @@ def test_invoice_transform(test_customer, test_settings: Settings, test_qbo: QBO
     tax_codes: Dict[str, TaxCode | None] = {}
 
     tax_codes[test_settings.default_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.default_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.default_tax_code_id)
         if test_settings.default_tax_code_id != "TAX"
         else None
     )
     tax_codes[test_settings.exempt_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
         if test_settings.exempt_tax_code_id != "NON"
         else None
     )
@@ -169,7 +169,7 @@ def test_invoice_transform(test_customer, test_settings: Settings, test_qbo: QBO
     # assert qbo_invoice.TxnTaxDetail.TaxLine[0].TaxLineDetail.NetAmountTaxable == 15
 
 
-def test_invoice_transform_with_tax(
+async def test_invoice_transform_with_tax(
     test_customer, test_settings: Settings, test_qbo: QBO
 ):
     tax_rate = stripe.TaxRate.create(
@@ -214,12 +214,12 @@ def test_invoice_transform_with_tax(
     tax_codes: Dict[str, TaxCode | None] = {}
 
     tax_codes[test_settings.default_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.default_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.default_tax_code_id)
         if test_settings.default_tax_code_id != "TAX"
         else None
     )
     tax_codes[test_settings.exempt_tax_code_id] = (
-        test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
+        await test_qbo.get_tax_code(test_settings.exempt_tax_code_id)
         if test_settings.exempt_tax_code_id != "NON"
         else None
     )
@@ -281,7 +281,7 @@ def test_payment_from_charge(test_customer, test_settings):
         transaction.charge,
         test_customer.id,
         test_settings,
-        exchange_rate=transaction.exchange_rate,
+        exchange_rate=transaction.exchange_rate or 1.0,
     )
 
     assert payment is not None
