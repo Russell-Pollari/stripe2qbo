@@ -2,7 +2,7 @@ import os
 from typing import Annotated, Any, Dict, Optional
 from datetime import datetime, timedelta
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Cookie
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -51,22 +51,24 @@ def authenticate_user(email: str, password: str, db: Session) -> Optional[User]:
     return user
 
 
-def create_access_token(email: str) -> str:
+def create_access_token(email: str) -> tuple[str, datetime]:
     to_encode: Dict[str, Any] = {"sub": email}
     expires = datetime.utcnow() + timedelta(minutes=60)
     to_encode.update(expires=expires.timestamp())
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, expires
 
 
 def get_current_user_from_token(
-    token: Annotated[str, Depends(oauth2_scheme)],
     db: Annotated[Session, Depends(get_db)],
+    token: Annotated[str | None, Cookie()] = None,
 ) -> User:
+    if token is None:
+        raise HTTPException(status_code=401, detail="Missing token")
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     email = payload.get("sub")
     if email is None:

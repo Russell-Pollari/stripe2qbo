@@ -11,36 +11,10 @@ import type {
     User,
 } from '../types';
 
-interface AuthToken {
-    access_token: string;
-    type: string;
-}
-
-const getToken = (): string | null => {
-    const tokenCookie = document.cookie;
-    const token = tokenCookie
-        .split('; ')
-        .find((row) => {
-            return row.startsWith('token=');
-        })
-        ?.split('=')[1];
-    if (token) {
-        return token;
-    }
-    return null;
-};
-
 export const api = createApi({
     reducerPath: 'api',
     baseQuery: fetchBaseQuery({
         baseUrl: '/api/',
-        prepareHeaders: (headers) => {
-            const token = getToken();
-            if (token) {
-                headers.set('Authorization', `Bearer ${token}`);
-            }
-            return headers;
-        },
     }),
     tagTypes: ['Settings', 'Stripe', 'User', 'Transaction', 'QBO'],
     endpoints: (builder) => ({
@@ -57,16 +31,15 @@ export const api = createApi({
                         ['username', body.email],
                         ['password', body.password],
                     ]),
-                    responseHandler: async (response: Response) => {
-                        const token =
-                            (await response.json()) as AuthToken | null;
-                        if (token) {
-                            document.cookie = `token=${token.access_token}; path=/; secure; samesite=strict;`;
-                        }
-                    },
                 };
             },
             invalidatesTags: ['User'],
+        }),
+        logout: builder.mutation<void, void>({
+            query: () => ({
+                url: 'logout',
+                method: 'POST',
+            }),
         }),
         signup: builder.mutation<void, { email: string; password: string }>({
             query: (body) => {
@@ -80,13 +53,6 @@ export const api = createApi({
                         ['username', body.email],
                         ['password', body.password],
                     ]),
-                    responseHandler: async (response: Response) => {
-                        const token =
-                            (await response.json()) as AuthToken | null;
-                        if (token) {
-                            document.cookie = `token=${token.access_token}; path=/; secure; samesite=strict;`;
-                        }
-                    },
                 };
             },
             invalidatesTags: ['User'],
@@ -178,15 +144,6 @@ export const api = createApi({
                 const PROTOCOL = process.env.SSL ? 'wss' : 'ws';
                 const ws = new WebSocket(`${PROTOCOL}://${HOST}/api/sync/ws`);
 
-                // Since we cannot send Headers with a WebSocket, we send the token as the first message
-                const token = getToken();
-                if (!token) {
-                    throw new Error('No token found');
-                }
-                ws.onopen = () => {
-                    ws.send(token);
-                };
-
                 try {
                     await cacheDataLoaded;
 
@@ -266,6 +223,7 @@ export const api = createApi({
 
 export const {
     useLoginMutation,
+    useLogoutMutation,
     useSignupMutation,
     useGetCurrentUserQuery,
 

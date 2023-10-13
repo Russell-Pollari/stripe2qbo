@@ -2,7 +2,7 @@ from typing import Annotated
 import os
 
 from sqlalchemy.orm import Session
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordRequestForm
@@ -23,7 +23,6 @@ from stripe2qbo.api.auth import (
     create_access_token,
     get_current_user_from_token,
     get_password_hash,
-    AuthToken,
 )
 
 load_dotenv()
@@ -46,19 +45,38 @@ app.include_router(settings.router, prefix="/api")
 def token(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
-) -> AuthToken:
+    response: Response,
+) -> str:
     user = authenticate_user(form_data.username, form_data.password, db)
     if not user:
         raise HTTPException(status_code=400, detail="Incorrect email or password")
-    access_token = create_access_token(user.email)
-    return AuthToken(access_token=access_token, token_type="bearer")
+    access_token, expires = create_access_token(user.email)
+    response.set_cookie(
+        key="token",
+        value=access_token,
+        httponly=True,
+        samesite="strict",
+        # expires=expires,
+        secure=os.getenv("SSL", "false").lower() == "true",
+    )
+    return "ok"
+
+
+@app.post("/api/logout")
+def logout(response: Response) -> str:
+    response.delete_cookie(
+        key="token",
+        secure=os.getenv("SSL", "false").lower() == "true",
+    )
+    return "ok"
 
 
 @app.post("/api/signup")
 def signup(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
     db: Annotated[Session, Depends(get_db)],
-):
+    response: Response,
+) -> str:
     if db.query(UserORM).filter(UserORM.email == form_data.username).first():
         raise HTTPException(status_code=400, detail="User already exists")
     user = UserORM(
@@ -68,8 +86,16 @@ def signup(
     db.add(user)
     db.commit()
     db.refresh(user)
-    access_token = create_access_token(user.email)
-    return {"access_token": access_token, "token_type": "bearer"}
+    access_token, expires = create_access_token(user.email)
+    response.set_cookie(
+        key="token",
+        value=access_token,
+        httponly=True,
+        samesite="strict",
+        # expires=expires,
+        secure=os.getenv("SSL", "false").lower() == "true",
+    )
+    return "ok"
 
 
 @app.get("/api/userId")
