@@ -56,14 +56,10 @@ manager = WebSocketManager()
 @router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket,
-    db: Annotated[Session, Depends(get_db)],
+    user: Annotated[User, Depends(get_current_user_from_token)],
 ) -> None:
     await websocket.accept()
 
-    # We can't use Headers with websockets, so cannot use oauth2_scheme
-    # the client sends the auth token with the first message
-    token = await websocket.receive_text()
-    user = get_current_user_from_token(token, db)
     manager.register(user.id, websocket)
 
     while True:
@@ -101,7 +97,7 @@ async def notify(
 
 
 @router.post("")
-def sync(
+async def sync(
     transaction_ids: Annotated[List[str], Query()],
     user: Annotated[User, Depends(get_current_user_from_token)],
     db: Annotated[Session, Depends(get_db)],
