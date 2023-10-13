@@ -62,6 +62,15 @@ def token(
     return "ok"
 
 
+@app.post("/api/logout")
+def logout(response: Response) -> str:
+    response.delete_cookie(
+        key="token",
+        secure=os.getenv("SSL", "false").lower() == "true",
+    )
+    return "ok"
+
+
 @app.post("/api/signup")
 def signup(
     form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
