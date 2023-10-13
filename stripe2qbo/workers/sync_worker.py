@@ -13,13 +13,11 @@ from stripe2qbo.Stripe2QBO import create_stripe2qbo
 from stripe2qbo.api.dependencies import get_qbo_token
 from stripe2qbo.api.routers.settings import get_settings
 
-# DATABASE_URI = os.getenv("POSTGRES_URI", "sqlite:///stripe2qbo.db")
 BROKER_URL = os.getenv("BROKER_URL", "amqp://localhost")
 
 app = Celery(
     "syncbooks",
     broker=BROKER_URL,
-    # backend="db+" + DATABASE_URI,
     broker_connection_retry_on_startup=True,
     worker_concurrency=2,
     task_serializer="json",
