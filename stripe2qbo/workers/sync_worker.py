@@ -1,3 +1,4 @@
+import asyncio
 import os
 import hmac
 import hashlib
@@ -12,20 +13,25 @@ from stripe2qbo.Stripe2QBO import create_stripe2qbo
 from stripe2qbo.api.dependencies import get_qbo_token
 from stripe2qbo.api.routers.settings import get_settings
 
-DATABASE_URI = os.getenv("POSTGRES_URI", "sqlite:///stripe2qbo.db")
+# DATABASE_URI = os.getenv("POSTGRES_URI", "sqlite:///stripe2qbo.db")
 BROKER_URL = os.getenv("BROKER_URL", "amqp://localhost")
 
 app = Celery(
     "syncbooks",
     broker=BROKER_URL,
-    backend="db+" + DATABASE_URI,
+    # backend="db+" + DATABASE_URI,
     broker_connection_retry_on_startup=True,
     worker_concurrency=2,
+    task_serializer="json",
 )
 
 
 @app.task
-async def sync_transaction_worker(transaction_id: str, user_id: int):
+def sync_transaction_worker(transaction_id: str, user_id: int):
+    asyncio.run(sync_transaction(transaction_id, user_id))
+
+
+async def sync_transaction(transaction_id: str, user_id: int):
     db = SessionLocal()
     if db is None:
         raise Exception("DB is not set")
@@ -78,4 +84,4 @@ async def sync_transaction_worker(transaction_id: str, user_id: int):
     except Exception as e:
         print("Failed to notify", e)
 
-    return transaction_sync
+    return "ok"

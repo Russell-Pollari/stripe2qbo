@@ -5,7 +5,8 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "concurrently \"npm run dev:styles\" \"npm run dev:client\" \"npm run dev:server\"",
+        "dev": "concurrently \"npm run dev:styles\" \"npm run dev:client\" \"npm run dev:server\" \"npm run worker\"",
+        "worker": "celery -A stripe2qbo.workers.sync_worker worker",
         "dev:styles": "npx tailwindcss -i client/index.css  -o static/index.css --watch",
         "dev:client": "esbuild --define:process.env.HOST=\\\"localhost:8000\\\"  --define:process.env.SSL=false ./client/index.tsx --bundle --minify --sourcemap --target=es2015 --outfile=static/index.js  --watch",
         "dev:server": "python -m uvicorn stripe2qbo.api.app:app --reload",
