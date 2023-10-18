@@ -2,8 +2,7 @@ from typing import List, Optional, Literal
 
 from pydantic import BaseModel
 
-
-QBOCurrency = Literal["USD", "CAD"]
+from stripe2qbo.api.dependencies import CurrencyLitList as QBOCurrency
 
 
 class CompanyInfo(BaseModel):

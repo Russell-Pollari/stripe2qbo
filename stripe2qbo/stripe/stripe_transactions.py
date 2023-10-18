@@ -26,6 +26,7 @@ def build_transaction(txn: stripe.BalanceTransaction, account_id: str) -> Transa
         transaction.charge = Charge(**txn.source)
         if txn.source.customer:
             transaction.customer = Customer(**txn.source.customer)
+            print(txn.source.invoice)
         inv = txn.source.invoice
         if inv:
             lines: List[InvoiceLine] = []

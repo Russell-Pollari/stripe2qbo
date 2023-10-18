@@ -16,6 +16,7 @@ from stripe2qbo.qbo.auth import (
 )
 from stripe2qbo.stripe.models import Transaction
 from stripe2qbo.stripe.stripe_transactions import get_transaction
+from stripe2qbo.api.dependencies import CurrencyList
 
 
 stripe.api_key = os.getenv("TEST_STRIPE_API_KEY", "")
@@ -24,12 +25,22 @@ ACCOUNT_ID = os.getenv("TEST_STRIPE_ACCOUNT_ID", "")
 load_dotenv()
 
 
-@pytest.fixture
-def test_customer():
+@pytest.fixture(params=CurrencyList)
+def test_currency(request: pytest.FixtureRequest):
+    return request.param
+
+
+@pytest.fixture()
+def test_customer(test_currency):
+    card_token = "tok_unionpay"
+
+    if test_currency == "ars":
+        card_token = "tok_ar"
+
     stripe_customer = stripe.Customer.create(
         email="test@example.com",
         name="Test Customer",
-        source="tok_visa",
+        source=card_token,
         stripe_account=ACCOUNT_ID,
     )
 
@@ -105,13 +116,13 @@ def test_settings(test_qbo: QBO) -> Settings:
     )
 
 
-@pytest.fixture(params=["usd", "cad"])
+@pytest.fixture()
 def test_charge_transaction(
-    test_customer: stripe.Customer, request: pytest.FixtureRequest
+    test_customer: stripe.Customer, test_currency
 ) -> Transaction:
     stripe.Charge.create(
-        amount=1000,
-        currency=request.param,
+        amount=99999999,
+        currency=test_currency,
         customer=test_customer.id,
         stripe_account=ACCOUNT_ID,
     )
@@ -126,21 +137,21 @@ def test_charge_transaction(
     return transaction
 
 
-@pytest.fixture(params=["usd", "cad"])
+@pytest.fixture()
 def test_invoice_transaction(
-    test_customer: stripe.Customer, request: pytest.FixtureRequest
+    test_customer: stripe.Customer, test_currency
 ) -> Transaction:
     stripe.InvoiceItem.create(
         customer=test_customer.id,
-        amount=1000,
-        currency=request.param,
+        amount=99999999,
+        currency=test_currency,
         description="Product A",
         stripe_account=ACCOUNT_ID,
     )
     stripe.InvoiceItem.create(
         customer=test_customer.id,
-        amount=500,
-        currency=request.param,
+        amount=99999999,
+        currency=test_currency,
         description="Product B",
         stripe_account=ACCOUNT_ID,
     )
@@ -148,11 +159,12 @@ def test_invoice_transaction(
         customer=test_customer.id,
         stripe_account=ACCOUNT_ID,
         collection_method="send_invoice",
-        currency=request.param,
+        currency=test_currency,
         days_until_due=30,
     )
     stripe.Invoice.pay(test_invoice.id, stripe_account=ACCOUNT_ID)
     txn = stripe.BalanceTransaction.list(limit=1, stripe_account=ACCOUNT_ID).data[0]
 
     transaction = get_transaction(txn.id, ACCOUNT_ID)
+    print(transaction.invoice)
     return transaction

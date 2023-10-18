@@ -44,7 +44,7 @@ def expense_from_transaction(
         amount = -transaction.amount / 100
         description = transaction.description or ""
 
-    currency = cast(qbo_models.QBOCurrency, transaction.currency.upper())
+    currency = cast(qbo_models.QBOCurrency, transaction.currency)
     account_id = settings.stripe_clearing_account_id
     vendor_id = settings.stripe_vendor_id
 
